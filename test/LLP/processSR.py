@@ -136,28 +136,16 @@ if not args.isData:
     
     analyzerChain.append(
         EventSkim(selection=lambda event: 
-            event.nominal_mht>300. or \
-            event.jerUp_mht>300. or \
-            event.jerDown_mht>300. or \
-            event.jesTotalUp_mht>300. or \
-            event.jesTotalDown_mht>300. or \
-            event.unclEnUp_mht>300. or \
-            event.unclEnDown_mht>300.
+            event.nominal_mht>250. or \
+            event.jerUp_mht>250. or \
+            event.jerDown_mht>250. or \
+            event.jesTotalUp_mht>250. or \
+            event.jesTotalDown_mht>250. or \
+            event.unclEnUp_mht>250. or \
+            event.unclEnDown_mht>205.
         )
     )
      
-    analyzerChain.append(
-        EventSkim(selection=lambda event: 
-            event.nominal_R < 1.25 or \
-            event.jerUp_R < 1.25 or \
-            event.jerDown_R < 1.25 or
-            event.jesTotalUp_R < 1.25 or
-            event.jesTotalDown_R < 1.25 or
-            event.unclEnUp_R < 1.25 or
-            event.unclEnDown_R < 1.25
-        )
-    )
-
     analyzerChain.extend([
         PileupWeight(
             dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root"),
@@ -289,7 +277,7 @@ else:
         
     analyzerChain.append(
         EventSkim(selection=lambda event: 
-            len(event.selectedJets_nominal)>=2 and len(event.vetoFwdJets_nominal)==0
+            len(event.selectedJets_nominal)>=2
         )
     )
     
