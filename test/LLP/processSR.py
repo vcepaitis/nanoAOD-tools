@@ -289,7 +289,7 @@ else:
         
     analyzerChain.append(
         EventSkim(selection=lambda event: 
-            len(event.selectedJets_nominal)>=2
+            len(event.selectedJets_nominal)>=2 and len(event.vetoFwdJets_nominal)==0
         )
     )
     
@@ -300,14 +300,6 @@ else:
             outputName = "nominal",
         )
     )
-    
-    #loose skim on ht/met (limits might use ht>1000 or (ht>200 && met>200))
-    analyzerChain.append(
-        EventSkim(selection=lambda event: 
-            event.nominal_met>150.
-        )
-    )
-    
     
     analyzerChain.append(
         TaggerEvaluation(
