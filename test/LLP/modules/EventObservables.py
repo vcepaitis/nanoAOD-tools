@@ -36,6 +36,7 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_mht","F")
         self.out.branch(self.outputName+"_mass","F")
         self.out.branch(self.outputName+"_met","F")
+        self.out.branch(self.outputName+"_R","F")
         self.out.branch(self.outputName+"_minPhi","F")
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -59,6 +60,8 @@ class EventObservables(Module):
         setattr(event,self.outputName+"_mass",jetVectorSum.M())
         self.out.fillBranch(self.outputName+"_met",met.pt)
         setattr(event,self.outputName+"_met",met.pt)
+        self.out.fillBranch(self.outputName+"_R",jetVectorSum.Pt()/met.pt)
+        setattr(event,self.outputName+"_R",jetVectorSum.Pt()/met.pt)
         
         minPhi = math.pi
         for jet in jets:

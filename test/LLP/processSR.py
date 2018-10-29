@@ -134,19 +134,30 @@ if not args.isData:
             )
         )
     
-    #loose skim on ht/met (limits might use ht>1000 or (ht>200 && met>200))
     analyzerChain.append(
         EventSkim(selection=lambda event: 
-            event.nominal_met>150. or \
-            event.jerUp_met>150. or \
-            event.jerDown_met>150. or \
-            event.jesTotalUp_met>150. or \
-            event.jesTotalDown_met>150. or \
-            event.unclEnUp_met>150. or \
-            event.unclEnDown_met>150.
+            event.nominal_mht>300. or \
+            event.jerUp_mht>300. or \
+            event.jerDown_mht>300. or \
+            event.jesTotalUp_mht>300. or \
+            event.jesTotalDown_mht>300. or \
+            event.unclEnUp_mht>300. or \
+            event.unclEnDown_mht>300.
         )
     )
-    
+     
+    analyzerChain.append(
+        EventSkim(selection=lambda event: 
+            event.nominal_R < 1.25 or \
+            event.jerUp_R < 1.25 or \
+            event.jerDown_R < 1.25 or
+            event.jesTotalUp_R < 1.25 or
+            event.jesTotalDown_R < 1.25 or
+            event.unclEnUp_R < 1.25 or
+            event.unclEnDown_R < 1.25
+        )
+    )
+
     analyzerChain.extend([
         PileupWeight(
             dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root"),
