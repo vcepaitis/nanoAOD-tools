@@ -82,11 +82,11 @@ class exampleProducer(Module):
     def setup(self,tree):
         #load dynamically from file
         featureDict = import_module('feature_dict').featureDict
-        self.tfEvalParametric = self.setupTFEval(tree,"weight2016_75.pb",featureDict)
+        self.tfEvalParametric = self.setupTFEval(tree,"../weight2016_75.pb",featureDict)
         
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
         self.nJets = 0
-        self.logctau = [0]*len(self.nLLPParam.keys())
+        self.logctau = numpy.zeros(len(self.nLLPParam.keys()))
         genFeatureGroup.addFeature(ROOT.TFEval.PyAccessor(lambda: self.nJets, lambda jetIndex,batchIndex: self.logctau[batchIndex]))
         self.tfEvalParametric.addFeatureGroup(genFeatureGroup)
         
@@ -115,7 +115,7 @@ class exampleProducer(Module):
                 
                 result = self.tfEvalParametric.evaluate(
                     len(self.nLLPParam.keys()),
-                    numpy.array([ijet]*len(self.nLLPParam.keys()),numpy.int64)
+                    numpy.zeros(len(self.nLLPParam.keys()),numpy.int64)*ijet
                 )
                 
                 for ictau,ctau_value in enumerate(self.nLLPParam.keys()):

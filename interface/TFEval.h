@@ -81,14 +81,14 @@ class TFEval
                 }
         };
         
-        static BranchAccessorTmpl<int> createAccessor(TTreeReaderArray<int>* branch)
+        static BranchAccessorTmpl<int>* createAccessor(TTreeReaderArray<int>* branch)
         {
-            return BranchAccessorTmpl<int>(branch);
+            return new BranchAccessorTmpl<int>(branch);
         };
         
-        static BranchAccessorTmpl<float> createAccessor(TTreeReaderArray<float>* branch)
+        static BranchAccessorTmpl<float>* createAccessor(TTreeReaderArray<float>* branch)
         {
-            return BranchAccessorTmpl<float>(branch);
+            return new BranchAccessorTmpl<float>(branch);
         };
         
         class PyAccessor:
