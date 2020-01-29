@@ -55,8 +55,9 @@ class TaggerEvaluation(Module):
         print "--- Model: ",modelFile," ---"
         for groupName,featureCfg in featureDict.iteritems():
             if featureCfg.has_key("max"):
-                print "building group ... %s, shape=[%i,%i], length=%s"%(groupName,featureCfg["max"],len(featureCfg["branches"]),featureCfg["length"])
-                lengthBranch = ROOT.TFEval.createAccessor(tree.arrayReader(featureCfg["length"]))
+                print "building group ... %s, shape=[%i,%i]"%(groupName,featureCfg["max"],len(featureCfg["branches"]))
+                print featureCfg["length"]
+                lengthBranch = ROOT.TFEval.BranchAccessor(tree.arrayReader(featureCfg["length"]))
                 featureGroup = ROOT.TFEval.ArrayFeatureGroup(
                     groupName,
                     len(featureCfg["branches"]),
@@ -65,7 +66,7 @@ class TaggerEvaluation(Module):
                 )
                 for branchName in featureCfg["branches"]:
                     print branchName
-                    featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
+                    featureGroup.addFeature(ROOT.TFEval.BranchAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
             else:
                 print "building group ... %s, shape=[%i]"%(groupName,len(featureCfg["branches"]))
@@ -75,7 +76,7 @@ class TaggerEvaluation(Module):
                 )
                 for branchName in featureCfg["branches"]:
                     print branchName
-                    featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
+                    featureGroup.addFeature(ROOT.TFEval.BranchAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
                 
         return tfEval
@@ -127,6 +128,7 @@ class TaggerEvaluation(Module):
             return True
             
         evaluationIndices = numpy.array(evaluationIndices,numpy.int64)
+            
         result = self.tfEvalParametric.evaluate(
             evaluationIndices.shape[0],
             evaluationIndices

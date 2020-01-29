@@ -57,8 +57,8 @@ class JetTruthFlags(Module):
             
         jets = self.inputCollection(event)
         jetOrigin = Collection(event,"jetorigin")
-        jetNSV = Collection(event,"svlength")
-        jetSV = Collection(event,"sv")
+        #jetNSV = Collection(event,"svlength")
+        #jetSV = Collection(event,"sv")
         jetGlobal = Collection(event,"global")
         
         flavors = {}
@@ -78,6 +78,7 @@ class JetTruthFlags(Module):
                     for k in sorted(self.flags.keys()):
                         setattr(jet,k,False)
                     continue
+                '''
                 else:
                     nsv[ijet] = int(round(jetNSV[jet._index].length))
                     offset = 0
@@ -94,6 +95,7 @@ class JetTruthFlags(Module):
                                 break
                         flavors[k][ijet]=flavorFlag
                         setattr(jet,k,flavorFlag>0.5)
+                '''
         '''
         self.out.fillBranch(self.outputName+"_nsv",nsv)
         self.out.fillBranch(self.outputName+"_svxysig",svxysig)

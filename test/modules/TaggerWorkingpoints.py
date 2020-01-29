@@ -72,9 +72,11 @@ class TaggerWorkingpoints(Module):
                 for m in self.multiplicities:
                     self.out.branch(self.outputName+"_"+getCtauLabel(ctau)+"_"+label+"_min"+str(m),"F")
             if not self.globalOptions["isData"]:
+                '''
                 for label in ["LLP"]:
                     self.out.branch(self.outputName+"_"+getCtauLabel(ctau)+"_n"+label+"True","I")
                     self.out.branch(self.outputName+"_"+getCtauLabel(ctau)+"_n"+label+"TrueTaggedLLP","I")
+                '''
                     
                 for m in self.multiplicities:
                     self.out.branch(self.outputName+"_"+getCtauLabel(ctau)+"_"+label+"_min"+str(m),"F")
@@ -96,6 +98,7 @@ class TaggerWorkingpoints(Module):
                 for label in self.predictionLabels:
                     predictionsPerCtauAndClass[ctau][label].append(predictions[ctau][label])
 
+        '''
         if not self.globalOptions["isData"]:
             for ctau in self.logctauValues:
                 nTrue = {}
@@ -114,6 +117,7 @@ class TaggerWorkingpoints(Module):
                             if predictions[ctau]['LLP']>self.thresholds[ctau]:
                                 nTrueTaggedLLP[label]+=1
                 #print ctau,nTrue,nTrueTagged
+        '''
                 
         for ctau in self.logctauValues:
             for label in self.predictionLabels:
@@ -125,10 +129,12 @@ class TaggerWorkingpoints(Module):
                     else:
                         self.out.fillBranch(self.outputName+"_"+getCtauLabel(ctau)+"_"+label+"_min"+str(m),0)
 
+            '''
             if not self.globalOptions["isData"]:
                  for label in ["LLP"]:
                     self.out.fillBranch(self.outputName+"_"+getCtauLabel(ctau)+"_n"+label+"True",nTrue[label])
                     self.out.fillBranch(self.outputName+"_"+getCtauLabel(ctau)+"_n"+label+"TrueTaggedLLP",nTrueTaggedLLP[label])
+            '''
                         
                     
         return True

@@ -29,8 +29,8 @@ class TFEval
         class Accessor
         {
             public:
-                virtual float value(int64_t jetIndex, int64_t batchIndex=0) const = 0; 
-                virtual int64_t size() const = 0; 
+                virtual float value(int64_t jetIndex, int64_t batchIndex=0) const = 0;
+                virtual int64_t size() const = 0;
                 virtual ~Accessor()
                 {
                 }
@@ -98,7 +98,7 @@ class TFEval
                 PyObject* _lengthFct;
                 PyObject* _valueFct;
             public:
-                PyAccessor(PyObject* lengthFct, PyObject* valueFct):  
+                PyAccessor(PyObject* lengthFct, PyObject* valueFct):
                     _lengthFct(lengthFct),
                     _valueFct(valueFct)
                 {
@@ -109,9 +109,9 @@ class TFEval
                 virtual float value(int64_t jetIndex, int64_t batchIndex) const
                 {
                     PyObject* args = PyTuple_Pack(2,PyInt_FromLong(jetIndex),PyInt_FromLong(batchIndex));
-                    if (not _valueFct) throw std::runtime_error("Value function is NULL"); 
+                    if (not _valueFct) throw std::runtime_error("Value function is NULL");
                     PyObject* result = PyObject_CallObject(_valueFct,args);
-                    if (not result) throw std::runtime_error("Failed to call value function"); 
+                    if (not result) throw std::runtime_error("Failed to call value function");
                     float value = PyFloat_AsDouble(result);
                     if (value==-1.f and  PyErr_Occurred()!=NULL)
                     {
@@ -126,7 +126,7 @@ class TFEval
                 {
                     if (not _lengthFct) throw std::runtime_error("Size function is NULL");
                     PyObject* result = PyObject_CallObject(_lengthFct,NULL);
-                    if (not result) throw std::runtime_error("Failed to call size function"); 
+                    if (not result) throw std::runtime_error("Failed to call size function");
                     int64_t value = PyInt_AsLong(result);
                     if (value==-1 and  PyErr_Occurred()!=NULL)
                     {
@@ -156,7 +156,7 @@ class TFEval
                 }
                 
                 inline const std::string name() const
-                {   
+                {
                     return _name;
                 }
                 
@@ -164,7 +164,7 @@ class TFEval
                 
                 virtual void addFeature(Accessor* accessor) = 0;//TTreeReaderArray<float>* branch) = 0;
                 
-                virtual tensorflow::Tensor createTensor(int64_t batchSize=1) const = 0; 
+                virtual tensorflow::Tensor createTensor(int64_t batchSize=1) const = 0;
                 
                 virtual void fillTensor(tensorflow::Tensor& tensor, int64_t jetIndex, int64_t batchIndex=0) const = 0;
                 
@@ -313,7 +313,7 @@ class TFEval
                 }
                 
                 static Result fill(
-                    std::vector<std::string> names, 
+                    std::vector<std::string> names,
                     std::vector<tensorflow::Tensor>& tensorList
                 )
                 {
@@ -399,8 +399,8 @@ class TFEval
             
             // load it
             status = ReadBinaryProto(
-                tensorflow::Env::Default(), 
-                std::string(filePath), 
+                tensorflow::Env::Default(),
+                std::string(filePath),
                 &_graphDef
             );
             tensorflow::graph::SetDefaultDevice("/cpu:0", &_graphDef);
@@ -530,5 +530,4 @@ class TFEval
 };
 
 #endif
-
 

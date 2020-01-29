@@ -48,7 +48,7 @@ globalOptions = {
 muonSelection = [
     MuonSelection(
         outputName="tightMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi'],
         storeWeights=True,
         muonMinPt = 25.,
         muonMaxDxy = 0.002,
@@ -60,10 +60,9 @@ muonSelection = [
     MuonSelection(
         inputCollection = lambda event: event.tightMuons_unselected,
         outputName="looseMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi'],
         storeWeights=False,
         muonMinPt = 5.,
-        muonMinDxy = 0.02,
         muonID = MuonSelection.LOOSE,
         muonIso = MuonSelection.NONE,
         globalOptions=globalOptions
@@ -75,9 +74,9 @@ muonSelection = [
         storeWeights=False,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.IsoMuTrigger_flag==1, outputName="WeightIsoMu24"),
-    EventSkim(selection=lambda event: event.ntightMuons>0, outputName="WeightPromptMuon"),
-    EventSkim(selection=lambda event: event.nlooseMuons>0, outputName="WeightDisplacedMuon"),
+    EventSkim(selection=lambda event: event.IsoMuTrigger_flag==1),
+    EventSkim(selection=lambda event: event.ntightMuons>0),
+    EventSkim(selection=lambda event: event.nlooseMuons>0)
 ]
 
 analyzerChain = []
@@ -86,10 +85,10 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        outputName="selJets",
-        jetMinPt = 15.,
+        outputName="selectedJets",
+        jetMinPt = 20.,
         jetMaxEta = 2.4,
-        storeKinematics=['pt','eta', 'phi'],
+        storeKinematics=['pt','eta', 'phi', 'mass', 'nMuons', 'nElectrons', 'muonSubtrFactor'],
     )
 )
 
@@ -99,88 +98,109 @@ storeVariables = [
 ]
 
 
-analyzerChain.append(
-    EventInfo(
-        storeVariables=storeVariables
-    )
-)
+analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
-analyzerChain.append(
-    EventSkim(selection=lambda event: len(event.selJets)>0,outputName="WeightJet"
-        )
-)
+analyzerChain.append(EventSkim(selection=lambda event: len(event.selectedJets)>0))
 
 
 analyzerChain.append(
     InvariantSystem(
-        inputCollection = lambda event: [event.looseMuons[0] if len(event.looseMuons) > 0 else None, event.tightMuons[0] if len(event.tightMuons) > 0 else None],
+        inputCollection = lambda event: [event.looseMuons[0], event.tightMuons[0]],
         outputName = "dimuon"
     )
 )
 
 analyzerChain.append(
     LepJetFinder(
-        jetCollection = lambda event: event.selJets,
+        jetCollection = lambda event: event.selectedJets,
         leptonCollection = lambda event: event.looseMuons,
     )
 )
  
 analyzerChain.append(
-    EventSkim(selection=lambda event: event.lepJet_deltaR<0.4,
-        outputName="Weight_lepJet"
-        )
+    InvariantSystem(
+        inputCollection = lambda event: [event.tightMuons[0], event.lepJet[0]],
+        outputName = "lepjet_muon"
+    )
 )
 
 
+'''
 analyzerChain.append(
     EventSkim(selection=lambda event: 
         event.dimuon_mass > 20 and event.dimuon_mass < 85,
-        outputName = "Weight_diMuonMass"
     )
 )
   
 analyzerChain.append(
     EventSkim(selection=lambda event: 
         event.dimuon_deltaR > 1 and event.dimuon_deltaR < 5,
-        outputName = "Weight_diMuon_DeltaR"
     )
 )
 
 
+if args.inputFiles[0].find("Heavy")>=0:
+    storeVariables = [
+        [lambda tree: tree.branch("llp","F"),lambda tree,event: tree.fillBranch("llp",Collection(event,"llpinfo").llp_mass)],
+        [lambda tree: tree.branch("llp","F"),lambda tree,event: tree.fillBranch("llp",Collection(event,"llpinfo").llp_pt)],
+    ]
+  
+    analyzerChain.append(EventInfo(storeVariables=storeVariables))
+   
 '''
+
+
 analyzerChain.append(
     TaggerEvaluation(
-        modelPath="PhysicsTools/NanoAODTools/data/nn/da.pb",
+        modelPath="PhysicsTools/NanoAODTools/data/nn/HNL.pb",
         inputCollections=[
+            lambda event: event.selectedJets,
             lambda event: event.lepJet
         ],
-        taggerName="llpdnnx",
-        logctauValues = range(0,5)
+        taggerName="llpdnnx_da",
     )
 )
 
-analyzerChain.append(
-    JetTruthFlags(inputCollection= lambda event: event.lepJet
-    )
-)
 
 analyzerChain.append(
     JetTaggerResult(
         inputCollection = lambda event: event.lepJet,
-        taggerName = "llpdnnx",
+        taggerName = "llpdnnx_da",
+        logctauValues = range(-1, 3),
+        outputName = "lepJet",
         predictionLabels = ["LLP"],
-        logctauValues = range(0,5)
     )
 )
 
-'''
+
+analyzerChain.append(
+    TaggerWorkingpoints(
+        inputCollection = lambda event: event.selectedJets,
+        taggerName = "llpdnnx_da",
+        logctauValues = range(-1, 3),
+        predictionLabels = ["LLP"],
+        multiplicities = [0]
+    )
+)
+
+analyzerChain.append(
+    JetTruthFlags(inputCollection= lambda event: event.selectedJets,
+        outputName="selectedJets"
+    )
+)
+
+analyzerChain.append(
+    JetTruthFlags(inputCollection= lambda event: event.lepJet,
+        outputName="lepJet"
+    )
+)
+
+
 p=PostProcessor(
     args.output[0],
     [args.inputFiles],
-    cut="",
-    branchsel=None,
-    maxEvents=-1,
     modules=analyzerChain,
+    maxEvents=-1,
     friend=True
 )
 p.run()
