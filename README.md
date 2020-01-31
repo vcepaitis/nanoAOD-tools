@@ -7,16 +7,16 @@ Tools for working with NanoAOD (requiring only python + root, not CMSSW) for the
 
 Using recent CMSSW release which is shipped with all the required software (especially tensorflow C++ API v1.6).
 ```
-cmsrel CMSSW_10_2_15
-cd CMSSW_10_2_15/src
+cmsrel CMSSW_10_2_18
+cd CMSSW_10_2_18/src
 cmsenv
 git clone -b HNL https://github.com/LLPDNNX/nanoAOD-tools.git PhysicsTools/NanoAODTools
 scram b
 ```
 
-Run the analysis using NANOX+XTagger files
+Example use: make ntuples for making performance studies (e.g. ROC curves)
 ```
-python PhysicsTools/NanoAODTools/processors/HNL.py
+python PhysicsTools/NanoAODTools/processors/XTaggerPerformance.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/LLP/NANOX_200124/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/200124_012623/0000/nano_3.root --year 2016 .
 ```
 
 The basic syntax of the command is the following:
