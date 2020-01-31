@@ -17,12 +17,13 @@ class JetSelection(Module):
          inputCollection = lambda event: Collection(event, "Jet"),
          leptonCollection = lambda event: [],
          outputName = "selecteJets",
-         jetMinPt = 0.,
+         jetMinPt = 15.,
+         jetMaxPt = 100.,
          jetMaxEta = 2.4,
          dRCleaning = 0.4,
          minNconstituents = 3,
-         genJetMinPt = 0.,
-         minRatio = 0.,
+         genJetMinPt = 5.,
+         minRatio = 0.5,
          flagDA = False,
          addSize = True,
          storeKinematics=['pt','eta'],
@@ -34,6 +35,7 @@ class JetSelection(Module):
         self.leptonCollection = leptonCollection
         self.outputName = outputName
         self.jetMinPt = jetMinPt
+        self.jetMaxPt = jetMaxPt
         self.jetMaxEta = jetMaxEta
         self.dRCleaning = dRCleaning
         self.minNconstituents = minNconstituents
@@ -81,7 +83,7 @@ class JetSelection(Module):
         failedId = 0
         
         for jet in jets:
-            if jet.pt>self.jetMinPt and math.fabs(jet.eta)<self.jetMaxEta and (jet.jetId>self.jetId) and (jet.nConstituents>self.minNconstituents):
+            if jet.pt>self.jetMinPt and jet.pt<self.jetMaxPt and math.fabs(jet.eta)<self.jetMaxEta and (jet.jetId>self.jetId) and (jet.nConstituents>self.minNconstituents):
                 leptons = self.leptonCollection(event)
                 if self.dRCleaning>0. and leptons!=None and len(leptons)>0:
                     mindr = min(map(lambda lepton: deltaR(lepton,jet),leptons))
@@ -96,7 +98,7 @@ class JetSelection(Module):
                 flagsDA[jet._index]=1.
             if not self.globalOptions["isData"]:
                 if jet.genJetIdx == -1:
-                    unselectedJets.append(jet)
+                    selectedJets.append(jet)
                     continue
                 elif jet.genJetIdx >= len(genJets):
                     unselectedJets.append(jet)

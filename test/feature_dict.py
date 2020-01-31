@@ -1,3 +1,5 @@
+
+
 featureDict = {
     "globalvars": {
         "branches": [
@@ -126,7 +128,7 @@ featureDict = {
             'sv_chi2':lambda x: tf.log(tf.nn.relu(x)+1e-6),
         },
         "max":4,
-        "length": "length_sv"
+        "length":"length_sv",
     },
     
     "muon" : {

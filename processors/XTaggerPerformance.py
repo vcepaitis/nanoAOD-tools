@@ -10,7 +10,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from modules import *
+from PhysicsTools.NanoAODTools.modules import *
 
 import argparse
 
@@ -54,10 +54,11 @@ analyzerChain.append(
 )
 
 analyzerChain.append(
-        JetTruthFlags(
-            inputCollection = lambda event: event.selectedJets,            
-            outputName = "selectedJets"
-    )
+    JetTruthFlags(
+        inputCollection = lambda event: event.selectedJets,
+        outputName = "selectedJets",
+        latentVariables = ["llp_mass", "llp_pt", "displacement", "displacement_xy", "displacement_z", "decay_angle", "betagamma"]
+    )   
 )
     
 analyzerChain.append(
@@ -69,6 +70,7 @@ analyzerChain.append(
 analyzerChain.append(
     TaggerEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
+        logctauValues = [1.74],
         #modelPath="PhysicsTools/NanoAODTools/data/nn/da.pb",
         inputCollections=[
             lambda event: event.selectedJets,
@@ -77,15 +79,15 @@ analyzerChain.append(
     )
 )
 
-'''
+
 analyzerChain.append(
     JetTaggerResult(
         inputCollection = lambda event: event.selectedJets,
-        taggerName = "llpdnnx_da",
-        predictionLabels = ["LLP"],
+        taggerName = "llpdnnx",
+        logctauValues = [1.74],
+        predictionLabels = ["LLP_Q", "LLP_QMU"],
     )
 )
-'''
 
  
 
