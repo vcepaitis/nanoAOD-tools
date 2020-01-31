@@ -1,48 +1,23 @@
 # nanoAOD-tools
-Tools for working with NanoAOD (requiring only python + root, not CMSSW)
+Tools for working with NanoAOD (requiring only python + root, not CMSSW) for the HNL hadronic analysis
 
-![build tests](https://travis-ci.org/LLPDNNX/nanoAOD-tools.svg?branch=llp-analysis)
+![build tests](https://travis-ci.org/LLPDNNX/nanoAOD-tools.svg?branch=HNL)
 
-## Checkout instructions: LLP-specific
+## Checkout instructions: HNL-specific
 
 Using recent CMSSW release which is shipped with all the required software (especially tensorflow C++ API v1.6).
 ```
 cmsrel CMSSW_10_2_15
 cd CMSSW_10_2_15/src
 cmsenv
-git clone -b llp-analysis https://github.com/LLPDNNX/nanoAOD-tools.git PhysicsTools/NanoAODTools
+git clone -b HNL https://github.com/LLPDNNX/nanoAOD-tools.git PhysicsTools/NanoAODTools
 scram b
 ```
 
-Run the analysis using NANOX+XTagger files (work in progress)
+Run the analysis using NANOX+XTagger files
 ```
-python PhysicsTools/NanoAODTools/test/LLP/processNANOX.py
+python PhysicsTools/NanoAODTools/processors/HNL.py
 ```
-
-## Checkout instructions: standalone
-
-You need to setup python 2.7 and a recent ROOT version first.
-
-    git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git NanoAODTools
-    cd NanoAODTools
-    bash standalone/env_standalone.sh build
-    source standalone/env_standalone.sh
-
-Repeat only the last command at the beginning of every session.
-
-Please never commit neither the build directory, nor the empty init.py files created by the script.
-
-## Checkout instructions: CMSSW
-
-    cd $CMSSW_BASE/src
-    git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
-    cd PhysicsTools/NanoAODTools
-    cmsenv
-    scram b
-
-## General instructions to run the post-processing step
-
-The script to run the post-processing step is `scripts/nano_postproc.py`.
 
 The basic syntax of the command is the following:
 

@@ -81,10 +81,7 @@ class TaggerEvaluation(Module):
         return tfEval
         
     def setup(self,tree):
-        #load dynamically from file
-        print "loading feature dict..."
-        featureDict = import_module('feature_dict').featureDict
-        print "imported featurel dict..."
+        from PhysicsTools.NanoAODTools import featureDict
         self.tfEvalParametric = self.setupTFEval(tree,self.modelPath,featureDict)
         print "setup model successfully..."
         
