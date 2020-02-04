@@ -15,7 +15,8 @@ class EventObservables(Module):
     def __init__(
         self,
         jetCollection = lambda event: Collection(event, "Jet"),
-        leptonCollection = None,
+        #leptonCollection = None,
+        leptonCollection = lambda event: Collection(event, "Muon"),
         metInput = lambda event: Object(event, "MET"),
         outputName = "centralJets",
         globalOptions={"isData":False}
@@ -73,10 +74,13 @@ class EventObservables(Module):
             met_px_lc = met.pt*math.sin(met.phi)
             met_py_lc = met.pt*math.cos(met.phi)
             
-            for lepton in self.leptonCollection(event):
-                met_px_lc+=lepton.p4().Px()
-                met_py_lc+=lepton.p4().Py()
-                
+            '''  for lepton in self.leptonCollection(event):
+            met_px_lc+=lepton.p4().Px()
+            met_py_lc+=lepton.p4().Py()
+            '''       
+	    lepton = self.leptonCollection(event)
+            met_px_lc+=lepton.p4().Px()
+            met_py_lc+=lepton.p4().Py()
             met_lc = math.sqrt(met_px_lc**2+met_py_lc**2)
             
             self.out.fillBranch(self.outputName+"_met_lc",met_lc)

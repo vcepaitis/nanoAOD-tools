@@ -2,18 +2,17 @@ import os
 import sys
 import math
 import json
-import ROOT
+import argparse
 import random
+import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from importlib import import_module
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
+from PhysicsTools.NanoAODTools.modules import *
 
-from modules import *
-
-
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--isData', dest='isData', action='store_true',default=False)
@@ -85,10 +84,6 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        outputName="selectedJets",
-        jetMinPt = 20.,
-        jetMaxEta = 2.4,
-        storeKinematics=['pt','eta', 'phi', 'mass', 'nMuons', 'nElectrons', 'muonSubtrFactor'],
     )
 )
 
@@ -123,6 +118,14 @@ analyzerChain.append(
         outputName = "lepjet_muon"
     )
 )
+analyzerChain.append(
+    EventObservables(
+       jetCollection = lambda event: event.selectedJets,
+       leptonCollection = lambda event: event.tightMuons[0] 
+    )
+
+
+)
 
 
 '''
@@ -137,27 +140,16 @@ analyzerChain.append(
         event.dimuon_deltaR > 1 and event.dimuon_deltaR < 5,
     )
 )
-
-
-if args.inputFiles[0].find("Heavy")>=0:
-    storeVariables = [
-        [lambda tree: tree.branch("llp","F"),lambda tree,event: tree.fillBranch("llp",Collection(event,"llpinfo").llp_mass)],
-        [lambda tree: tree.branch("llp","F"),lambda tree,event: tree.fillBranch("llp",Collection(event,"llpinfo").llp_pt)],
-    ]
-  
-    analyzerChain.append(EventInfo(storeVariables=storeVariables))
    
 '''
-
-
 analyzerChain.append(
     TaggerEvaluation(
-        modelPath="PhysicsTools/NanoAODTools/data/nn/HNL.pb",
+        modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
+        logctauValues = [1.74],
         inputCollections=[
-            lambda event: event.selectedJets,
             lambda event: event.lepJet
         ],
-        taggerName="llpdnnx_da",
+        taggerName="llpdnnx",
     )
 )
 
@@ -165,23 +157,13 @@ analyzerChain.append(
 analyzerChain.append(
     JetTaggerResult(
         inputCollection = lambda event: event.lepJet,
-        taggerName = "llpdnnx_da",
-        logctauValues = range(-1, 3),
+        taggerName = "llpdnnx",
         outputName = "lepJet",
-        predictionLabels = ["LLP"],
+        logctauValues = [1.74],
+        predictionLabels = ["LLP_Q", "LLP_QMU"],
     )
 )
 
-
-analyzerChain.append(
-    TaggerWorkingpoints(
-        inputCollection = lambda event: event.selectedJets,
-        taggerName = "llpdnnx_da",
-        logctauValues = range(-1, 3),
-        predictionLabels = ["LLP"],
-        multiplicities = [0]
-    )
-)
 
 analyzerChain.append(
     JetTruthFlags(inputCollection= lambda event: event.selectedJets,
