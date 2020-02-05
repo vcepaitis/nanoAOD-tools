@@ -14,21 +14,38 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--isData', dest='isData', action='store_true',default=False)
-parser.add_argument('--year', dest='year', action='store',type=int, default=2016)
-parser.add_argument('--input', dest='inputFiles', action='append',default=[])
-parser.add_argument('output', nargs=1)
+#parser = argparse.ArgumentParser()
+#parser.add_argument('--isData', dest='isData', action='store_true',default=False)
+#parser.add_argument('--year', dest='year', action='store',type=int, default=2016)
+#parser.add_argument('--input', dest='inputFiles', action='append',default=[])
+#parser.add_argument('output', nargs=1)
 
-args = parser.parse_args()
+#args = parser.parse_args()
+#print "isData:",args.isData
+#print "year:",args.year
+#print "inputs:",len(args.inputFiles)
 
-print "isData:",args.isData
-print "year:",args.year
-print "inputs:",len(args.inputFiles)
-for inputFile in args.inputFiles:
-    rootFile = ROOT.TFile.Open(inputFile)
+isData = False
+year = 2016
+input_filename = sys.argv[1]
+year  = sys.argv[2]
+isData = sys.argv[3]
+os.environ["X509_USER_PROXY"] = sys.argv[4]
+print os.environ["X509_USER_PROXY"]
+
+#output 
+
+
+#for inputFile in args.inputFiles:
+print "The name of the file is ", input_filename
+
+input_file = open(input_filename, 'r')
+for File in input_file:
+    print "file name is : ", File  , "\n"
+    rootFile = ROOT.TFile.Open(File)
     if not rootFile:
-        print "CRITICAL - file '"+inputFile+"' not found!"
+	print "yes same issue  ", rootFile
+        #print "CRITICAL - file '"+str(input_file)+"' not found!"
         sys.exit(1)
     tree = rootFile.Get("Events")
     if not tree:
@@ -36,7 +53,7 @@ for inputFile in args.inputFiles:
         sys.exit(1)
     print " - ",inputFile,", events=",tree.GetEntries()
     
-print "output directory:",args.output[0]
+#print "output directory:",args.output[0]
 
 globalOptions = {
     "isData":args.isData,
@@ -118,6 +135,13 @@ analyzerChain.append(
         outputName = "lepjet_muon"
     )
 )
+
+analyzerChain.append( 
+    MetFilter(
+       outputName ="MET_filter"
+   )
+)
+
 analyzerChain.append(
     EventObservables(
        jetCollection = lambda event: event.selectedJets,
@@ -179,8 +203,8 @@ analyzerChain.append(
 
 
 p=PostProcessor(
-    args.output[0],
-    [args.inputFiles],
+ #   args.output[0],
+#    [args.inputFiles],
     modules=analyzerChain,
     maxEvents=-1,
     friend=True
