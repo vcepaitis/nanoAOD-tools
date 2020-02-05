@@ -50,8 +50,6 @@ muonSelection = [
         storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi'],
         storeWeights=True,
         muonMinPt = 25.,
-        muonMaxDxy = 0.002,
-        muonMaxDz = 0.01,
         muonID = MuonSelection.TIGHT,
         muonIso = MuonSelection.TIGHT,
         globalOptions=globalOptions
@@ -74,8 +72,8 @@ muonSelection = [
         globalOptions=globalOptions
     ),
     EventSkim(selection=lambda event: event.IsoMuTrigger_flag==1),
-    EventSkim(selection=lambda event: event.ntightMuons>0),
-    EventSkim(selection=lambda event: event.nlooseMuons>0)
+    EventSkim(selection=lambda event: event.ntightMuons==1),
+    EventSkim(selection=lambda event: event.nlooseMuons==1)
 ]
 
 analyzerChain = []
@@ -87,13 +85,6 @@ analyzerChain.append(
     )
 )
 
-
-storeVariables = [
-    [lambda tree: tree.branch("genweight","F"),lambda tree,event: tree.fillBranch("genweight",event.Generator_weight)],
-]
-
-
-analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
 analyzerChain.append(EventSkim(selection=lambda event: len(event.selectedJets)>0))
 
@@ -109,13 +100,6 @@ analyzerChain.append(
     LepJetFinder(
         jetCollection = lambda event: event.selectedJets,
         leptonCollection = lambda event: event.looseMuons,
-    )
-)
- 
-analyzerChain.append(
-    InvariantSystem(
-        inputCollection = lambda event: [event.tightMuons[0], event.lepJet[0]],
-        outputName = "lepjet_muon"
     )
 )
 
@@ -137,9 +121,10 @@ analyzerChain.append(
 analyzerChain.append(
     TaggerEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
-        logctauValues = [1.74],
+        logctauValues = range(-1, 4),
         inputCollections=[
-            lambda event: event.lepJet
+            lambda event: event.lepJet,
+            lambda event: event.selectedJets     
         ],
         taggerName="llpdnnx",
     )
@@ -151,8 +136,7 @@ analyzerChain.append(
         inputCollection = lambda event: event.lepJet,
         taggerName = "llpdnnx",
         outputName = "lepJet",
-        logctauValues = [1.74],
-        predictionLabels = ["LLP_Q", "LLP_QMU"],
+        logctauValues = range(-1, 4),
     )
 )
 
@@ -169,6 +153,28 @@ analyzerChain.append(
     )
 )
 
+analyzerChain.append(
+    TaggerWorkingpoints(
+        inputCollection = lambda event: event.selectedJets,
+    )
+)
+
+analyzerChain.append(
+    XGBEvaluation(
+        modelPath="PhysicsTools/NanoAODTools/data/nn/bdt.dat",
+    )
+)
+
+storeVariables = [
+    [lambda tree: tree.branch("genweight","F"),lambda tree,event: tree.fillBranch("genweight",event.Generator_weight)],
+    [lambda tree: tree.branch("MET_pt", "F"), lambda tree,event: tree.fillBranch("MET_pt", event.MET_pt)],
+    [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
+    [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
+    [lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
+]
+
+
+analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
 p=PostProcessor(
     args.output[0],

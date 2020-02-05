@@ -28,3 +28,4 @@ from PDFWeights import PDFWeights
 from WNLOWeights import WNLOWeights
 from JetFeatures import JetFeatures
 from LepJetFinder import LepJetFinder
+from XGBEvaluation import XGBEvaluation
