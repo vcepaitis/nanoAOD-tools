@@ -102,20 +102,14 @@ analyzerChain.append(
         leptonCollection = lambda event: event.looseMuons,
     )
 )
-analyzerChain.append( 
-     MetFilter(
-       outputName ="MET_filter"
+
+
+'''
+analyzerChain.append(
+    EventSkim(selection=lambda event: 
+        event.dimuon_mass > 20 and event.dimuon_mass < 85,
     )
 )
-
-analyzerChain.append(
-     EventObservables(
-       jetCollection = lambda event: event.selectedJets,
-       leptonCollection = lambda event: event.tightMuons[0] 
-     )
-) 
-
-
   
 analyzerChain.append(
     EventSkim(selection=lambda event: 
@@ -123,10 +117,11 @@ analyzerChain.append(
     )
 )
    
+'''
 analyzerChain.append(
     TaggerEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
-        logctauValues = [1.74],
+        logctauValues = range(-1, 4),
         inputCollections=[
             lambda event: event.lepJet,
             lambda event: event.selectedJets     
@@ -141,8 +136,7 @@ analyzerChain.append(
         inputCollection = lambda event: event.lepJet,
         taggerName = "llpdnnx",
         outputName = "lepJet",
-        logctauValues = [1.74],
-	predictionLabels = ["LLP_Q", "LLP_QMU"],
+        logctauValues = range(-1, 4),
     )
 )
 
@@ -165,9 +159,18 @@ analyzerChain.append(
     )
 )
 
+analyzerChain.append(
+    XGBEvaluation(
+        modelPath="PhysicsTools/NanoAODTools/data/nn/bdt.model",
+    )
+)
 
 storeVariables = [
     [lambda tree: tree.branch("genweight","F"),lambda tree,event: tree.fillBranch("genweight",event.Generator_weight)],
+    [lambda tree: tree.branch("MET_pt", "F"), lambda tree,event: tree.fillBranch("MET_pt", event.MET_pt)],
+    [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
+    [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
+    [lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
 ]
 
 

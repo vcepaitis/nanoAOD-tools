@@ -39,11 +39,16 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_mht","F")
         self.out.branch(self.outputName+"_mheta","F")
         self.out.branch(self.outputName+"_mass","F")
-        self.out.branch(self.outputName+"_met","F")
+        self.out.branch(self.outputName+"_met_pt","F")
+        self.out.branch(self.outputName+"_met_significance","F")
+        self.out.branch(self.outputName+"_met_covXX","F")
+        self.out.branch(self.outputName+"_met_covYY","F")
+        self.out.branch(self.outputName+"_met_covXY","F")
         self.out.branch(self.outputName+"_minPhi","F")
         
         if self.leptonCollection!=None:
             self.out.branch(self.outputName+"_met_lc","F")
+            self.out.branch(self.outputName+"_met_l_mT","F")
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -66,18 +71,22 @@ class EventObservables(Module):
         setattr(event,self.outputName+"_mheta",vectorSum.Eta())
         self.out.fillBranch(self.outputName+"_mass",vectorSum.M())
         setattr(event,self.outputName+"_mass",vectorSum.M())
-        self.out.fillBranch(self.outputName+"_met",met.pt)
-        setattr(event,self.outputName+"_met",met.pt)
-        
+        self.out.fillBranch(self.outputName+"_met_pt",met.pt)
+        setattr(event,self.outputName+"_met_pt",met.pt)
+        self.out.fillBranch(self.outputName+"_met_covXX",met.covXX)
+        setattr(event,self.outputName+"_met_covXX",met.covXX)
+        self.out.fillBranch(self.outputName+"_met_covYY",met.covYY)
+        setattr(event,self.outputName+"_met_covYY",met.covYY)
+        self.out.fillBranch(self.outputName+"_met_covXY",met.covXY)
+        setattr(event,self.outputName+"_met_covXY",met.covXY)
+
+        self.out.fillBranch(self.outputName+"_met_significance",met.significance)
+        setattr(event,self.outputName+"_met_significance",met.significance)
         
         if self.leptonCollection!=None:
             met_px_lc = met.pt*math.sin(met.phi)
             met_py_lc = met.pt*math.cos(met.phi)
             
-            '''  for lepton in self.leptonCollection(event):
-            met_px_lc+=lepton.p4().Px()
-            met_py_lc+=lepton.p4().Py()
-            '''       
 	    lepton = self.leptonCollection(event)
             met_px_lc+=lepton.p4().Px()
             met_py_lc+=lepton.p4().Py()
@@ -85,6 +94,12 @@ class EventObservables(Module):
             
             self.out.fillBranch(self.outputName+"_met_lc",met_lc)
             setattr(event,self.outputName+"_met_lc",met_lc)
+	    #print lepton.pt 
+	    #print  math.sqrt(2.*lepton.pt*met.pt (1. - math.cos(lepton.phi - met.phi)))
+	    met_l_mT = math.sqrt(2.*lepton.pt*met.pt*(1. - math.cos(lepton.phi - met.phi)))
+	    
+            self.out.fillBranch(self.outputName+"_met_l_mT",met_l_mT)
+            setattr(event,self.outputName+"_met_l_mT",met_l_mT)
         
         minPhi = math.pi
         for obj in objs:
