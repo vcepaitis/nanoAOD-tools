@@ -46,10 +46,6 @@ analyzerChain = []
 
 analyzerChain.append(
     JetSelection(
-        outputName="selectedJets",
-        storeKinematics=['pt','eta'],
-        genJetMinPt = 5.,
-        minRatio=0.5
     )
 )
 

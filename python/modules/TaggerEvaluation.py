@@ -20,8 +20,8 @@ class TaggerEvaluation(Module):
         modelPath,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
-        predictionLabels = ["B","C","UDS","G","PU","LLP_QMU","LLP_Q"], #this is how the output array from TF is interpreted
-        logctauValues = range(-2, 4),
+        predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
+        logctauValues = range(-1, 4),
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions

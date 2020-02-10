@@ -17,8 +17,8 @@ class JetTaggerResult(Module):
         inputCollection = lambda event: Collection(event, "Jet"),
         taggerName = "llpdnnx",
         outputName = "selectedJets",
-        predictionLabels = ["B","C","UDS","G","PU","LLP_QMU","LLP_Q"], #this is how the output array from TF is interpreted
-        logctauValues = range(-3,5),
+        predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
+        logctauValues = range(-1,4),
         globalOptions={"isData":False}
     ):
         self.globalOptions = globalOptions
