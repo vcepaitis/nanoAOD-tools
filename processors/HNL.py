@@ -47,17 +47,17 @@ globalOptions = {
 muonSelection = [
     MuonSelection(
         outputName="tightMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
         storeWeights=True,
         muonMinPt = 25.,
         muonID = MuonSelection.TIGHT,
-        muonIso = MuonSelection.TIGHT,
+        muonIso = MuonSelection.NONE,
         globalOptions=globalOptions
     ),
     MuonSelection(
         inputCollection = lambda event: event.tightMuons_unselected,
         outputName="looseMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
         storeWeights=False,
         muonMinPt = 5.,
         muonID = MuonSelection.LOOSE,
@@ -103,21 +103,6 @@ analyzerChain.append(
     )
 )
 
-
-'''
-analyzerChain.append(
-    EventSkim(selection=lambda event: 
-        event.dimuon_mass > 20 and event.dimuon_mass < 85,
-    )
-)
-  
-analyzerChain.append(
-    EventSkim(selection=lambda event: 
-        event.dimuon_deltaR > 1 and event.dimuon_deltaR < 5,
-    )
-)
-   
-'''
 analyzerChain.append(
     TaggerEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
