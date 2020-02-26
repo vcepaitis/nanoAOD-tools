@@ -184,7 +184,8 @@ storeVariables = [
     [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
     [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
     #[lambda tree: tree.branch("muon_numberOfpixelLayersWithMeasurement", "F", lenVar="nmuon"), lambda tree,event: tree.fillBranch("muon_numberOfpixelLayersWithMeasurement", event.muon_numberOfpixelLayersWithMeasurement)],
-    [lambda tree: tree.branch("muon_numberOfpixelLayersWithMeasurement", "F", lenVar="nmuon"), lambda tree,event: tree.fillBranch("muon_numberOfpixelLayersWithMeasurement", map(lambda muon: getattr(muon,"numberOfpixelLayersWithMeasurement"), lambda event: Collection(event, "muon")) )] ,
+    #[lambda tree: tree.branch("nmuon", "F"), lambda tree,event: tree.fillBranch("nmuon", event.nmuon)],
+    #[lambda tree: tree.branch("muon_numberOfpixelLayersWithMeasurement", "muon_numberOfpixelLayersWithMeasurement[nmuon]/F", lenVar="nmuon"), lambda tree,event: tree.fillBranch("muon_numberOfpixelLayersWithMeasurement",[event.muon_numberOfpixelLayersWithMeasurement for muon in Collection(event,"muon")])] ,
     [lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
 ]
 

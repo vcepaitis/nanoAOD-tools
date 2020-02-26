@@ -49,6 +49,7 @@ class EventObservables(Module):
         if self.leptonCollection!=None:
             self.out.branch(self.outputName+"_met_lc","F")
             self.out.branch(self.outputName+"_met_l_mT","F")
+            self.out.branch(self.outputName+"_mhtmuon","F")
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -62,7 +63,8 @@ class EventObservables(Module):
         for obj in objs:
             vectorSum+=obj.p4()
             scalarPtSum+=obj.pt
-            
+        
+	print "vectorSum.Pt() ", vectorSum.Pt();    
         self.out.fillBranch(self.outputName+"_ht",scalarPtSum)
         setattr(event,self.outputName+"_ht",scalarPtSum)
         self.out.fillBranch(self.outputName+"_mht",vectorSum.Pt())
@@ -91,15 +93,16 @@ class EventObservables(Module):
             met_px_lc+=lepton.p4().Px()
             met_py_lc+=lepton.p4().Py()
             met_lc = math.sqrt(met_px_lc**2+met_py_lc**2)
-            
             self.out.fillBranch(self.outputName+"_met_lc",met_lc)
             setattr(event,self.outputName+"_met_lc",met_lc)
-	    #print lepton.pt 
-	    #print  math.sqrt(2.*lepton.pt*met.pt (1. - math.cos(lepton.phi - met.phi)))
+
 	    met_l_mT = math.sqrt(2.*lepton.pt*met.pt*(1. - math.cos(lepton.phi - met.phi)))
 	    
             self.out.fillBranch(self.outputName+"_met_l_mT",met_l_mT)
             setattr(event,self.outputName+"_met_l_mT",met_l_mT)
+
+     	    self.out.fillBranch(self.outputName+"_mhtmuon",vectorSum.Pt() + lepton.p4().Pt())
+            setattr(event,self.outputName+"_mhtmuon",vectorSum.Pt() + lepton.p4().Pt())
         
         minPhi = math.pi
         for obj in objs:
