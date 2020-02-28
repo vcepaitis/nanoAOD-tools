@@ -51,11 +51,23 @@ muonSelection = [
         storeWeights=True,
         muonMinPt = 25.,
         muonID = MuonSelection.TIGHT,
-        muonIso = MuonSelection.NONE,
+        muonIso = MuonSelection.TIGHT,
         globalOptions=globalOptions
     ),
+
+    EventSkim(selection=lambda event: event.ntightMuons>=1),
+        MuonSelection(
+        outputName="tightMuonsLooseIso",
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
+        storeWeights=False,
+        muonMinPt = 25.,
+        muonID = MuonSelection.TIGHT,
+        muonIso = MuonSelection.LOOSE,
+        globalOptions=globalOptions
+    ),
+
     MuonSelection(
-        inputCollection = lambda event: event.tightMuons_unselected,
+        inputCollection = lambda event: [muon for muon in Collection(event, "Muon") if abs(muon.pt-event.tightMuons[0].pt)>1e-4],
         outputName="looseMuons",
         storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
         storeWeights=False,
@@ -72,8 +84,7 @@ muonSelection = [
         globalOptions=globalOptions
     ),
     EventSkim(selection=lambda event: event.IsoMuTrigger_flag==1),
-    EventSkim(selection=lambda event: event.ntightMuons==1),
-    EventSkim(selection=lambda event: event.nlooseMuons==1)
+    EventSkim(selection=lambda event: event.nlooseMuons>=1)
 ]
 
 analyzerChain = []
@@ -82,6 +93,8 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
+        leptonCollection=lambda event: event.tightMuons,
+        globalOptions={"isData":True}
     )
 )
 
@@ -109,7 +122,6 @@ analyzerChain.append(
         logctauValues = range(-1, 4),
         inputCollections=[
             lambda event: event.lepJet,
-            lambda event: event.selectedJets     
         ],
         taggerName="llpdnnx",
     )
@@ -125,24 +137,28 @@ analyzerChain.append(
     )
 )
 
-
+'''
 analyzerChain.append(
     JetTruthFlags(inputCollection= lambda event: event.selectedJets,
         outputName="selectedJets"
     )
 )
+'''
 
 analyzerChain.append(
     JetTruthFlags(inputCollection= lambda event: event.lepJet,
+        globalOptions=globalOptions,
         outputName="lepJet"
     )
 )
 
+'''
 analyzerChain.append(
     TaggerWorkingpoints(
         inputCollection = lambda event: event.selectedJets,
     )
 )
+'''
 
 analyzerChain.append( 
      MetFilter(
@@ -156,23 +172,25 @@ analyzerChain.append(
        leptonCollection = lambda event: event.tightMuons[0] 
      )
 )
+
+'''
  
 analyzerChain.append(
     XGBEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/bdt.model",
     )
 )
+'''
 
 storeVariables = [
-    [lambda tree: tree.branch("genweight","F"),lambda tree,event: tree.fillBranch("genweight",event.Generator_weight)],
     [lambda tree: tree.branch("MET_pt", "F"), lambda tree,event: tree.fillBranch("MET_pt", event.MET_pt)],
     [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
     [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
-    #[lambda tree: tree.branch("muon_numberOfpixelLayersWithMeasurement", "F", lenVar="nmuon"), lambda tree,event: tree.fillBranch("muon_numberOfpixelLayersWithMeasurement", event.muon_numberOfpixelLayersWithMeasurement)],
-    #[lambda tree: tree.branch("nmuon", "F"), lambda tree,event: tree.fillBranch("nmuon", event.nmuon)],
-    #[lambda tree: tree.branch("muon_numberOfpixelLayersWithMeasurement", "muon_numberOfpixelLayersWithMeasurement[nmuon]/F", lenVar="nmuon"), lambda tree,event: tree.fillBranch("muon_numberOfpixelLayersWithMeasurement",[event.muon_numberOfpixelLayersWithMeasurement for muon in Collection(event,"muon")])] ,
-    [lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
+    #[lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
 ]
+
+if not globalOptions["isData"]:
+    storeVariables.append([lambda tree: tree.branch("genweight","F"),lambda tree,event: tree.fillBranch("genweight",event.Generator_weight)])
 
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))

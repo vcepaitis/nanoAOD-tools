@@ -92,21 +92,21 @@ def getX(hist, x):
     
     return hist.GetBinContent(xbin), hist.GetBinError(xbin)
     
-def getSFPtEta(hist,pt,eta):
-    ptBin = hist.GetXaxis().FindBin(pt)
-    etaBin = hist.GetYaxis().FindBin(math.fabs(eta))
+def getSFXY(hist,x,y):
+    xBin = hist.GetXaxis().FindBin(x)
+    yBin = hist.GetYaxis().FindBin(y)
     
-    if ptBin==0:
-        ptBin=1
-    if ptBin>hist.GetNbinsX():
-        ptBin=hist.GetNbinsX()
+    if xBin==0:
+        xBin=1
+    if xBin>hist.GetNbinsX():
+        xBin=hist.GetNbinsX()
         
-    if etaBin==0:
-        etaBin = 1
-    if etaBin>hist.GetNbinsY():
-        etaBin=hist.GetNbinsY()
+    if yBin==0:
+        yBin = 1
+    if yBin>hist.GetNbinsY():
+        yBin=hist.GetNbinsY()
         
-    return hist.GetBinContent(ptBin,etaBin),hist.GetBinError(ptBin,etaBin)
+    return hist.GetBinContent(xBin,yBin),hist.GetBinError(xBin,yBin)
     
 def getSFPt(hist,pt):
     ptBin = hist.GetXaxis().FindBin(pt)

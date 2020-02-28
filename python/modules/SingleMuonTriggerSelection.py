@@ -8,7 +8,7 @@ import random
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getHist,combineHist2D,getSFPtEta
+from utils import getHist,combineHist2D,getSFXY
 
 class SingleMuonTriggerSelection(Module):
     def __init__(
@@ -72,7 +72,7 @@ class SingleMuonTriggerSelection(Module):
         
         if (not self.globalOptions["isData"]) and len(muons)>0 and self.storeWeights: 
             #take the leading muon here; note: technically correct would be to match to HLT obj
-            weight_trigger,weight_trigger_err = getSFPtEta(self.triggerSFHist,muons[0].pt,muons[0].eta)
+            weight_trigger,weight_trigger_err = getSFXY(self.triggerSFHist,muons[0].pt,muons[0].eta)
             weight_trigger_nominal*=weight_trigger
             weight_trigger_up*=(weight_trigger+weight_trigger_err)
             weight_trigger_down*=(weight_trigger-weight_trigger_err)

@@ -8,7 +8,7 @@ import random
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getGraph,getHist,combineHist2D,getSFPtEta
+from utils import getGraph,getHist,combineHist2D,getSFXY
 
 class MuonSelection(Module):
     TIGHT = 1
@@ -22,7 +22,7 @@ class MuonSelection(Module):
         outputName = "tightMuons",
         muonID = TIGHT,
         muonIso = TIGHT,
-        muonMinPt = 29.,
+        muonMinPt = 25.,
         muonMaxEta = 2.4,
         muonMaxDxy = 1.e9,
         muonMaxDz = 1.e9,
@@ -96,6 +96,23 @@ class MuonSelection(Module):
                 1.-16226.5/35916.4,
                 16226.5/35916.4
             )
+
+            #loose iso and tight id efficiency
+            isoLooseTightSFBToF = getHist(
+                "PhysicsTools/NanoAODTools/data/muon/2016/RunBCDEF_SF_ISO.root",
+                "NUM_LooseRelIso_DEN_TightIDandIPCut_eta_pt"
+            )
+            isoLooseTightSFGToH = getHist(
+                "PhysicsTools/NanoAODTools/data/muon/2016/RunGH_SF_ISO.root",
+                "NUM_LooseRelIso_DEN_TightIDandIPCut_eta_pt"
+            )
+            self.isoLooseTightSFHist = combineHist2D(
+                isoLooseTightSFBToF,
+                isoLooseTightSFGToH,
+                1.-16226.5/35916.4,
+                16226.5/35916.4
+            )
+            
             
             #loose iso and loose id efficiency
             isoLooseLooseSFBToF = getHist(
@@ -202,7 +219,7 @@ class MuonSelection(Module):
             elif muonID==MuonSelection.LOOSE:
                 self.muonIsoSF = self.isoLooseLooseSFHist
         elif muonIso==MuonSelection.NONE:
-            self.muonIso = lambda muon: muon.pfRelIso04_all<1e9
+            self.muonIso = lambda muon: True
             self.muonIsoSF = self.isoLooseLooseSFHist
             
         else:
@@ -260,17 +277,17 @@ class MuonSelection(Module):
                 selectedMuons.append(muon)
                 if not self.globalOptions["isData"] and self.storeWeights:
                     if self.globalOptions["year"] == 2016:
-                        weight_id,weight_id_err = getSFPtEta(self.muonIdSF,muon.pt,muon.eta)
+                        weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.eta,muon.pt)
                     elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
-                        weight_id,weight_id_err = getSFPtEta(self.muonIdSF,abs(muon.eta),muon.pt)
+                        weight_id,weight_id_err = getSFXY(self.muonIdSF,abs(muon.eta),muon.pt)
                     weight_id_nominal*=weight_id
                     weight_id_up*=(weight_id+weight_id_err)
                     weight_id_down*=(weight_id-weight_id_err)
                     
                     if self.globalOptions["year"] == 2016:
-                        weight_iso,weight_iso_err = getSFPtEta(self.muonIsoSF,muon.pt,muon.eta)
+                        weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,muon.eta,muon.pt)
                     elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
-                        weight_iso,weight_iso_err = getSFPtEta(self.muonIsoSF,abs(muon.eta),muon.pt)
+                        weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,abs(muon.eta),muon.pt)
                     weight_iso_nominal*=weight_iso
                     weight_iso_up*=(weight_iso+weight_iso_err)
                     weight_iso_down*=(weight_iso-weight_iso_err)
