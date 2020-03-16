@@ -21,12 +21,12 @@ class JetSelection(Module):
          jetMaxPt = 100.,
          jetMaxEta = 2.4,
          dRCleaning = 0.4,
-         minNconstituents = 3,
+         minNconstituents = 0,
          genJetMinPt = 0.,
          minRatio = 0.,
          flagDA = False,
          addSize = True,
-         storeKinematics=['pt','eta'],
+         storeKinematics=['pt','eta', 'jetId'],
          globalOptions={"isData":False},
          jetId = -1
          ):

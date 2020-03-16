@@ -13,13 +13,7 @@ class jetRecalib(Module):
 
         self.redoJEC = redoJEC
 
-        if "AK4" in jetType : 
-            self.jetBranchName = "Jet"
-        elif "AK8" in jetType :
-            self.jetBranchName = "FatJet"
-            self.subJetBranchName = "SubJet"
-        else:
-            raise ValueError("ERROR: Invalid jet type = '%s'!" % jetType)
+        self.jetBranchName = "Jet"
         self.rhoBranchName = "fixedGridRhoFastjetAll"
         self.lenVar = "n" + self.jetBranchName        
 
@@ -67,7 +61,6 @@ class jetRecalib(Module):
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
         jets = Collection(event, self.jetBranchName )
-        subJets = Collection(event, self.subJetBranchName )
         met = Object(event, "MET") 
 
         jets_pt_raw = []
@@ -88,6 +81,7 @@ class jetRecalib(Module):
         for jet in jets:            
             #jet pt and mass corrections
             jet_pt=jet.pt
+            print "before", jet.pt
             jet_mass=jet.mass
 
             #redo JECs if desired
@@ -97,8 +91,10 @@ class jetRecalib(Module):
             else:
                 jet_rawpt = -1.0 * jet_pt #If factor not present factor will be saved as -1
                 jet_rawmass = -1.0 * jet_mass #If factor not present factor will be saved as -1
+
             if self.redoJEC :
                 (jet_pt, jet_mass) = self.jetReCalibrator.correct(jet,rho)
+                print "after", jet_pt
             jets_pt_raw.append(jet_rawpt)
             jets_mass_raw.append(jet_rawmass)
             jets_corr_JEC.append(jet_pt/jet_rawpt)
@@ -119,10 +115,7 @@ class jetRecalib(Module):
                 met_px_nom = met_px_nom - (jet_pt_nom - jet.pt)*jet_cosPhi
                 met_py_nom = met_py_nom - (jet_pt_nom - jet.pt)*jet_sinPhi
 
-            # Do PUPPI SD mass correction
-            if jet.subJetIdx1 >= 0 and jet.subJetIdx2 >= 0 :
-                groomedP4 = subJets[ jet.subJetIdx1 ].p4() + subJets[ jet.subJetIdx2].p4() #check subjet jecs
-            else : groomedP4 = None
+            groomedP4 = None
 
             jets_msoftdrop_raw.append(0.0) if groomedP4 == None else jets_msoftdrop_raw.append(groomedP4.M())
 

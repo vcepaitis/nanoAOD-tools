@@ -12,6 +12,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib import *
 
 
 parser = argparse.ArgumentParser()
@@ -43,34 +45,31 @@ globalOptions = {
     "year":args.year
 }
 
+isMC = not args.isData
+
+#jmeCorrections = createJMECorrector(isMC=isMC, dataYear=args.year, runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
+#jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2018", runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
+jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
+
 
 muonSelection = [
+    EventSkim(selection=lambda event: event.nTrigObj>0),
     MuonSelection(
         outputName="tightMuons",
         storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
         storeWeights=True,
         muonMinPt = 25.,
+        triggerMatch = True,
         muonID = MuonSelection.TIGHT,
         muonIso = MuonSelection.TIGHT,
         globalOptions=globalOptions
     ),
-
-    EventSkim(selection=lambda event: event.ntightMuons>=1),
-        MuonSelection(
-        outputName="tightMuonsLooseIso",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
-        storeWeights=False,
-        muonMinPt = 25.,
-        muonID = MuonSelection.TIGHT,
-        muonIso = MuonSelection.LOOSE,
-        globalOptions=globalOptions
-    ),
-
+    EventSkim(selection=lambda event: event.ntightMuons==1),
     MuonSelection(
         inputCollection = lambda event: [muon for muon in Collection(event, "Muon") if abs(muon.pt-event.tightMuons[0].pt)>1e-4],
         outputName="looseMuons",
         storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
-        storeWeights=False,
+        storeWeights=True,
         muonMinPt = 5.,
         muonID = MuonSelection.LOOSE,
         muonIso = MuonSelection.NONE,
@@ -84,9 +83,10 @@ muonSelection = [
         globalOptions=globalOptions
     ),
     EventSkim(selection=lambda event: event.IsoMuTrigger_flag==1),
-    EventSkim(selection=lambda event: event.nlooseMuons>=1)
+    EventSkim(selection=lambda event: event.nlooseMuons>0)
 ]
 
+#analyzerChain = [jetRecalibration]
 analyzerChain = []
 
 analyzerChain.extend(muonSelection)
@@ -94,7 +94,8 @@ analyzerChain.extend(muonSelection)
 analyzerChain.append(
     JetSelection(
         leptonCollection=lambda event: event.tightMuons,
-        globalOptions={"isData":True}
+
+        globalOptions=globalOptions
     )
 )
 
@@ -161,9 +162,7 @@ analyzerChain.append(
 '''
 
 analyzerChain.append( 
-     MetFilter(
-       outputName ="MET_filter"
-    )
+     MetFilter()
 )
 
 analyzerChain.append(

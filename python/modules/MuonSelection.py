@@ -8,7 +8,7 @@ import random
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getGraph,getHist,combineHist2D,getSFXY
+from utils import getGraph,getHist,combineHist2D,getSFXY,deltaR
 
 class MuonSelection(Module):
     TIGHT = 1
@@ -20,14 +20,11 @@ class MuonSelection(Module):
         self,
         inputCollection = lambda event: Collection(event, "Muon"),
         outputName = "tightMuons",
+        triggerMatch = False,
         muonID = TIGHT,
         muonIso = TIGHT,
         muonMinPt = 25.,
         muonMaxEta = 2.4,
-        muonMaxDxy = 1.e9,
-        muonMaxDz = 1.e9,
-        muonMinDxy = 0.,
-        muonMinDz = 0.,
         storeKinematics=['pt','eta'],
         storeWeights=False,
         globalOptions={"isData":False, "year":2016}
@@ -38,12 +35,11 @@ class MuonSelection(Module):
         self.outputName = outputName
         self.muonMinPt = muonMinPt
         self.muonMaxEta = muonMaxEta
-        self.muonMaxDxy = muonMaxDxy
-        self.muonMaxDz = muonMaxDz
-        self.muonMinDxy = muonMinDxy
-        self.muonMinDz = muonMinDz
         self.storeKinematics = storeKinematics
         self.storeWeights = storeWeights
+        self.triggerMatch = triggerMatch
+        if triggerMatch:
+            self.trigger_object = lambda event: Collection(event, "TrigObj")[0]
 
         if self.globalOptions["year"] == 2016:
             
@@ -212,6 +208,7 @@ class MuonSelection(Module):
             sys.exit(1)
         elif muonIso==MuonSelection.LOOSE:
             self.muonIso = lambda muon: muon.pfRelIso04_all<0.25
+
             if muonID==MuonSelection.TIGHT:
                 self.muonIsoSF = self.isoLooseTightSFHist
             elif muonID==MuonSelection.MEDIUM:
@@ -220,12 +217,26 @@ class MuonSelection(Module):
                 self.muonIsoSF = self.isoLooseLooseSFHist
         elif muonIso==MuonSelection.NONE:
             self.muonIso = lambda muon: True
-            self.muonIsoSF = self.isoLooseLooseSFHist
+            if muonID==MuonSelection.TIGHT:
+                self.muonIsoSF = self.isoLooseTightSFHist
+            elif muonID==MuonSelection.MEDIUM:
+                self.muonIsoSF = self.isoLooseMediumSFHist
+            elif muonID==MuonSelection.LOOSE:
+                self.muonIsoSF = self.isoLooseLooseSFHist
             
         else:
             print "Error - undefined muon id flag"
             sys.exit(1)
-            
+
+
+    def triggerMatched(self, muon, trigger_object):
+        if self.triggerMatch:
+            if deltaR(trigger_object, muon) < 0.1:
+                return True
+            else:
+                return False
+        else:
+            return True    
  
     def beginJob(self):
         pass
@@ -255,7 +266,12 @@ class MuonSelection(Module):
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
         muons = self.inputCollection(event)
-        
+
+        if self.triggerMatch:
+            trigger_object = self.trigger_object(event)
+        else:
+            trigger_object = None
+
         selectedMuons = []
         unselectedMuons = []
         
@@ -273,7 +289,9 @@ class MuonSelection(Module):
                 muonMinPt = self.muonMinPt[min(len(selectedMuons),len(self.muonMinPt)-1)]
             else:
                 muonMinPt = self.muonMinPt
-            if muon.pt>muonMinPt and math.fabs(muon.eta)<self.muonMaxEta and self.muonId(muon) and self.muonIso(muon) and math.fabs(muon.dxy) > self.muonMinDxy and math.fabs(muon.dz) > self.muonMinDz and math.fabs(muon.dxy) < self.muonMaxDxy and math.fabs(muon.dz) < self.muonMaxDz:
+
+
+            if muon.pt>muonMinPt and math.fabs(muon.eta)<self.muonMaxEta and self.muonId(muon) and self.muonIso(muon) and self.triggerMatched(muon, trigger_object):
                 selectedMuons.append(muon)
                 if not self.globalOptions["isData"] and self.storeWeights:
                     if self.globalOptions["year"] == 2016:
