@@ -186,6 +186,12 @@ storeVariables = [
     [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
     [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
     #[lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
+    [lambda tree: tree.branch("Jet_btagCMVA", "F"), lambda tree,event: tree.fillBranch("Jet_btagCMVA", event.Jet_btagCMVA)],
+    [lambda tree: tree.branch("Jet_btagDeepB", "F"), lambda tree,event: tree.fillBranch("Jet_btagDeepB", event.Jet_btagDeepB)],
+    [lambda tree: tree.branch("Jet_btagDeepFlavB", "F"), lambda tree,event: tree.fillBranch("Jet_btagDeepFlavB", event.Jet_btagDeepFlavB)],
+    [lambda tree: tree.branch("nsv", "F"), lambda tree,event: tree.fillBranch("nsv", event.nsv)],
+    [lambda tree: tree.branch("sv_mass", "F"), lambda tree,event: tree.fillBranch("sv_mass", event.sv_mass)],
+    [lambda tree: tree.branch("sv_ntracks", "F"), lambda tree,event: tree.fillBranch("sv_ntracks", event.sv_ntracks)],
 ]
 
 if not globalOptions["isData"]:
