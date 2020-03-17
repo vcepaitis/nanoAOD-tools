@@ -39,7 +39,7 @@ class MuonSelection(Module):
         self.storeWeights = storeWeights
         self.triggerMatch = triggerMatch
         if triggerMatch:
-            self.trigger_object = lambda event: Collection(event, "TrigObj")[0]
+            self.trigger_object = lambda event: Collection(event, "TrigObj")
 
         if self.globalOptions["year"] == 2016:
             
@@ -231,7 +231,10 @@ class MuonSelection(Module):
 
     def triggerMatched(self, muon, trigger_object):
         if self.triggerMatch:
-            if deltaR(trigger_object, muon) < 0.1:
+            trig_deltaR = math.pi
+            for trig_obj in trigger_object:
+                trig_deltaR = min(trig_deltaR, deltaR(trig_obj, muon))
+            if trig_deltaR < 0.1:
                 return True
             else:
                 return False

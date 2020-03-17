@@ -31,9 +31,10 @@ class PhysicsObject(object):
 def deltaPhi(phi1,phi2):
     res = phi1-phi2
     while (res>math.pi):
-        res -= 2*math.pi
+        res -=2*math.pi
     while (res<=-math.pi):
-        res += 2*math.pi
+        res +=2*math.pi
+
     return res
     
 def deltaR(j1,j2):

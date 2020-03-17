@@ -5,6 +5,8 @@ import json
 import ROOT
 import random
 
+from utils import deltaPhi, deltaR
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
@@ -13,7 +15,7 @@ class InvariantSystem(Module):
         self,
         inputCollection = lambda event: Collection(event, "Muon"),
         outputName = "sys",
-        globalOptions={"isData":False}
+        globalOptions={"isData": False}
     ):
         self.inputCollection = inputCollection
         self.outputName = outputName
@@ -30,6 +32,8 @@ class InvariantSystem(Module):
         self.out.branch(self.outputName+"_pt","F")
         self.out.branch(self.outputName+"_eta","F")
         self.out.branch(self.outputName+"_deltaR","F")
+        self.out.branch(self.outputName+"_deltaPhi","F")
+
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -40,10 +44,12 @@ class InvariantSystem(Module):
         for obj in collection:
             vec+=obj.p4()
 
-        self.out.fillBranch(self.outputName+"_deltaR", collection[0].p4().DeltaR(collection[1].p4()))
         self.out.fillBranch(self.outputName+"_mass",vec.M())
         self.out.fillBranch(self.outputName+"_pt",vec.Pt())
         self.out.fillBranch(self.outputName+"_eta",vec.Eta())
+        self.out.fillBranch(self.outputName+"_deltaR", deltaR(collection[0], collection[1]))
+        self.out.fillBranch(self.outputName+"_deltaPhi", deltaPhi(collection[0].phi, collection[1].phi))
+
         
         return True
         
