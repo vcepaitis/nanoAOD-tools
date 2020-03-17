@@ -26,7 +26,7 @@ class JetSelection(Module):
          minRatio = 0.,
          flagDA = False,
          addSize = True,
-         storeKinematics=['pt','eta', 'jetId'],
+         storeKinematics=['pt','eta', 'jetId','btagCMVA','btagDeepB','btagDeepFlavB'],
          globalOptions={"isData":False},
          jetId = -1
          ):
