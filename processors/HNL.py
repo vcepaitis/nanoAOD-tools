@@ -117,6 +117,12 @@ analyzerChain.append(
     )
 )
 
+
+analyzerChain.append(
+
+        JetFeatures()
+)
+
 analyzerChain.append(
     TaggerEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
@@ -191,8 +197,7 @@ storeVariables = [
 if not globalOptions["isData"]:
     storeVariables.append([lambda tree: tree.branch("genweight","F"),lambda tree,event: tree.fillBranch("genweight",event.Generator_weight)])
 
-T_ptT_ptT_ptT_ptT_ptT_ptT_ple
-t
+
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
 p=PostProcessor(
