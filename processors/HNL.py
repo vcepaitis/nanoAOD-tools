@@ -7,7 +7,6 @@ import random
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from importlib import import_module
-
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -50,7 +49,18 @@ isMC = not args.isData
 #jmeCorrections = createJMECorrector(isMC=isMC, dataYear=args.year, runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
 #jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2018", runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
 #jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
+'''if isMC : 
 
+    if args.year == 2016 :
+       era = "2016" 
+       globalTag  = '102X_mcRun2_asymptotic_v7' 
+    elif args.year == 2017 : 
+       era = "2017" 
+       globalTag = '102X_mc2017_realistic_v7'
+    elif args.year == 2018 : 
+       era = "2018"
+       globalTag = '102X_upgrade2018_realistic_v20'
+'''
 
 muonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj>0),
@@ -116,10 +126,6 @@ analyzerChain.append(
 )
 
 
-analyzerChain.append(
-
-        JetFeatures()
-)
 
 analyzerChain.append(
     TaggerEvaluation(
@@ -151,12 +157,30 @@ analyzerChain.append(
 )
 
 
+'''
+if isMC:
+
+    analyzerChain.append(
+        JetMetUncertainties(
+            era,
+            globalTag
+        )
+    )
+    for systName,collection in [
+        ("nominal",lambda event: event.jets_nominal),
+        ("jerUp",lambda event: event.jets_jerUp),
+        ("jerDown",lambda event: event.jets_jerDown),
+        ("jesTotalUp",lambda event: event.jets_jesUp["Total"]),
+        ("jesTotalDown",lambda event: event.jets_jesDown["Total"]),
+    ]:
+'''
 analyzerChain.append( 
-     MetFilter(
-     	globalOptions=globalOptions,
-     	outputName="MET_filter"
+     	MetFilter(
+     		globalOptions=globalOptions,
+     		outputName="MET_filter"
      	)
 )
+
 analyzerChain.append(
      EventObservables(
        jetCollection = lambda event: event.selectedJets,

@@ -17,7 +17,7 @@ class JetSelection(Module):
          inputCollection = lambda event: Collection(event, "Jet"),
          leptonCollection = lambda event: [],
          outputName = "selectedJets",
-         jetMinPt = 15.,
+         jetMinPt = 20.,
          jetMaxPt = 100.,
          jetMaxEta = 2.4,
          dRCleaning = 0.4,
