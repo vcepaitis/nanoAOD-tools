@@ -93,7 +93,7 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        leptonCollection=lambda event: event.tightMuons,
+        leptonCollection=lambda event: [event.tightMuons[0]],
         globalOptions=globalOptions
     )
 )
@@ -116,10 +116,11 @@ analyzerChain.append(
 )
 
 
+'''
 analyzerChain.append(
-
         JetFeatures()
 )
+'''
 
 analyzerChain.append(
     TaggerEvaluation(
