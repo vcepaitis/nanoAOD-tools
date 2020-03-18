@@ -115,6 +115,12 @@ analyzerChain.append(
     )
 )
 
+
+analyzerChain.append(
+
+        JetFeatures()
+)
+
 analyzerChain.append(
     TaggerEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
