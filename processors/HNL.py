@@ -49,7 +49,7 @@ isMC = not args.isData
 
 #jmeCorrections = createJMECorrector(isMC=isMC, dataYear=args.year, runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
 #jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2018", runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
-jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
+#jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
 
 
 muonSelection = [
@@ -64,7 +64,7 @@ muonSelection = [
         muonIso = MuonSelection.TIGHT,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuons==1),
+    EventSkim(selection=lambda event: event.ntightMuons>0),
     MuonSelection(
         inputCollection = lambda event: [muon for muon in Collection(event, "Muon") if abs(muon.pt-event.tightMuons[0].pt)>1e-4],
         outputName="looseMuons",
@@ -94,11 +94,9 @@ analyzerChain.extend(muonSelection)
 analyzerChain.append(
     JetSelection(
         leptonCollection=lambda event: event.tightMuons,
-
         globalOptions=globalOptions
     )
 )
-
 
 analyzerChain.append(EventSkim(selection=lambda event: len(event.selectedJets)>0))
 
@@ -144,13 +142,6 @@ analyzerChain.append(
     )
 )
 
-'''
-analyzerChain.append(
-    JetTruthFlags(inputCollection= lambda event: event.selectedJets,
-        outputName="selectedJets"
-    )
-)
-'''
 
 analyzerChain.append(
     JetTruthFlags(inputCollection= lambda event: event.lepJet,
@@ -159,25 +150,19 @@ analyzerChain.append(
     )
 )
 
-'''
-analyzerChain.append(
-    TaggerWorkingpoints(
-        inputCollection = lambda event: event.selectedJets,
-    )
-)
-'''
 
 analyzerChain.append( 
-     MetFilter()
+     MetFilter(
+     	globalOptions=globalOptions,
+     	outputName="MET_filter"
+     	)
 )
-
 analyzerChain.append(
      EventObservables(
        jetCollection = lambda event: event.selectedJets,
        leptonCollection = lambda event: event.tightMuons[0] 
      )
 )
-
 '''
  
 analyzerChain.append(
@@ -199,6 +184,15 @@ if not globalOptions["isData"]:
 
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
+
+analyzerChain.append(
+    PileupWeight(
+        mcFile = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/pileup.root",
+        dataFile = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root",
+        outputName ="puweight",
+        globalOptions=globalOptions
+    )
+)
 
 p=PostProcessor(
     args.output[0],
