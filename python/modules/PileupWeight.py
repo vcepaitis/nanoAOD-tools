@@ -12,11 +12,9 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 class PileupWeight(Module):
     def __init__(
         self,
-        mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/pileup.root"),
-        dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root"),
         outputName ="puweight",
         processName=None,
-        globalOptions={"isData":False}
+        globalOptions={"isData":False, year=2016}
     ):
         self.mcFile = mcFile
         self.dataFile = dataFile
@@ -26,6 +24,7 @@ class PileupWeight(Module):
         
     def beginJob(self):
         if not self.globalOptions["isData"]:
+            self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/pileup.root")
             self.mcHistPerProcess = {}
             fMC = ROOT.TFile(self.mcFile)
             if not fMC:
@@ -36,7 +35,15 @@ class PileupWeight(Module):
                 self.mcHistPerProcess[k.GetName()].SetDirectory(0)
             fMC.Close()
             
-            
+            if self.globalOptions["year"] == 2016:
+                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/PU69000.root")
+            elif self.globalOptions["year"] == 2017:
+                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/PU69000.root")
+            elif self.globalOptions["year"] == 2018:
+                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/PU69000.root")
+            else:
+                print "wrong year selected", year
+                sys.exit(1)
             fData = ROOT.TFile(self.dataFile)
             if not fData:
                 print "ERROR: Cannot find pileup file: ",self.dataFile

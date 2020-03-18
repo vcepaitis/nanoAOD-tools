@@ -129,25 +129,25 @@ class MuonSelection(Module):
         elif self.globalOptions["year"] == 2017:
             
             #tight id efficiency
-            idTightSFHist = getHist(
+            self.idTightSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ID.root",
                 "NUM_TightID_DEN_genTracks_pt_abseta"
             )
             
             #loose id efficiency
-            idLooseSFHist = getHist(
+            self.idLooseSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ID.root",
                 "NUM_LooseID_DEN_genTracks_pt_abseta"
             )
             
             #tight iso and tight id efficiency
-            isoTightTightSFHist = getHist(
+            self.isoTightTightSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ISO.root",
                 "NUM_TightRelIso_DEN_TightIDandIPCut_pt_abseta"
             )
             
             #loose iso and loose id efficiency
-            isoLooseLooseSFHist = getHist(
+            self.isoLooseLooseSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ISO.root",
                 "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
             )
@@ -155,25 +155,25 @@ class MuonSelection(Module):
         elif self.globalOptions["year"] == 2018:
 
             #tight id efficiency
-            idTightSFHist = getHist(
+            self.idTightSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ID.root",
                 "NUM_TightID_DEN_TrackerMuons_pt_abseta"
             )
             
             #loose id efficiency
-            idLooseSFHist = getHist(
+            self.idLooseSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ID.root",
                 "NUM_LooseID_DEN_TrackerMuons_pt_abseta"
             )
             
             #tight iso and tight id efficiency
-            isoTightTightSFHist = getHist(
+            self.isoTightTightSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ISO.root",
                 "NUM_TightRelIso_DEN_TightIDandIPCut_pt_abseta"
             )
             
             #loose iso and loose id efficiency
-            isoLooseLooseSFHist = getHist(
+            self.isoLooseLooseSFHist = getHist(
                 "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ISO.root",
                 "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
             )
@@ -300,7 +300,7 @@ class MuonSelection(Module):
                     if self.globalOptions["year"] == 2016:
                         weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.eta,muon.pt)
                     elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
-                        weight_id,weight_id_err = getSFXY(self.muonIdSF,abs(muon.eta),muon.pt)
+                        weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.pt, abs(muon.eta))
                     weight_id_nominal*=weight_id
                     weight_id_up*=(weight_id+weight_id_err)
                     weight_id_down*=(weight_id-weight_id_err)
@@ -308,7 +308,7 @@ class MuonSelection(Module):
                     if self.globalOptions["year"] == 2016:
                         weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,muon.eta,muon.pt)
                     elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
-                        weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,abs(muon.eta),muon.pt)
+                        weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,muon.pt, abs(muon.eta))
                     weight_iso_nominal*=weight_iso
                     weight_iso_up*=(weight_iso+weight_iso_err)
                     weight_iso_down*=(weight_iso-weight_iso_err)
