@@ -56,7 +56,7 @@ muonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj>0),
     MuonSelection(
         outputName="tightMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
         storeWeights=True,
         muonMinPt = 25.,
         triggerMatch = True,
@@ -68,7 +68,7 @@ muonSelection = [
     MuonSelection(
         inputCollection = lambda event: [muon for muon in Collection(event, "Muon") if abs(muon.pt-event.tightMuons[0].pt)>1e-4],
         outputName="looseMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
         storeWeights=True,
         muonMinPt = 5.,
         muonID = MuonSelection.LOOSE,
@@ -79,7 +79,7 @@ muonSelection = [
     SingleMuonTriggerSelection(
         inputCollection=lambda event: event["tightMuons"],
         outputName="IsoMuTrigger",
-        storeWeights=False,
+        storeWeights=True,
         globalOptions=globalOptions
     ),
     EventSkim(selection=lambda event: event.IsoMuTrigger_flag==1),
