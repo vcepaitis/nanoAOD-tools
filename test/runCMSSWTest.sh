@@ -14,7 +14,7 @@ function run_test()
     scram b || return 1
      
     echo "--- Test evaluation script ---"
-    python PhysicsTools/NanoAODTools/test/testEval.py --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/RunIISummer16NanoAODv2_MC.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/RunIISummer16NanoAODv2_MC.root . || return 1
 
 }
 
