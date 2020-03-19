@@ -24,10 +24,19 @@ parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
+
 print "isData:",args.isData
-print "year:",args.year
 print "inputs:",len(args.inputFiles)
 for inputFile in args.inputFiles:
+    print "2018" in inputFile
+    if "2016" in inputFile:
+        year = 2016
+    elif "2017" in inputFile:
+        year = 2017
+    elif "2018" in inputFile:
+        year = 2018
+    else:
+        year = args.year
     rootFile = ROOT.TFile.Open(inputFile)
     if not rootFile:
         print "CRITICAL - file '"+inputFile+"' not found!"
@@ -38,11 +47,12 @@ for inputFile in args.inputFiles:
         sys.exit(1)
     print " - ",inputFile,", events=",tree.GetEntries()
     
+print "year:",year
 print "output directory:",args.output[0]
 
 globalOptions = {
     "isData":args.isData,
-    "year":args.year
+    "year":year
 }
 
 isMC = not args.isData
