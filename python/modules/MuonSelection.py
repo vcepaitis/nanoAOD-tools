@@ -27,6 +27,7 @@ class MuonSelection(Module):
         muonMaxEta = 2.4,
         storeKinematics=['pt','eta'],
         storeWeights=False,
+        selectLeadingOnly=False,
         globalOptions={"isData":False, "year":2016}
     ):
         
@@ -37,6 +38,7 @@ class MuonSelection(Module):
         self.muonMaxEta = muonMaxEta
         self.storeKinematics = storeKinematics
         self.storeWeights = storeWeights
+        self.selectLeadingOnly = selectLeadingOnly
         self.triggerMatch = triggerMatch
         if triggerMatch:
             self.trigger_object = lambda event: Collection(event, "TrigObj")
@@ -208,7 +210,6 @@ class MuonSelection(Module):
             sys.exit(1)
         elif muonIso==MuonSelection.LOOSE:
             self.muonIso = lambda muon: muon.pfRelIso04_all<0.25
-
             if muonID==MuonSelection.TIGHT:
                 self.muonIsoSF = self.isoLooseTightSFHist
             elif muonID==MuonSelection.MEDIUM:
@@ -223,7 +224,6 @@ class MuonSelection(Module):
                 self.muonIsoSF = self.isoLooseMediumSFHist
             elif muonID==MuonSelection.LOOSE:
                 self.muonIsoSF = self.isoLooseLooseSFHist
-            
         else:
             print "Error - undefined muon id flag"
             sys.exit(1)
@@ -278,13 +278,13 @@ class MuonSelection(Module):
         selectedMuons = []
         unselectedMuons = []
         
-        weight_id_nominal = 1.0
-        weight_id_up = 1.0
-        weight_id_down = 1.0
+        weight_id_nominal = []
+        weight_id_up = []
+        weight_id_down = []
         
-        weight_iso_nominal = 1.0
-        weight_iso_up = 1.0
-        weight_iso_down = 1.0
+        weight_iso_nominal = []
+        weight_iso_up = []
+        weight_iso_down = []
         
         #https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Tight_Muon
         for muon in muons:
@@ -301,20 +301,52 @@ class MuonSelection(Module):
                         weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.eta,muon.pt)
                     elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
                         weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.pt, abs(muon.eta))
-                    weight_id_nominal*=weight_id
-                    weight_id_up*=(weight_id+weight_id_err)
-                    weight_id_down*=(weight_id-weight_id_err)
+                    weight_id_nominal.append(weight_id)
+                    weight_id_up.append((weight_id+weight_id_err))
+                    weight_id_down.append((weight_id-weight_id_err))
                     
                     if self.globalOptions["year"] == 2016:
                         weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,muon.eta,muon.pt)
                     elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
                         weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,muon.pt, abs(muon.eta))
-                    weight_iso_nominal*=weight_iso
-                    weight_iso_up*=(weight_iso+weight_iso_err)
-                    weight_iso_down*=(weight_iso-weight_iso_err)
+
+                    weight_iso_nominal.append(weight_iso)
+                    weight_iso_up.append((weight_iso+weight_iso_err))
+                    weight_iso_down.append((weight_iso-weight_iso_err))
             else:
                 unselectedMuons.append(muon)
-  
+
+        if len(selectedMuons) > 0:
+            if self.selectLeadingOnly:
+                unselectedMuons.extend(selectedMuons[1:])
+                selectedMuons = [selectedMuons[0]]
+
+                if not self.globalOptions["isData"] and self.storeWeights:
+                    weight_id_nominal = weight_id_nominal[0]
+                    weight_id_up = weight_id_up[0]
+                    weight_id_down = weight_id_down[0]
+
+                    weight_iso_nominal = weight_iso_nominal[0]
+                    weight_iso_up = weight_iso_up[0]
+                    weight_iso_down = weight_iso_down[0]
+            elif not self.globalOptions["isData"] and self.storeWeights:
+                weight_id_nominal = reduce(lambda x, y: x*y, weight_id_nominal)
+                weight_id_up = reduce(lambda x, y: x*y, weight_id_up)
+                weight_id_down = reduce(lambda x, y: x*y, weight_id_down)
+
+                weight_iso_nominal = reduce(lambda x, y: x*y, weight_iso_nominal)
+                weight_iso_up = reduce(lambda x, y: x*y, weight_iso_up)
+                weight_iso_down = reduce(lambda x, y: x*y, weight_iso_down)
+        else:
+                weight_id_nominal = 1
+                weight_id_up = 1
+                weight_id_down = 1
+
+                weight_iso_nominal = 1
+                weight_iso_up = 1
+                weight_iso_down = 1
+
+
         self.out.fillBranch("n"+self.outputName,len(selectedMuons))
         for variable in self.storeKinematics:
             self.out.fillBranch(self.outputName+"_"+variable,map(lambda muon: getattr(muon,variable),selectedMuons))
