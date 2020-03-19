@@ -24,10 +24,19 @@ parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
+
 print "isData:",args.isData
-print "year:",args.year
 print "inputs:",len(args.inputFiles)
 for inputFile in args.inputFiles:
+    print "2018" in inputFile
+    if "2016" in inputFile:
+        year = 2016
+    elif "2017" in inputFile:
+        year = 2017
+    elif "2018" in inputFile:
+        year = 2018
+    else:
+        year = args.year
     rootFile = ROOT.TFile.Open(inputFile)
     if not rootFile:
         print "CRITICAL - file '"+inputFile+"' not found!"
@@ -38,19 +47,17 @@ for inputFile in args.inputFiles:
         sys.exit(1)
     print " - ",inputFile,", events=",tree.GetEntries()
     
+print "year:",year
 print "output directory:",args.output[0]
 
 globalOptions = {
     "isData":args.isData,
-    "year":args.year
+    "year":year
 }
 
 isMC = not args.isData
 
-#jmeCorrections = createJMECorrector(isMC=isMC, dataYear=args.year, runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
-#jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2018", runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
-#jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
-
+minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
 
 muonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj>0),
@@ -58,7 +65,7 @@ muonSelection = [
         outputName="tightMuons",
         storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
         storeWeights=True,
-        muonMinPt = 25.,
+        muonMinPt = minMuonPt[globalOptions["year"]],
         triggerMatch = True,
         muonID = MuonSelection.TIGHT,
         muonIso = MuonSelection.TIGHT,
@@ -177,6 +184,9 @@ storeVariables = [
     [lambda tree: tree.branch("MET_pt", "F"), lambda tree,event: tree.fillBranch("MET_pt", event.MET_pt)],
     [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
     [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
+    [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,event: tree.fillBranch("PV_npvs", event.PV_npvs)],
+    [lambda tree: tree.branch("PV_npvsGood", "I"), lambda tree,event: tree.fillBranch("PV_npvsGood", event.PV_npvsGood)],
+    [lambda tree: tree.branch("fixedGridRhoFastjetAll", "F"), lambda tree,event: tree.fillBranch("fixedGridRhoFastjetAll", event.fixedGridRhoFastjetAll)],
     #[lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
 ]
 
@@ -188,8 +198,6 @@ analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
 analyzerChain.append(
     PileupWeight(
-        mcFile = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/pileup.root",
-        dataFile = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root",
         outputName ="puweight",
         globalOptions=globalOptions
     )
