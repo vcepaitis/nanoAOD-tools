@@ -20,11 +20,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--isData', dest='isData', action='store_true',default=False)
 parser.add_argument('--year', dest='year', action='store',type=int, default=2016)
 parser.add_argument('--input', dest='inputFiles', action='append',default=[])
+parser.add_argument('--testMode', dest='testMode', action='store_true',default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
-
+testMode = args.testMode
 print "isData:",args.isData
 print "inputs:",len(args.inputFiles)
 for inputFile in args.inputFiles:
@@ -202,12 +203,13 @@ if not globalOptions["isData"]:
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
-analyzerChain.append(
-    PileupWeight(
-        outputName ="puweight",
-        globalOptions=globalOptions
+if not testMode:
+    analyzerChain.append(
+        PileupWeight(
+            outputName ="puweight",
+            globalOptions=globalOptions
+        )
     )
-)
 
 p=PostProcessor(
     args.output[0],
