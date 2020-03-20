@@ -1,22 +1,18 @@
 function run_test()
 {
-    touch /var/lib/rpm/* || return 1
-    yum -y install wget rsync yum-plugin-ovl || return 1
-    yum -y install glibc-devel.x86_64 --disablerepo=adobe* || return 1
     cd ~
-    source ~/.bashrc
-    export SCRAM_ARCH=slc6_amd64_gcc630 || return 1
+    source /cvmfs/cms.cern.ch/cmsset_default.sh
+    export SCRAM_ARCH=slc6_amd64_gcc700 || return 1
     scramv1 project CMSSW CMSSW_10_2_18 || return 1
     cd CMSSW_10_2_18/src || return 1
-    eval `scramv1 runtime -sh` || return 1
+    eval `scram runtime -sh` || return 1
+    rsync -r /scripts/* LLPReco  || return 1
+    scram b || return 1
     mkdir -p PhysicsTools/NanoAODTools
     rsync -r --stats /scripts/ PhysicsTools/NanoAODTools/. || return 1
     scram b || return 1
-     
-    echo "--- Test evaluation script ---"
+    echo "--- Test HNL script ---"
     python PhysicsTools/NanoAODTools/processors/HNL.py --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/RunIISummer16NanoAODv2_MC.root . || return 1
-
 }
-
 
 run_test
