@@ -62,20 +62,21 @@ minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
 muonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj>0),
     MuonSelection(
-        outputName="tightMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
+        outputName="tightMuon",
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
         storeWeights=True,
         muonMinPt = minMuonPt[globalOptions["year"]],
         triggerMatch = True,
         muonID = MuonSelection.TIGHT,
         muonIso = MuonSelection.TIGHT,
+        selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuons>0),
+    EventSkim(selection=lambda event: event.ntightMuon==1),
     MuonSelection(
-        inputCollection = lambda event: [muon for muon in Collection(event, "Muon") if abs(muon.pt-event.tightMuons[0].pt)>1e-4],
+        inputCollection = lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'tightId'],
         storeWeights=True,
         muonMinPt = 5.,
         muonID = MuonSelection.LOOSE,
@@ -84,7 +85,7 @@ muonSelection = [
     ),
     
     SingleMuonTriggerSelection(
-        inputCollection=lambda event: event["tightMuons"],
+        inputCollection=lambda event: event.tightMuon,
         outputName="IsoMuTrigger",
         storeWeights=True,
         globalOptions=globalOptions
@@ -100,7 +101,7 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        leptonCollection=lambda event: [event.tightMuons[0]],
+        leptonCollection=lambda event: event.tightMuon,
         globalOptions=globalOptions
     )
 )
@@ -110,7 +111,7 @@ analyzerChain.append(EventSkim(selection=lambda event: len(event.selectedJets)>0
 
 analyzerChain.append(
     InvariantSystem(
-        inputCollection = lambda event: [event.looseMuons[0], event.tightMuons[0]],
+        inputCollection = lambda event: [event.looseMuons[0], event.tightMuon[0]],
         outputName = "dimuon"
     )
 )
@@ -129,9 +130,14 @@ analyzerChain.append(
 )
 '''
 
+modelPath = {2016: "PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
+            2017: "PhysicsTools/NanoAODTools/data/nn/weight2017_68.pb",
+            2018: "PhysicsTools/NanoAODTools/data/nn/weight2018_73.pb"
+            }
+
 analyzerChain.append(
     TaggerEvaluation(
-        modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
+        modelPath=modelPath[year],
         logctauValues = range(-1, 4),
         inputCollections=[
             lambda event: event.lepJet,
@@ -168,7 +174,7 @@ analyzerChain.append(
 analyzerChain.append(
      EventObservables(
        jetCollection = lambda event: event.selectedJets,
-       leptonCollection = lambda event: event.tightMuons[0] 
+       leptonCollection = lambda event: event.tightMuon[0] 
      )
 )
 '''
