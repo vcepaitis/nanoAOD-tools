@@ -11,9 +11,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib import *
-
+#from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
+#from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--isData', dest='isData', action='store_true',default=False)
@@ -47,20 +46,31 @@ globalOptions = {
 isMC = not args.isData
 
 #jmeCorrections = createJMECorrector(isMC=isMC, dataYear=args.year, runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
-#jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2018", runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
+#jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2016", jesUncert="All", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
 #jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
-'''if isMC : 
 
-    if args.year == 2016 :
-       era = "2016" 
-       globalTag  = '102X_mcRun2_asymptotic_v7' 
-    elif args.year == 2017 : 
-       era = "2017" 
-       globalTag = '102X_mc2017_realistic_v7'
-    elif args.year == 2018 : 
-       era = "2018"
-       globalTag = '102X_upgrade2018_realistic_v20'
-'''
+
+
+if isMC : 
+
+	jecTags = {2016 : 'Summer16_07Aug2017_V11_MC',
+ 	           2017 : 'Fall17_17Nov2017_V32_MC',
+         	   2018 : 'Autumn18_V19_MC'
+	}
+
+
+
+	jerTags = {2016 : 'Summer16_25nsV1_MC',
+         	   2017 : 'Fall17_V3_MC',
+            	   2018 : 'Autumn18_V7_MC'
+        }
+if args.isData : 
+
+	jecTags = { 2016 : 'Summer16_07Aug2017All_V11_DATA',
+		    2017 : 'Fall17_17Nov2017_V32_DATA',
+                    2018 : 'Autumn18_V19_DATA'
+        }
+
 
 muonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj>0),
@@ -157,23 +167,17 @@ analyzerChain.append(
 )
 
 
-'''
-if isMC:
 
-    analyzerChain.append(
-        JetMetUncertainties(
-            era,
-            globalTag
-        )
+analyzerChain.append(
+    JetMetUncertainties(
+            era = globalOptions["year"],
+            globalTag=jecTags[globalOptions["year"]],
+	    jerTag = jerTags[globalOptions["year"]],
+	    isData= args.isData 
     )
-    for systName,collection in [
-        ("nominal",lambda event: event.jets_nominal),
-        ("jerUp",lambda event: event.jets_jerUp),
-        ("jerDown",lambda event: event.jets_jerDown),
-        ("jesTotalUp",lambda event: event.jets_jesUp["Total"]),
-        ("jesTotalDown",lambda event: event.jets_jesDown["Total"]),
-    ]:
-'''
+)
+
+#Summer16_07Aug2017_V11_MC 	 JER= Summer16_25nsV1_MC
 analyzerChain.append( 
      	MetFilter(
      		globalOptions=globalOptions,
