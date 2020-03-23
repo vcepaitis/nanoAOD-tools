@@ -13,12 +13,8 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties im
 from utils import PhysicsObject
 
 class JetMetUncertainties(jetmetUncertaintiesProducer):
-    def __init__(
-        self, era, globalTag, jesUncertainties = [ "Total" ], jetType = "AK4PFchs", redoJEC=False, noGroom=False,
-        globalOptions={"isData":False}
-    ):
-        jetmetUncertaintiesProducer.__init__(self, era, globalTag, jesUncertainties = [ "Total" ], jetType = "AK4PFchs", redoJEC=False, noGroom=False)
-        self.globalOptions = globalOptions
+    def __init__(self, era, globalTag, jesUncertainties = [ "Total" ], archive=None, globalTagProd=None, jetType = "AK4PFchs", metBranchName="MET", jerTag="", isData=False, applySmearing=True):
+        jetmetUncertaintiesProducer.__init__(self, era, globalTag, jesUncertainties = [ "Total" ], archive=None, globalTagProd=None, jetType = "AK4PFchs", metBranchName="MET", jerTag="", isData=False, applySmearing=True)
         
     def beginJob(self):
         jetmetUncertaintiesProducer.beginJob(self)
@@ -36,7 +32,7 @@ class JetMetUncertainties(jetmetUncertaintiesProducer):
     def analyze(self, event):
         jets = Collection(event, self.jetBranchName )
         genJets = Collection(event, self.genJetBranchName )
-
+	self.corrMET = True 
 
         jets_pt_nom = []
         jets_pt_jerUp   = []
@@ -82,8 +78,8 @@ class JetMetUncertainties(jetmetUncertaintiesProducer):
             #these are the smear factors => use for energy instead of pT!!!
             ( jet_pt_jerNomVal, jet_pt_jerUpVal, jet_pt_jerDownVal ) = self.jetSmearer.getSmearValsPt(jet, genJet, rho)
 	    
-            if self.redoJEC:
-                jet.pt = self.jetReCalibrator.correct(jet,rho)
+            #if self.redoJEC:
+             #   jet.pt = self.jetReCalibrator.correct(jet,rho)
                 
             jet.pt_jerNominal = jet_pt_jerNomVal *jet.pt
             if jet.pt_jerNominal < 0.0:
@@ -217,9 +213,11 @@ class JetMetUncertainties(jetmetUncertaintiesProducer):
                 if variation==1:
                     systMet.px = met.px_jerUp
                     systMet.py = met.py_jerUp
+		    #print "sys met px var +1  is : ", systMet.px , "  sys met py var + 1 is : ", systMet.py 
                 elif variation==-1:
                     systMet.px = met.px_jerDown
                     systMet.py = met.py_jerDown
+		    #print "sys met px  var -1 is : ", systMet.px , "  sys met py var -1 is : ", systMet.py 
                 else:
                     print "Error - 'jer' variation needs to be either [-1,1]!"
                     sys.exit(1)
