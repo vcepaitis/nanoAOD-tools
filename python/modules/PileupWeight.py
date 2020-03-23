@@ -12,20 +12,29 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 class PileupWeight(Module):
     def __init__(
         self,
-        mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/pileup.root"),
-        dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root"),
         outputName ="puweight",
         processName=None,
-        globalOptions={"isData":False}
+        globalOptions={"isData":False, "year":2016}
     ):
-        self.mcFile = mcFile
-        self.dataFile = dataFile
         self.outputName = outputName
         self.globalOptions = globalOptions
         self.processName = processName
         
     def beginJob(self):
         if not self.globalOptions["isData"]:
+            if self.globalOptions["year"] == 2016:
+                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/data_pileup_2016_69200.root")
+                self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/pileup.root")
+            elif self.globalOptions["year"] == 2017:
+                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_69200.root")
+                self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/pileup.root")
+            elif self.globalOptions["year"] == 2018:
+                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_69200.root")
+                self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/pileup.root")
+            else:
+                print "wrong year selected", year
+                sys.exit(1)
+
             self.mcHistPerProcess = {}
             fMC = ROOT.TFile(self.mcFile)
             if not fMC:
@@ -36,8 +45,9 @@ class PileupWeight(Module):
                 self.mcHistPerProcess[k.GetName()].SetDirectory(0)
             fMC.Close()
             
-            
+
             fData = ROOT.TFile(self.dataFile)
+
             if not fData:
                 print "ERROR: Cannot find pileup file: ",self.dataFile
                 sys.exit(1)

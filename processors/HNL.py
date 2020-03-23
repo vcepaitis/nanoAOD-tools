@@ -22,10 +22,19 @@ parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
+
 print "isData:",args.isData
-print "year:",args.year
 print "inputs:",len(args.inputFiles)
 for inputFile in args.inputFiles:
+    print "2018" in inputFile
+    if "2016" in inputFile:
+        year = 2016
+    elif "2017" in inputFile:
+        year = 2017
+    elif "2018" in inputFile:
+        year = 2018
+    else:
+        year = args.year
     rootFile = ROOT.TFile.Open(inputFile)
     if not rootFile:
         print "CRITICAL - file '"+inputFile+"' not found!"
@@ -36,19 +45,17 @@ for inputFile in args.inputFiles:
         sys.exit(1)
     print " - ",inputFile,", events=",tree.GetEntries()
     
+print "year:",year
 print "output directory:",args.output[0]
 
 globalOptions = {
     "isData":args.isData,
-    "year":args.year
+    "year":year
 }
 
 isMC = not args.isData
 
-#jmeCorrections = createJMECorrector(isMC=isMC, dataYear=args.year, runPeriod="B", jesUncert="Total", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
-#jmeCorrections = createJMECorrector(isMC=isMC, dataYear="2016", jesUncert="All", redojec=True, jetType="AK4PFchs", noGroom=False, metBranchName="MET", applySmearing="True", isFastSim=False)
-#jetRecalibration = jetRecalib(globalTag="Summer16_07Aug2017_V11_MC", archive="Summer16_07Aug2017_V11_MC", jetType="AK4PFchs", redoJEC=True)
-
+minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
 
 
 if isMC : 
@@ -75,20 +82,21 @@ if args.isData :
 muonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj>0),
     MuonSelection(
-        outputName="tightMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
+        outputName="tightMuon",
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all'],
         storeWeights=True,
-        muonMinPt = 25.,
+        muonMinPt = minMuonPt[globalOptions["year"]],
         triggerMatch = True,
         muonID = MuonSelection.TIGHT,
         muonIso = MuonSelection.TIGHT,
+        selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuons>0),
+    EventSkim(selection=lambda event: event.ntightMuon==1),
     MuonSelection(
-        inputCollection = lambda event: [muon for muon in Collection(event, "Muon") if abs(muon.pt-event.tightMuons[0].pt)>1e-4],
+        inputCollection = lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
-        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'looseId', 'tightId'],
+        storeKinematics=['pt','eta', 'dxy', 'dxyErr', 'dz', 'dzErr', 'phi', 'pfRelIso04_all', 'tightId'],
         storeWeights=True,
         muonMinPt = 5.,
         muonID = MuonSelection.LOOSE,
@@ -97,7 +105,7 @@ muonSelection = [
     ),
     
     SingleMuonTriggerSelection(
-        inputCollection=lambda event: event["tightMuons"],
+        inputCollection=lambda event: event.tightMuon,
         outputName="IsoMuTrigger",
         storeWeights=True,
         globalOptions=globalOptions
@@ -113,7 +121,7 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        leptonCollection=lambda event: [event.tightMuons[0]],
+        leptonCollection=lambda event: event.tightMuon,
         globalOptions=globalOptions
     )
 )
@@ -123,7 +131,7 @@ analyzerChain.append(EventSkim(selection=lambda event: len(event.selectedJets)>0
 
 analyzerChain.append(
     InvariantSystem(
-        inputCollection = lambda event: [event.looseMuons[0], event.tightMuons[0]],
+        inputCollection = lambda event: [event.looseMuons[0], event.tightMuon[0]],
         outputName = "dimuon"
     )
 )
@@ -137,9 +145,14 @@ analyzerChain.append(
 
 
 
+modelPath = {2016: "PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
+            2017: "PhysicsTools/NanoAODTools/data/nn/weight2017_68.pb",
+            2018: "PhysicsTools/NanoAODTools/data/nn/weight2018_73.pb"
+            }
+
 analyzerChain.append(
     TaggerEvaluation(
-        modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
+        modelPath=modelPath[year],
         logctauValues = range(-1, 4),
         inputCollections=[
             lambda event: event.lepJet,
@@ -188,7 +201,7 @@ analyzerChain.append(
 analyzerChain.append(
      EventObservables(
        jetCollection = lambda event: event.selectedJets,
-       leptonCollection = lambda event: event.tightMuons[0] 
+       leptonCollection = lambda event: event.tightMuon[0] 
      )
 )
 '''
@@ -204,6 +217,9 @@ storeVariables = [
     [lambda tree: tree.branch("MET_pt", "F"), lambda tree,event: tree.fillBranch("MET_pt", event.MET_pt)],
     [lambda tree: tree.branch("MET_phi", "F"), lambda tree,event: tree.fillBranch("MET_phi", event.MET_phi)],
     [lambda tree: tree.branch("MET_significance", "F"), lambda tree,event: tree.fillBranch("MET_significance", event.MET_significance)],
+    [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,event: tree.fillBranch("PV_npvs", event.PV_npvs)],
+    [lambda tree: tree.branch("PV_npvsGood", "I"), lambda tree,event: tree.fillBranch("PV_npvsGood", event.PV_npvsGood)],
+    [lambda tree: tree.branch("fixedGridRhoFastjetAll", "F"), lambda tree,event: tree.fillBranch("fixedGridRhoFastjetAll", event.fixedGridRhoFastjetAll)],
     #[lambda tree: tree.branch("bdt_score", "F"), lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
 ]
 
@@ -215,8 +231,6 @@ analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
 analyzerChain.append(
     PileupWeight(
-        mcFile = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/pileup.root",
-        dataFile = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/PU69000.root",
         outputName ="puweight",
         globalOptions=globalOptions
     )

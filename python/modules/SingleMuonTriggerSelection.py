@@ -16,7 +16,7 @@ class SingleMuonTriggerSelection(Module):
         inputCollection = lambda event: getattr(event,"tightMuons"),
         storeWeights=True,
         outputName = "IsoMuTrigger",
-        globalOptions={"isData":False}
+        globalOptions={"isData":False, "year":2016}
     ):
         self.globalOptions = globalOptions
         self.inputCollection = inputCollection
@@ -24,20 +24,40 @@ class SingleMuonTriggerSelection(Module):
         self.storeWeights = storeWeights
         
         if not self.globalOptions["isData"]:
-            triggerSFBToF = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/EfficienciesAndSF_RunBtoF.root",
-                "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio"
-            )
-            triggerSFGToH = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/EfficienciesAndSF_RunGtoH.root",
-                "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio"
-            )
-            self.triggerSFHist = combineHist2D(
-                triggerSFBToF,
-                triggerSFGToH,
-                1.-16226.5/35916.4,
-                16226.5/35916.4
-            )
+            if self.globalOptions["year"] == 2016:
+
+                triggerSFBToF = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2016/EfficienciesAndSF_RunBtoF.root",
+                    "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio"
+                )
+                triggerSFGToH = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2016/EfficienciesAndSF_RunGtoH.root",
+                    "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio"
+                )
+                self.triggerSFHist = combineHist2D(
+                    triggerSFBToF,
+                    triggerSFGToH,
+                    1.-16226.5/35916.4,
+                    16226.5/35916.4
+                )
+
+            elif self.globalOptions["year"] == 2017:
+
+                self.triggerSFHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2017/EfficienciesStudies_2017_trigger_EfficienciesAndSF_RunBtoF_Nov17Nov2017.root",
+                    "IsoMu27_PtEtaBins/pt_abseta_ratio"
+                )
+   
+            elif self.globalOptions["year"] == 2018:
+
+                self.triggerSFHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_trigger_EfficienciesAndSF_2018Data_AfterMuonHLTUpdate.root",
+                    "IsoMu24_PtEtaBins/pt_abseta_ratio"
+                )
+            else: 
+                print("Invalid year")
+                sys.exit(1)
+
             
     def beginJob(self):
         pass
@@ -69,16 +89,23 @@ class SingleMuonTriggerSelection(Module):
         weight_trigger_down = 1.
         
         if (not self.globalOptions["isData"]) and len(muons)>0 and self.storeWeights: 
-            #take the leading muon here; note: technically correct would be to match to HLT obj
-            weight_trigger,weight_trigger_err = getSFXY(self.triggerSFHist,muons[0].pt,muons[0].eta)
+            weight_trigger,weight_trigger_err = getSFXY(self.triggerSFHist,muons[0].pt,abs(muons[0].eta))
             weight_trigger_nominal*=weight_trigger
             weight_trigger_up*=(weight_trigger+weight_trigger_err)
             weight_trigger_down*=(weight_trigger-weight_trigger_err)
-            
-        self.out.fillBranch(
-            self.outputName+"_flag",
-            event.HLT_IsoMu24>0 or event.HLT_IsoTkMu24>0
-        )
+
+        trigger_flag = 0
+
+        if self.globalOptions["year"] == 2016:
+            trigger_flag = event.HLT_IsoMu24>0 or event.HLT_IsoTkMu24>0
+
+        elif self.globalOptions["year"] == 2017:
+            trigger_flag = event.HLT_IsoMu27
+
+        elif self.globalOptions["year"] == 2018:
+            trigger_flag = event.HLT_IsoMu24
+
+        self.out.fillBranch(self.outputName+"_flag", trigger_flag)
             
         if not self.globalOptions["isData"] and self.storeWeights:
             self.out.fillBranch(self.outputName+"_weight_trigger_nominal",weight_trigger_nominal)
