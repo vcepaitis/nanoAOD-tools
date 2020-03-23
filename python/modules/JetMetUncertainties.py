@@ -14,7 +14,7 @@ from utils import PhysicsObject
 
 class JetMetUncertainties(jetmetUncertaintiesProducer):
     def __init__(self, era, globalTag, jesUncertainties = [ "Total" ], archive=None, globalTagProd=None, jetType = "AK4PFchs", metBranchName="MET", jerTag="", isData=False, applySmearing=True):
-        jetmetUncertaintiesProducer.__init__(self, era, globalTag, jesUncertainties = [ "Total" ], archive=None, globalTagProd=None, jetType = "AK4PFchs", metBranchName="MET", jerTag="", isData=False, applySmearing=True)
+        jetmetUncertaintiesProducer.__init__(self, era, globalTag, jesUncertainties = [ "Total" ], archive=None, globalTagProd=None, jetType = "AK4PFchs", metBranchName="MET", jerTag=jerTag, isData=False, applySmearing=True)
         
     def beginJob(self):
         jetmetUncertaintiesProducer.beginJob(self)
