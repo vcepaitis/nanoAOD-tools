@@ -58,7 +58,7 @@ isMC = not args.isData
 minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
 
 
-if isMC : 
+if isMC: 
 
 	jecTags = {	2016 : 'Summer16_07Aug2017_V11_MC',
 			2017 : 'Fall17_17Nov2017_V32_MC',
@@ -71,7 +71,7 @@ if isMC :
 			2017 : 'Fall17_V3_MC',
 			2018 : 'Autumn18_V7_MC'
         }
-if args.isData : 
+if args.isData: 
 
 	jecTags = {	2016 : 'Summer16_07Aug2017All_V11_DATA',
 			2017 : 'Fall17_17Nov2017_V32_DATA',
