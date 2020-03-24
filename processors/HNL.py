@@ -190,7 +190,6 @@ analyzerChain.append(
     )
 )
 
-#Summer16_07Aug2017_V11_MC 	 JER= Summer16_25nsV1_MC
 analyzerChain.append( 
      	MetFilter(
      		globalOptions=globalOptions,
