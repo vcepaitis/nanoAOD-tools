@@ -183,10 +183,10 @@ analyzerChain.append(
 
 analyzerChain.append(
     JetMetUncertainties(
-            era = globalOptions["year"],
-            globalTag=jecTags[globalOptions["year"]],
-	    jerTag = jerTags[globalOptions["year"]],
-	    isData= args.isData 
+	era = globalOptions["year"],
+	globalTag=jecTags[globalOptions["year"]],
+	jerTag = jerTags[globalOptions["year"]],
+	isData= args.isData 
     )
 )
 
