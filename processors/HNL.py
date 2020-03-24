@@ -73,9 +73,9 @@ if isMC :
         }
 if args.isData : 
 
-	jecTags = { 2016 : 'Summer16_07Aug2017All_V11_DATA',
-		    2017 : 'Fall17_17Nov2017_V32_DATA',
-                    2018 : 'Autumn18_V19_DATA'
+	jecTags = {2016 : 'Summer16_07Aug2017All_V11_DATA',
+		   2017 : 'Fall17_17Nov2017_V32_DATA',
+                   2018 : 'Autumn18_V19_DATA'
         }
 
 
