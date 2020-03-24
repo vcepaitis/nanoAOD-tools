@@ -60,22 +60,22 @@ minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
 
 if isMC : 
 
-	jecTags = {2016 : 'Summer16_07Aug2017_V11_MC',
- 	           2017 : 'Fall17_17Nov2017_V32_MC',
-         	   2018 : 'Autumn18_V19_MC'
+	jecTags = {	2016 : 'Summer16_07Aug2017_V11_MC',
+			2017 : 'Fall17_17Nov2017_V32_MC',
+			2018 : 'Autumn18_V19_MC'
 	}
 
 
 
-	jerTags = {2016 : 'Summer16_25nsV1_MC',
-         	   2017 : 'Fall17_V3_MC',
-            	   2018 : 'Autumn18_V7_MC'
+	jerTags = {	2016 : 'Summer16_25nsV1_MC',
+			2017 : 'Fall17_V3_MC',
+			2018 : 'Autumn18_V7_MC'
         }
 if args.isData : 
 
-	jecTags = {2016 : 'Summer16_07Aug2017All_V11_DATA',
-		   2017 : 'Fall17_17Nov2017_V32_DATA',
-                   2018 : 'Autumn18_V19_DATA'
+	jecTags = {	2016 : 'Summer16_07Aug2017All_V11_DATA',
+			2017 : 'Fall17_17Nov2017_V32_DATA',
+			2018 : 'Autumn18_V19_DATA'
         }
 
 
