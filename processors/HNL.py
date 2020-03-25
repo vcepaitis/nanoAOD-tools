@@ -121,9 +121,9 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        leptonCollection=lambda event: event.tightMuon,
+	leptonCollection=lambda event: event.tightMuon,
 	outputName = "selectedJets",
-        globalOptions=globalOptions
+	globalOptions=globalOptions
     )
 )
 
@@ -250,8 +250,8 @@ if isMC:
 			leptonCollection = lambda event: event.tightMuon[0], 
                 	metInput = metObject,
                 	outputName ="metUnc_"+systName,
-            )
-        )
+			)
+		)
 
 '''
  
