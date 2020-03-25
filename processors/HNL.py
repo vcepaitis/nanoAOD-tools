@@ -233,6 +233,15 @@ if isMC:
 			outputName="EventObservables_"+systName
 			)
 		)
+
+		
+		analyzerChain.append(
+			LepJetFinder(
+			jetCollection = collection,
+			leptonCollection = lambda event: event.looseMuons,
+			outputName = "lepJet_"+systName
+			)
+		)
 	
 	for systName,jetCollection,metObject in [
         	("nominal",lambda event: event.selectedJets_nominal,lambda event: event.met_nominal),
@@ -249,9 +258,10 @@ if isMC:
                 	jetCollection = jetCollection,
 			leptonCollection = lambda event: event.tightMuon[0], 
                 	metInput = metObject,
-                	outputName ="metUnc_"+systName,
+                	outputName ="metUnc_"+systName
 			)
 		)
+
 
 '''
  
