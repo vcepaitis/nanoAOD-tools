@@ -121,8 +121,9 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     JetSelection(
-        leptonCollection=lambda event: event.tightMuon,
-        globalOptions=globalOptions
+	leptonCollection=lambda event: event.tightMuon,
+	outputName = "selectedJets",
+	globalOptions=globalOptions
     )
 )
 
@@ -180,16 +181,6 @@ analyzerChain.append(
 )
 
 
-
-analyzerChain.append(
-    JetMetUncertainties(
-	era = globalOptions["year"],
-	globalTag=jecTags[globalOptions["year"]],
-	jerTag = jerTags[globalOptions["year"]],
-	isData= args.isData 
-    )
-)
-
 analyzerChain.append( 
      	MetFilter(
      		globalOptions=globalOptions,
@@ -203,6 +194,75 @@ analyzerChain.append(
        leptonCollection = lambda event: event.tightMuon[0] 
      )
 )
+
+analyzerChain.append(
+    JetMetUncertainties(
+	era = globalOptions["year"],
+	globalTag=jecTags[globalOptions["year"]],
+	jerTag = jerTags[globalOptions["year"]],
+	isData= args.isData 
+    )
+)
+
+
+if isMC:
+	
+	for systName,collection in [
+        	("nominal",lambda event: event.jets_nominal),
+	        ("jerUp",lambda event: event.jets_jerUp),
+	        ("jerDown",lambda event: event.jets_jerDown),
+	        ("jesTotalUp",lambda event: event.jets_jesUp["Total"]),
+	        ("jesTotalDown",lambda event: event.jets_jesDown["Total"]),
+    	]:
+
+        	analyzerChain.append(
+            		JetSelection(
+                		inputCollection=collection,
+				leptonCollection=lambda event: event.tightMuon,		
+	                	outputName="selectedJets_"+systName,
+		                storeKinematics=['pt','eta'],
+        			globalOptions=globalOptions
+			)
+	        )
+
+	
+		analyzerChain.append(
+			EventObservables(
+			jetCollection = collection,
+			leptonCollection = lambda event: event.tightMuon[0],
+			outputName="EventObservables_"+systName
+			)
+		)
+
+		
+		analyzerChain.append(
+			LepJetFinder(
+			jetCollection = collection,
+			leptonCollection = lambda event: event.looseMuons,
+			outputName = "lepJet_"+systName
+			)
+		)
+	
+	for systName,jetCollection,metObject in [
+        	("nominal",lambda event: event.selectedJets_nominal,lambda event: event.met_nominal),
+	        ("jerUp",lambda event: event.selectedJets_jerUp,lambda event: event.met_jerUp),
+	        ("jerDown",lambda event: event.selectedJets_jerDown,lambda event: event.met_jerDown),
+	        ("jesTotalUp",lambda event: event.selectedJets_jesTotalUp,lambda event: event.met_jesUp["Total"]),
+	        ("jesTotalDown",lambda event: event.selectedJets_jesTotalDown,lambda event: event.met_jesDown["Total"]),
+        	("unclEnUp",lambda event: event.selectedJets_nominal,lambda event: event.met_unclEnUp),
+	        ("unclEnDown",lambda event: event.selectedJets_nominal,lambda event: event.met_unclEnDown),
+	]:
+    
+        	analyzerChain.append(
+            		EventObservables(
+                	jetCollection = jetCollection,
+			leptonCollection = lambda event: event.tightMuon[0], 
+                	metInput = metObject,
+                	outputName ="metUnc_"+systName
+			)
+		)
+
+
 '''
  
 analyzerChain.append(

@@ -155,7 +155,7 @@ class JetMetUncertainties(jetmetUncertaintiesProducer):
             systJets = []
             for jet in jets:
                 systJet = PhysicsObject(jet,
-                    pt=jet.pt,eta=jet.eta,phi=jet.phi,mass=jet.mass,
+                    pt=jet.pt,eta=jet.eta,phi=jet.phi,mass=jet.mass,nConstituents=jet.nConstituents,
                     keys=[
                         "jetId",
                         "hadronFlavour",

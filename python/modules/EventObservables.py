@@ -17,7 +17,7 @@ class EventObservables(Module):
         jetCollection = lambda event: Collection(event, "Jet"),
         leptonCollection = lambda event: Collection(event, "Muon"),
         metInput = lambda event: Object(event, "MET"),
-        outputName = "Jet_Muon",
+        outputName = "EventObservables",
         globalOptions={"isData":False}
     ):
         self.globalOptions = globalOptions
