@@ -230,7 +230,7 @@ if isMC:
 			EventObservables(
 			jetCollection = collection,
 			leptonCollection = lambda event: event.tightMuon[0],
-			outputName="Jet_Muon_"+systName
+			outputName="EventObservables_"+systName
 			)
 		)
 	
