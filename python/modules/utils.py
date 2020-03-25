@@ -13,19 +13,19 @@ class PhysicsObject(object):
 	self.__dict__["phi"] = phi
 	self.__dict__["mass"] = mass
 	self.__dict__["nConstituents"] = nConstituents
-        for k in keys:
+	for k in keys:
             self.__dict__[k] = getattr(obj,k)
             
     def p4(self):
-        ret = ROOT.TLorentzVector()
-        ret.SetPtEtaPhiM(self.pt,self.eta,self.phi,self.mass)
-        return ret
+	ret = ROOT.TLorentzVector()
+	ret.SetPtEtaPhiM(self.pt,self.eta,self.phi,self.mass)
+	return ret
         
     def originalP4(self):
-        return self._obj.p4()
+	return self._obj.p4()
         
     def __str__(self):
-        return self._obj.__str__()
+	return self._obj.__str__()
         
 
         
