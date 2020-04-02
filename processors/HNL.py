@@ -71,6 +71,7 @@ if isMC:
 			2017 : 'Fall17_V3_MC',
 			2018 : 'Autumn18_V7_MC'
         }
+
 if args.isData: 
 
 	jecTags = {	2016 : 'Summer16_07Aug2017All_V11_DATA',
@@ -195,17 +196,16 @@ analyzerChain.append(
      )
 )
 
-analyzerChain.append(
-    JetMetUncertainties(
-	era = globalOptions["year"],
-	globalTag=jecTags[globalOptions["year"]],
-	jerTag = jerTags[globalOptions["year"]],
-	isData= args.isData 
-    )
-)
-
-
 if isMC:
+	analyzerChain.append(
+		JetMetUncertainties(
+			era = globalOptions["year"],
+			globalTag=jecTags[globalOptions["year"]],
+			jerTag = jerTags[globalOptions["year"]],
+    		)
+	)
+
+
 	
 	for systName,collection in [
         	("nominal",lambda event: event.jets_nominal),
