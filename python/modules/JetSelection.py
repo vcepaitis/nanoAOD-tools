@@ -17,6 +17,7 @@ class JetSelection(Module):
          self,
          inputCollection=lambda event: Collection(event, "Jet"),
          leptonCollection=lambda event: [],
+         leptonFinderCollection=lambda event: [],
          outputName="selectedJets",
          jetMinPt=15.,
          jetMaxPt=100.,
@@ -27,13 +28,14 @@ class JetSelection(Module):
          minRatio=0.,
          flagDA=False,
          addSize=True,
-         storeKinematics=['pt', 'eta', 'jetId', 'btagCMVA', 'btagDeepB', 'btagDeepFlavB'],
+         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'btagCMVA', 'btagDeepB', 'btagDeepFlavB', "muonSubtrFactor", "muon_DeltaR"],
          globalOptions={"isData": False},
          jetId=-1
          ):
         self.globalOptions = globalOptions
         self.inputCollection = inputCollection
         self.leptonCollection = leptonCollection
+        self.leptonFinderCollection = leptonFinderCollection
         self.outputName = outputName
         self.jetMinPt = jetMinPt
         self.jetMaxPt = jetMaxPt
@@ -87,12 +89,17 @@ class JetSelection(Module):
                and (jet.jetId > self.jetId)\
                and (jet.nConstituents > self.minNconstituents):
                 leptons = self.leptonCollection(event)
+                leptonsToFind = self.leptonFinderCollection(event)
 
                 if self.dRCleaning > 0. and leptons is not None and len(leptons) > 0:
                     mindr = min(map(lambda lepton: deltaR(lepton, jet), leptons))
                     if mindr < self.dRCleaning:
                         unselectedJets.append(jet)
                         continue
+                if self.dRCleaning > 0. and leptonsToFind is not None and len(leptonsToFind) > 0:
+                    mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsToFind))
+                    setattr(jet, "muon_DeltaR", mindr)
+
             else:
                 unselectedJets.append(jet)
                 continue

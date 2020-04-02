@@ -14,12 +14,10 @@ class LepJetFinder(Module):
         self,
         jetCollection,
         leptonCollection,
-        usePFLinking=True,
         outputName="lepJet",
     ):
         self.jetCollection = jetCollection
         self.leptonCollection = leptonCollection
-        self.usePFLinking = usePFLinking
         self.outputName = outputName
 
     def beginJob(self):
@@ -52,36 +50,20 @@ class LepJetFinder(Module):
         jet_deltaRs = []
         lepJets = []
 
-        if self.usePFLinking:
-            for jet in jetCollection:
-                muonIdx1 = jet.muonIdx1
-                if muonIdx1 == -1:
-                    continue
-                else:
-                    for lepton in leptonCollection:
-                        if lepton._index == muonIdx1:
-                            lepJets.append(jet)
-                            jet_deltaRs.append(lepton.p4().DeltaR(jet.p4()))
-                            jet_pts.append(jet.pt)
-                            jet_etas.append(jet.eta)
-                            jet_phis.append(jet.phi)
-                            break
+        for lepton in leptonCollection:
+            jet = jetCollection[0]
+            deltaR = lepton.p4().DeltaR(jet.p4())
+            for _jet in jetCollection:
+                _deltaR = lepton.p4().DeltaR(_jet.p4())
+                if _deltaR < deltaR:
+                    jet = _jet
+                    deltaR = _deltaR
 
-        else:
-            for lepton in leptonCollection:
-                jet = jetCollection[0]
-                deltaR = lepton.p4().DeltaR(jet.p4())
-                for _jet in jetCollection:
-                    _deltaR = lepton.p4().DeltaR(_jet.p4())
-                    if _deltaR < deltaR:
-                        jet = _jet
-                        deltaR = _deltaR
-
-                lepJets.append(jet)
-                jet_deltaRs.append(lepton.p4().DeltaR(jet.p4()))
-                jet_pts.append(jet.pt)
-                jet_etas.append(jet.eta)
-                jet_phis.append(jet.phi)
+            lepJets.append(jet)
+            jet_deltaRs.append(lepton.p4().DeltaR(jet.p4()))
+            jet_pts.append(jet.pt)
+            jet_etas.append(jet.eta)
+            jet_phis.append(jet.phi)
 
         self.out.fillBranch(self.outputName+"_pt", jet_pts)
         self.out.fillBranch(self.outputName+"_eta", jet_etas)

@@ -78,7 +78,7 @@ muonSelection = [
         inputCollection=lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'pfRelIso04_all', 'tightId', "muon frac"],
+                         'dzErr', 'phi', 'pfRelIso04_all', 'tightId'],
         storeWeights=True,
         muonMinPt=5.,
         muonID=MuonSelection.LOOSE,
@@ -104,6 +104,16 @@ analyzerChain.extend(muonSelection)
 analyzerChain.append(
     JetSelection(
         leptonCollection=lambda event: event.tightMuon,
+        globalOptions=globalOptions,
+        leptonFinderCollection=lambda event: event.looseMuons,
+
+    )
+)
+
+analyzerChain.append(
+    JetTruthFlags(
+        inputCollection=lambda event: event.selectedJets,
+        outputName="selectedJets",
         globalOptions=globalOptions
     )
 )
@@ -129,28 +139,11 @@ analyzerChain.append(
     )
 )
 
-analyzerChain.append(
-    LepJetFinder(
-        jetCollection=lambda event: event.selectedJets,
-        leptonCollection=lambda event: event.looseMuons,
-        usePFLinking=False,
-        outputName="lepJet_old"
-    )
-)
-
 
 analyzerChain.append(
     JetTruthFlags(
         inputCollection=lambda event: event.lepJet,
         outputName="lepJet",
-        globalOptions=globalOptions
-    )
-)
-
-analyzerChain.append(
-    JetTruthFlags(
-        inputCollection=lambda event: event.lepJet_old,
-        outputName="lepJet_old",
         globalOptions=globalOptions
     )
 )

@@ -71,8 +71,7 @@ class EventObservables(Module):
         if self.leptonCollection is not None:
             met_px_lc = met.pt*math.sin(met.phi)
             met_py_lc = met.pt*math.cos(met.phi)
-
-        lepton = self.leptonCollection(event)
+            lepton = self.leptonCollection(event)
             met_px_lc += lepton.p4().Px()
             met_py_lc += lepton.p4().Py()
             met_lc = math.sqrt(met_px_lc**2+met_py_lc**2)
@@ -82,10 +81,10 @@ class EventObservables(Module):
         met_l_mT = math.sqrt(2.*lepton.pt*met.pt*(1. - math.cos(lepton.phi - met.phi)))
 
         self.out.fillBranch(self.outputName+"_MET_Mu_mT", met_l_mT)
-            setattr(event, self.outputName+"_MET_Mu_mT", met_l_mT)
+        setattr(event, self.outputName+"_MET_Mu_mT", met_l_mT)
 
         self.out.fillBranch(self.outputName+"_mht_NoMu", vectorSum.Pt() + lepton.p4().Pt())
-            setattr(event, self.outputName+"_mht_NoMu", vectorSum.Pt() + lepton.p4().Pt())
+        setattr(event, self.outputName+"_mht_NoMu", vectorSum.Pt() + lepton.p4().Pt())
 
         minPhi = math.pi
         for obj in objs:
