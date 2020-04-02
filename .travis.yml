@@ -1,14 +1,10 @@
 sudo: required
 services:
   - docker
+language: python
+  - "2.7"
 script:
-  - docker pull mattkomm/cvmfs-cms
-  - docker run -h dev --privileged -v $PWD:/scripts:ro mattkomm/cvmfs-cms /bin/bash -c /scripts/test/runCMSSWTest.sh
-notifications:
-  email:
-    recipients:
-      - mkomm@cern.ch
-    on_success: changet
-    on_failure: always
+  - docker pull clelange/slc6-cmssw-cvmfs
+  - docker run --rm --privileged -v $PWD:/scripts:ro --device /dev/fuse clelange/slc6-cmssw-cvmfs /bin/bash -c /scripts/test/runCMSSWTest.sh
 
 

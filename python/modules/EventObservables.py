@@ -78,13 +78,16 @@ class EventObservables(Module):
             self.out.fillBranch(self.outputName+"_MET_NoMu_pt", met_lc)
             setattr(event, self.outputName+"_MET_NoMu_pt", met_lc)
 
-        met_l_mT = math.sqrt(2.*lepton.pt*met.pt*(1. - math.cos(lepton.phi - met.phi)))
+        met_l_mT = math.sqrt(2.*lepton.pt *
+                             met.pt*(1. - math.cos(lepton.phi - met.phi)))
 
         self.out.fillBranch(self.outputName+"_MET_Mu_mT", met_l_mT)
         setattr(event, self.outputName+"_MET_Mu_mT", met_l_mT)
 
-        self.out.fillBranch(self.outputName+"_mht_NoMu", vectorSum.Pt() + lepton.p4().Pt())
-        setattr(event, self.outputName+"_mht_NoMu", vectorSum.Pt() + lepton.p4().Pt())
+        self.out.fillBranch(self.outputName+"_mht_NoMu",
+                            vectorSum.Pt() + lepton.p4().Pt())
+        setattr(event, self.outputName+"_mht_NoMu",
+                vectorSum.Pt() + lepton.p4().Pt())
 
         minPhi = math.pi
         for obj in objs:

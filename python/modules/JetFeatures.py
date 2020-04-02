@@ -51,6 +51,7 @@ class JetFeatures(Module):
         nsvs = []
         nnpfs = []
         ncpfs = []
+	print "length of Jets ", len(jets) , "length of jet global ", len(jetGlobal)
 
         for ijet, jet in enumerate(jets):
             if jet.pt < 30.:
