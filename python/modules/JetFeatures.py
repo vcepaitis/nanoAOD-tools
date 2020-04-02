@@ -10,43 +10,42 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from utils import deltaR
 
+
 class JetFeatures(Module):
 
     def __init__(
         self,
-        inputCollection = lambda event: Collection(event, "Jet"),
-        outputName = "selectedJets",
+        inputCollection=lambda event: Collection(event, "Jet"),
+        outputName="selectedJets",
     ):
         self.outputName = outputName
         self.inputCollection = inputCollection
- 
+
     def beginJob(self):
         pass
-        
+
     def endJob(self):
         pass
-        
+
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        
+
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
+
     def analyze(self, event):
-        """process event, return True (go to next module) or False (fail, go to next event)"""
-            
         jets = self.inputCollection(event)
-        jetGlobal = Collection(event,"global")
-        jetOrigin = Collection(event,"jetorigin")
-        
-        jetNSV = Collection(event,"svlength")
-        jetSV = Collection(event,"sv")
-        
-        jetNCPF = Collection(event,"cpflength")
-        jetCPF = Collection(event,"cpf")
-        
-        jetNNPF = Collection(event,"npflength")
-        jetNPF = Collection(event,"npf")
+        jetGlobal = Collection(event, "global")
+        jetOrigin = Collection(event, "jetorigin")
+
+        jetNSV = Collection(event, "svlength")
+        jetSV = Collection(event, "sv")
+
+        jetNCPF = Collection(event, "cpflength")
+        jetCPF = Collection(event, "cpf")
+
+        jetNNPF = Collection(event, "npflength")
+        jetNPF = Collection(event, "npf")
 
         selectedJets = []
         nsvs = []
@@ -54,7 +53,7 @@ class JetFeatures(Module):
         ncpfs = []
 	print "length of Jets ", len(jets) , "length of jet global ", len(jetGlobal)
 
-        for ijet,jet in enumerate(jets):
+        for ijet, jet in enumerate(jets):
             if jet.pt < 30.:
                 continue
             selectedJets.append(jet)
@@ -66,5 +65,5 @@ class JetFeatures(Module):
             ncpfs.append(jet.ncpf)
 
         setattr(event, self.outputName, selectedJets)
-                    
+
         return True
