@@ -30,13 +30,13 @@ class PileupWeight(Module):
                 self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/pileup.root")
             elif self.globalOptions["year"] == 2017:
                 self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_69200.root")
-                self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2016_72500.root")
-                self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2016_65500.root")
+                self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_72500.root")
+                self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_65500.root")
                 self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/pileup.root")
             elif self.globalOptions["year"] == 2018:
                 self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_69200.root")
-                self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2016_72500.root")
-                self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2016_65500.root")
+                self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_72500.root")
+                self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_65500.root")
                 self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/pileup.root")
             else:
                 print "wrong year selected", year
