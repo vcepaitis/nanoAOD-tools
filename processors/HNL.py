@@ -84,7 +84,7 @@ muonSelection = [
     MuonSelection(
         outputName="tightMuon",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'pfRelIso04_all'],
+                         'dzErr', 'phi', 'pfRelIso04_all', 'charge'],
         storeWeights=True,
         muonMinPt=minMuonPt[globalOptions["year"]],
         triggerMatch=True,
@@ -98,7 +98,8 @@ muonSelection = [
         inputCollection=lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'pfRelIso04_all', 'tightId'],
+                         'dzErr', 'phi', 'pfRelIso04_all',
+                         'tightId', 'charge'],
         storeWeights=True,
         muonMinPt=5.,
         muonID=MuonSelection.LOOSE,

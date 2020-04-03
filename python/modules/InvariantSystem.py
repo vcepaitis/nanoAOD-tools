@@ -35,6 +35,8 @@ class InvariantSystem(Module):
         self.out.branch(self.outputName+"_eta", "F")
         self.out.branch(self.outputName+"_deltaR", "F")
         self.out.branch(self.outputName+"_deltaPhi", "F")
+        self.out.branch(self.outputName+"_charge", "I")
+
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -42,13 +44,16 @@ class InvariantSystem(Module):
     def analyze(self, event):
         collection = self.inputCollection(event)
         vec = ROOT.TLorentzVector()
+        charge = 1
         for obj in collection:
             vec += obj.p4()
+            charge *= obj.charge
 
         self.out.fillBranch(self.outputName+"_mass", vec.M())
         self.out.fillBranch(self.outputName+"_pt", vec.Pt())
         self.out.fillBranch(self.outputName+"_eta", vec.Eta())
         self.out.fillBranch(self.outputName+"_deltaR",  deltaR(collection[0], collection[1]))
         self.out.fillBranch(self.outputName+"_deltaPhi",  deltaPhi(collection[0].phi, collection[1].phi))
+        self.out.fillBranch(self.outputName+"_charge", charge)
 
         return True
