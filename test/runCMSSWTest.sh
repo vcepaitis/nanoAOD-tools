@@ -12,7 +12,7 @@ function run_test()
     rsync -r --stats /scripts/ PhysicsTools/NanoAODTools/. || return 1
     scram b || return 1
     echo "--- Test HNL script ---"
-    python PhysicsTools/NanoAODTools/processors/HNL.py --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
 }
 
 run_test

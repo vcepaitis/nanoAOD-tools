@@ -14,6 +14,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
 
 parser = argparse.ArgumentParser()
+
+parser.add_argument('--testMode', dest='testMode', action='store_true', default=False)
 parser.add_argument('--isData', dest='isData',
                     action='store_true', default=False)
 parser.add_argument('--year', dest='year',
@@ -23,9 +25,10 @@ parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
+testMode = args.testMode
+print "isData:",args.isData
+print "inputs:",len(args.inputFiles)
 
-print "isData:", args.isData
-print "inputs:", len(args.inputFiles)
 for inputFile in args.inputFiles:
     print "2018" in inputFile
     if "-2016" in inputFile:
@@ -338,12 +341,13 @@ if not globalOptions["isData"]:
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
-analyzerChain.append(
-    PileupWeight(
-        outputName="puweight",
-        globalOptions=globalOptions
+if not testMode:
+    analyzerChain.append(
+        PileupWeight(
+            outputName ="puweight",
+            globalOptions=globalOptions
+        )
     )
-)
 
 p = PostProcessor(
     args.output[0],
