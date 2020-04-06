@@ -5,26 +5,27 @@ import ROOT
 import random
 
 class PhysicsObject(object):
-    def __init__(self,obj,pt=0.,eta=0.,phi=0.,mass=0.,keys=[]):
-        self._obj = obj
-        self._index = self._obj._index
-        self.__dict__["pt"] = pt
-        self.__dict__["eta"] = eta
-        self.__dict__["phi"] = phi
-        self.__dict__["mass"] = mass
-        for k in keys:
+    def __init__(self,obj,pt=0.,eta=0.,phi=0.,mass=0.,nConstituents =0.,keys=[]):
+	self._obj = obj
+	self._index = self._obj._index
+	self.__dict__["pt"] = pt
+	self.__dict__["eta"] = eta
+	self.__dict__["phi"] = phi
+	self.__dict__["mass"] = mass
+	self.__dict__["nConstituents"] = nConstituents
+	for k in keys:
             self.__dict__[k] = getattr(obj,k)
             
     def p4(self):
-        ret = ROOT.TLorentzVector()
-        ret.SetPtEtaPhiM(self.pt,self.eta,self.phi,self.mass)
-        return ret
+	ret = ROOT.TLorentzVector()
+	ret.SetPtEtaPhiM(self.pt,self.eta,self.phi,self.mass)
+	return ret
         
     def originalP4(self):
-        return self._obj.p4()
+	return self._obj.p4()
         
     def __str__(self):
-        return self._obj.__str__()
+	return self._obj.__str__()
         
 
         
