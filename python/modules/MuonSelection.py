@@ -8,7 +8,8 @@ import random
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getGraph,getHist,combineHist2D,getSFXY,deltaR
+from utils import getGraph, getHist, combineHist2D, getSFXY, deltaR
+
 
 class MuonSelection(Module):
     TIGHT = 1

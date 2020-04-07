@@ -30,7 +30,6 @@ print "isData:",args.isData
 print "inputs:",len(args.inputFiles)
 
 for inputFile in args.inputFiles:
-    print "2018" in inputFile
     if "-2016" in inputFile:
         year = 2016
     elif "-2017" in inputFile:
