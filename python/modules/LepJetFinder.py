@@ -28,6 +28,8 @@ class LepJetFinder(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
+        self.out.branch(self.outputName+"_jetIdx",
+                        "I", lenVar="n"+self.outputName)
         self.out.branch(self.outputName+"_pt",
                         "F", lenVar="n"+self.outputName)
         self.out.branch(self.outputName+"_eta",
@@ -43,7 +45,7 @@ class LepJetFinder(Module):
     def analyze(self, event):
         jetCollection = self.jetCollection(event)
         leptonCollection = self.leptonCollection(event)
-
+        jet_idxs = []
         jet_pts = []
         jet_etas = []
         jet_phis = []
@@ -64,7 +66,9 @@ class LepJetFinder(Module):
             jet_pts.append(jet.pt)
             jet_etas.append(jet.eta)
             jet_phis.append(jet.phi)
+            jet_idxs.append(jet._index)
 
+        self.out.fillBranch(self.outputName+"_jetIdx", jet_idxs)
         self.out.fillBranch(self.outputName+"_pt", jet_pts)
         self.out.fillBranch(self.outputName+"_eta", jet_etas)
         self.out.fillBranch(self.outputName+"_phi", jet_phis)

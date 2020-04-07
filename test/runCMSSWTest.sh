@@ -16,6 +16,8 @@ function run_test()
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2017 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2018 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --isData root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/skimForDA.py --testMode --isData root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root . || return 1
 }
 
 run_test

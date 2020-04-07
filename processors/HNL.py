@@ -176,6 +176,12 @@ if isMC:
         )
 
         analyzerChain.append(
+            EventSkim(
+                selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
+            )
+        )
+
+        analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
                 outputName="selectedJets_"+systName,
@@ -262,6 +268,12 @@ else:
     )
 
     analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nselectedJets_nominal > 0
+        )
+    )
+
+    analyzerChain.append(
         LepJetFinder(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.looseMuons,
@@ -280,7 +292,7 @@ else:
 
     analyzerChain.append(
         JetTaggerResult(
-            inputCollection=lepJet,
+            inputCollection=lambda event: event.lepJet_nominal,
             taggerName="llpdnnx_nominal",
             outputName="lepJet_nominal",
             logctauValues=range(-1, 4),
@@ -289,9 +301,8 @@ else:
 
     analyzerChain.append(
         EventObservables(
-            jetCollection=event.selectedJets_nominal,
+            jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.tightMuon[0],
-            metInput=event.met_nominal,
             outputName="EventObservables_nominal"
         )
     )
@@ -306,12 +317,6 @@ analyzerChain.append(
     )
 )
 '''
-analyzerChain.append(
-    EventSkim(
-        selection=lambda event: len(event.selectedJets_nominal) > 0
-    )
-)
-
 
 storeVariables = [
     [lambda tree: tree.branch("MET_pt", "F"), lambda tree,
@@ -357,3 +362,4 @@ p = PostProcessor(
 )
 
 p.run()
+            
