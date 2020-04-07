@@ -14,10 +14,21 @@ git clone -b HNL https://github.com/LLPDNNX/nanoAOD-tools.git PhysicsTools/NanoA
 scram b
 ```
 
-Example use: make ntuples for making performance studies (e.g. ROC curves)
+Example use: make ntuples for applying the HNL preselection
 ```
-python PhysicsTools/NanoAODTools/processors/XTaggerPerformance.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/LLP/NANOX_200124/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/200124_012623/0000/nano_3.root --year 2016 .
+python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/LLP/NANOX_200124/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/200124_012623/0000/nano_3.root --year 2016 .
 ```
+
+Running on data instead:
+```
+python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root --isData --year 2016 .
+```
+
+Skimming ntuples for DA:
+```
+python PhysicsTools/NanoAODTools/processors/skimForDA.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root --isData --year 2016 .
+```
+
 
 The basic syntax of the command is the following:
 
