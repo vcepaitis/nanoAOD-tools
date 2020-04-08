@@ -176,12 +176,6 @@ if isMC:
         )
 
         analyzerChain.append(
-            EventSkim(
-                selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
-            )
-        )
-
-        analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
                 outputName="selectedJets_"+systName,
@@ -268,12 +262,6 @@ else:
     )
 
     analyzerChain.append(
-        EventSkim(
-            selection=lambda event: event.nselectedJets_nominal > 0
-        )
-    )
-
-    analyzerChain.append(
         LepJetFinder(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.looseMuons,
@@ -306,6 +294,13 @@ else:
             outputName="EventObservables_nominal"
         )
     )
+
+analyzerChain.append(
+    EventSkim(
+        selection=lambda event: event.nselectedJets_nominal > 0
+    )
+)
+
 
 
 # Event level BDT
