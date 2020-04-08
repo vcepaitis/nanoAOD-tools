@@ -61,6 +61,10 @@ class LepJetFinder(Module):
         lepJets = []
 	lepJets_index = []
 
+        if len(jetCollection) == 0:
+            setattr(event, self.outputName, lepJets)
+            return True
+
         for lepton in leptonCollection:
             jet = jetCollection[0]
             deltaR = lepton.p4().DeltaR(jet.p4())
