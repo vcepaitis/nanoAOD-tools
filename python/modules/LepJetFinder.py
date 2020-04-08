@@ -51,7 +51,7 @@ class LepJetFinder(Module):
     def analyze(self, event):
         jetCollection = self.jetCollection(event)
         leptonCollection = self.leptonCollection(event)
-
+        jet_idxs = []
         jet_pts = []
         jet_etas = []
         jet_phis = []
@@ -78,7 +78,6 @@ class LepJetFinder(Module):
             jet_pts.append(jet.pt)
             jet_etas.append(jet.eta)
             jet_phis.append(jet.phi)
-
 	    
 	    lepjet = lepJets[0]
 	    lepjet_ind = lepJets_index[0]	

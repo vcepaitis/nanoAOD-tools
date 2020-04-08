@@ -14,6 +14,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
 
 parser = argparse.ArgumentParser()
+
+parser.add_argument('--testMode', dest='testMode', action='store_true', default=False)
 parser.add_argument('--isData', dest='isData',
                     action='store_true', default=False)
 parser.add_argument('--year', dest='year',
@@ -23,11 +25,11 @@ parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
+testMode = args.testMode
+print "isData:",args.isData
+print "inputs:",len(args.inputFiles)
 
-print "isData:", args.isData
-print "inputs:", len(args.inputFiles)
 for inputFile in args.inputFiles:
-    print "2018" in inputFile
     if "-2016" in inputFile:
         year = 2016
     elif "-2017" in inputFile:
@@ -174,6 +176,12 @@ if isMC:
         )
 
         analyzerChain.append(
+            EventSkim(
+                selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
+            )
+        )
+
+        analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
                 outputName="selectedJets_"+systName,
@@ -260,6 +268,12 @@ else:
     )
 
     analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nselectedJets_nominal > 0
+        )
+    )
+
+    analyzerChain.append(
         LepJetFinder(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.looseMuons,
@@ -278,7 +292,7 @@ else:
 
     analyzerChain.append(
         JetTaggerResult(
-            inputCollection=lepJet,
+            inputCollection=lambda event: event.lepJet_nominal,
             taggerName="llpdnnx_nominal",
             outputName="lepJet_nominal",
             logctauValues=range(-1, 4),
@@ -287,9 +301,8 @@ else:
 
     analyzerChain.append(
         EventObservables(
-            jetCollection=event.selectedJets_nominal,
+            jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.tightMuon[0],
-            metInput=event.met_nominal,
             outputName="EventObservables_nominal"
         )
     )
@@ -304,12 +317,6 @@ analyzerChain.append(
     )
 )
 '''
-analyzerChain.append(
-    EventSkim(
-        selection=lambda event: len(event.selectedJets_nominal) > 0
-    )
-)
-
 
 storeVariables = [
     [lambda tree: tree.branch("MET_pt", "F"), lambda tree,
@@ -338,12 +345,13 @@ if not globalOptions["isData"]:
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
-analyzerChain.append(
-    PileupWeight(
-        outputName="puweight",
-        globalOptions=globalOptions
+if not testMode:
+    analyzerChain.append(
+        PileupWeight(
+            outputName ="puweight",
+            globalOptions=globalOptions
+        )
     )
-)
 
 p = PostProcessor(
     args.output[0],
@@ -354,3 +362,4 @@ p = PostProcessor(
 )
 
 p.run()
+            
