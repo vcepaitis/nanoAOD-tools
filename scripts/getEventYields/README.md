@@ -1,6 +1,6 @@
 # C++ script to get event yield and make pileup histograms
 
-Requires the following header file [https://raw.githubusercontent.com/nlohmann/json/master/single_include/nlohmann/json.hpp]
+Requires the following header file <https://raw.githubusercontent.com/nlohmann/json/master/single_include/nlohmann/json.hpp>
 
 
 Compilation flags:
