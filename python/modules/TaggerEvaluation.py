@@ -114,6 +114,7 @@ class TaggerEvaluation(Module):
             for ijet, jet in enumerate(jets):
                 global_jet_index = jetglobal_indices.index(jet._index)
                 jetOriginIndices.add(jet._index)
+                #print "jet pt, jet eta, phi, index, global jet pt, eta, phi, index:", jet.pt,jet.eta, jet.phi, jet._index, jetglobal[global_jet_index].eta, jetglobal[global_jet_index].phi, jetglobal[global_jet_index].jetIdx
                 '''
                 if jet._index >= len(jetglobal):
                     print "Jet not filled"
@@ -121,6 +122,7 @@ class TaggerEvaluation(Module):
                 '''
                 
         jetOriginIndices = list(jetOriginIndices)
+
         
         evaluationIndices = []
         for index in jetOriginIndices:
@@ -167,4 +169,4 @@ class TaggerEvaluation(Module):
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
-            
+
