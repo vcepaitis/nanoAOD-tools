@@ -104,7 +104,6 @@ class TaggerEvaluation(Module):
     def analyze(self, event):
 
         jetglobal = Collection(event, "global")
-        jetorigin = Collection(event, "jetorigin")
         jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
 
         jetOriginIndices = set() # superset of all indices to evaluate
