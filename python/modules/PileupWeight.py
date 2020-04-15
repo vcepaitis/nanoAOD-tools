@@ -53,7 +53,7 @@ class PileupWeight(Module):
             fMC.Close()
 
             #add up and down hists in a loop
-            for var in ["", "_up", "_down"]:
+            for var in ["_up", "", "_down"]:
 
                 fData = ROOT.TFile(getattr(self, "dataFile"+var))
 
@@ -61,7 +61,7 @@ class PileupWeight(Module):
                     print "ERROR: Cannot find pileup file: ",getattr(self, "dataFile"+var)
                     sys.exit(1)
 
-                setattr(self, "dataHist"+var, fData.Get("pileup").Clone("pileup"+str(random.random())))
+                setattr(self, "dataHist"+var, fData.Get("pileup").Clone())
                 getattr(self, "dataHist"+var).SetDirectory(0)
 
     def getWeight(self,nTrueInteractions):
@@ -69,15 +69,15 @@ class PileupWeight(Module):
         mcBin = self.mcHist.FindBin(nTrueInteractions)
         w = []
         #add w_up and down
-        for var in ["", "_up", "_down"]:
+        for var in ["_up", "", "_down"]:
             dataBin = getattr(self, "dataHist"+var).FindBin(nTrueInteractions)
             w.append(getattr(self, "dataHist"+var).GetBinContent(dataBin)/(self.mcHist.GetBinContent(mcBin)+self.mcHist.Integral()*0.0001))
             if w[-1]>5.:
                 w[-1] = 0
 
         #w_up >= w >= w_down
-        if not (w[1] >= w[0] >= w[2]):
-            w = numpy.ones(3)
+        if not (w[0] >= w[1] >= w[2]):
+            w = numpy.sort(w)[::-1]
 
         return w
 
@@ -135,7 +135,7 @@ class PileupWeight(Module):
 
             self.normHist(self.mcHist)
 
-            for var in ["", "_up", "_down"]:
+            for var in ["_up", "", "_down"]:
                 self.out.branch(self.outputName+var,"F")
                 self.normHist(getattr(self, "dataHist"+var))
 
@@ -147,6 +147,7 @@ class PileupWeight(Module):
         if not self.globalOptions["isData"] and self.n>0 and (self.sum2/(1.*self.n))>(self.sum**2/(1.*self.n**2)):
             avg = 1.*self.sum/self.n
             sig = math.sqrt(self.sum2/(1.*self.n)-self.sum**2/(1.*self.n**2))
+            
             print "Average pileup weight (%s): %6.3f +- %6.3f"%(self.outputName,avg,sig)
 
     def analyze(self, event):
@@ -154,10 +155,10 @@ class PileupWeight(Module):
             puWeight = numpy.ones(3)
             puWeight = self.getWeight(event.Pileup_nTrueInt)
             self.n += 1
-            self.sum+=puWeight[0]
-            self.sum2+=puWeight[0]**2
+            self.sum+=puWeight[1]
+            self.sum2+=puWeight[1]**2
 
-            for i, var in enumerate(["", "_up", "_down"]):
+            for i, var in enumerate(["_up", "", "_down"]):
                 self.out.fillBranch(self.outputName+var,puWeight[i])
 
         return True
