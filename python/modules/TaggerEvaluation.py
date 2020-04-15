@@ -22,14 +22,14 @@ class TaggerEvaluation(Module):
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
         predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
-        logctauValues = range(-1, 4),
+        evalValues = range(-1, 4),
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
         self.predictionLabels = predictionLabels
-        self.logctauValues = logctauValues
-        self.logctau = numpy.array(logctauValues,dtype=numpy.float32)
+        self.evalValues = evalValues
+        self.logctau = numpy.array(evalValues,dtype=numpy.float32)
         
         self.modelPath = os.path.expandvars(modelPath)
         print featureDictFile
@@ -104,22 +104,27 @@ class TaggerEvaluation(Module):
     def analyze(self, event):
 
         jetglobal = Collection(event, "global")
+        jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
+
         
-        jetOriginIndices = set() #superset of all indices to evaluate
+        jetOriginIndices = set() # superset of all indices to evaluate
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
-            for ijet,jet in enumerate(jets):
-                if jet._index>=len(jetglobal):
+            for ijet, jet in enumerate(jets):
+                global_jet_index = jetglobal_indices.index(jet._index)
+                jetOriginIndices.add(jet._index)
+                '''
+                if jet._index >= len(jetglobal):
                     print "Jet not filled"
                     continue
-                jetOriginIndices.add(jet._index)
+                '''
                 
         jetOriginIndices = list(jetOriginIndices)
         
         evaluationIndices = []
         for index in jetOriginIndices:
-            evaluationIndices.extend([index]*len(self.logctauValues))
+            evaluationIndices.extend([index]*len(self.evalValues))
                 
         if event._tree._ttreereaderversion > self._ttreereaderversion:
             self.setup(event._tree)
@@ -139,8 +144,8 @@ class TaggerEvaluation(Module):
         for ijet,jetIndex in enumerate(jetOriginIndices):
             predictionsPerIndexAndCtau[jetIndex] = {}
 
-            for ictau,ctau in enumerate(self.logctauValues):
-                predictionIndex = ijet*len(self.logctauValues)+ictau
+            for ictau,ctau in enumerate(self.evalValues):
+                predictionIndex = ijet*len(self.evalValues)+ictau
                 predictionsPerIndexAndCtau[jetIndex][ctau] = result.get("prediction",predictionIndex)
                 
                 
@@ -150,15 +155,15 @@ class TaggerEvaluation(Module):
             for ijet,jet in enumerate(jets):
                 taggerOutput = {}
 
-                for ictau,ctau in enumerate(self.logctauValues):
-                    taggerOutput[self.logctauValues[ictau]] = {}
+                for ictau,ctau in enumerate(self.evalValues):
+                    taggerOutput[self.evalValues[ictau]] = {}
 
                     for iclass, classLabel in enumerate(self.predictionLabels):  
                         if jet._index<len(jetglobal):
-                            taggerOutput[self.logctauValues[ictau]][classLabel] = \
+                            taggerOutput[self.evalValues[ictau]][classLabel] = \
                                     predictionsPerIndexAndCtau[jet._index][ctau][iclass]
                         else:
-                            taggerOutput[self.logctauValues[ictau]][classLabel] = -1
+                            taggerOutput[self.evalValues[ictau]][classLabel] = -1
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
