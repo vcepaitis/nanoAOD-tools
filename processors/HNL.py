@@ -186,12 +186,21 @@ if isMC:
 
         analyzerChain.append(
             LepJetFinder(
-                jetCollection=lambda event: getattr(event, "selectedJets_"+systName),
+                jetCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
                 leptonCollection=lambda event: event.looseMuons,
                 outputName="lepJet_"+systName
             )
         )
 
+    analyzerChain.append(
+        EventSkim(selection=lambda event: \
+            getattr(event, "nselectedJets_nominal") > 0 or
+            getattr(event, "nselectedJets_jesTotalUp") > 0 or
+            getattr(event, "nselectedJets_jesTotalDown") > 0 or
+            getattr(event, "nselectedJets_jerUp") > 0 or
+            getattr(event, "nselectedJets_jerDown") > 0
+        )
+    )
 
     analyzerChain.append(
         TaggerEvaluation(
@@ -215,6 +224,7 @@ if isMC:
         ("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
         ("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
     ]:
+
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=lepJet,
@@ -256,17 +266,6 @@ if isMC:
                 outputName="EventObservables_"+systName
             )
         )
-
-        analyzerChain.append(
-            EventSkim(selection=lambda event: \
-                getattr(event, "nselectedJets_nominal") > 0 or
-                getattr(event, "nselectedJets_jesTotalUp") > 0 or
-                getattr(event, "nselectedJets_jesTotalDown") > 0 or
-                getattr(event, "nselectedJets_jerUp") > 0 or
-                getattr(event, "nselectedJets_jerDown") > 0
-            )
-        )
-
 
 else:
     analyzerChain.append(
@@ -311,11 +310,11 @@ else:
         )
     )
 
-analyzerChain.append(
-    EventSkim(
-        selection=lambda event: event.nselectedJets_nominal > 0
+    analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nselectedJets_nominal > 0
+        )
     )
-)
 
 
 
