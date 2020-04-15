@@ -275,12 +275,6 @@ else:
     )
 
     analyzerChain.append(
-        EventSkim(
-            selection=lambda event: event.nselectedJets_nominal > 0
-        )
-    )
-
-    analyzerChain.append(
         LepJetFinder(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.looseMuons,
@@ -313,6 +307,13 @@ else:
             outputName="EventObservables_nominal"
         )
     )
+
+analyzerChain.append(
+    EventSkim(
+        selection=lambda event: event.nselectedJets_nominal > 0
+    )
+)
+
 
 
 # Event level BDT
