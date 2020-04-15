@@ -175,13 +175,7 @@ if isMC:
                 globalOptions=globalOptions
             )
         )
-        '''
-        analyzerChain.append(
-            EventSkim(
-                selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
-            )
-        )
-        '''
+
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
@@ -192,7 +186,7 @@ if isMC:
 
         analyzerChain.append(
             LepJetFinder(
-                jetCollection=collection,
+                jetCollection=lambda event: getattr(event, "selectedJets_"+systName),
                 leptonCollection=lambda event: event.looseMuons,
                 outputName="lepJet_"+systName
             )
@@ -203,7 +197,6 @@ if isMC:
         TaggerEvaluation(
             modelPath=modelPath[year],
             featureDictFile = featureDictFile,
-            logctauValues=range(-1, 4),
             inputCollections=[
                 lambda event: event.lepJet_nominal,
                 lambda event: event.lepJet_jerUp,
@@ -235,7 +228,6 @@ if isMC:
                 inputCollection=lepJet,
                 taggerName="llpdnnx",
                 outputName="lepJet_"+systName,
-                logctauValues=range(-1, 4),
             )
         )
 
@@ -271,9 +263,7 @@ if isMC:
                 getattr(event, "nselectedJets_jesTotalUp") > 0 or
                 getattr(event, "nselectedJets_jesTotalDown") > 0 or
                 getattr(event, "nselectedJets_jerUp") > 0 or
-                getattr(event, "nselectedJets_jerDown") > 0 or
-                getattr(event, "nselectedJets_unclEnUp") > 0 or
-                getattr(event, "nselectedJets_unclEnDown") > 0
+                getattr(event, "nselectedJets_jerDown") > 0
             )
         )
 
@@ -300,7 +290,6 @@ else:
         TaggerEvaluation(
             modelPath=modelPath[year],
             featureDictFile=featureDictFile,
-            logctauValues=range(-1, 4),
             inputCollections=[lambda event: event.lepJet_nominal],
             taggerName="llpdnnx_nominal",
         )
@@ -311,7 +300,6 @@ else:
             inputCollection=lambda event: event.lepJet_nominal,
             taggerName="llpdnnx_nominal",
             outputName="lepJet_nominal",
-            logctauValues=range(-1, 4),
         )
     )
 

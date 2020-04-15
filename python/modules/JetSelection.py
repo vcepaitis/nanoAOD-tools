@@ -23,9 +23,6 @@ class JetSelection(Module):
          jetMaxPt=100.,
          jetMaxEta=2.4,
          dRCleaning=0.4,
-         minNconstituents=0,
-         genJetMinPt=0.,
-         minRatio=0.,
          flagDA=False,
          addSize=True,
          storeKinematics=['pt', 'eta', 'phi', 'jetId', 'btagCMVA', 'btagDeepB', 'btagDeepFlavB', "muonSubtrFactor", "muon_DeltaR"],
@@ -41,9 +38,6 @@ class JetSelection(Module):
         self.jetMaxPt = jetMaxPt
         self.jetMaxEta = jetMaxEta
         self.dRCleaning = dRCleaning
-        self.minNconstituents = minNconstituents
-        self.genJetMinPt = genJetMinPt
-        self.minRatio = minRatio
         self.flagDA = flagDA
         self.addSize = addSize
         self.storeKinematics = storeKinematics
@@ -85,9 +79,9 @@ class JetSelection(Module):
 
         for jet in jets:
             if jet.pt > self.jetMinPt and jet.pt < self.jetMaxPt\
-               and math.fabs(jet.eta) < self.jetMaxEta\
-               and (jet.jetId > self.jetId)\
-               and (jet.nConstituents > self.minNconstituents):
+                and math.fabs(jet.eta) < self.jetMaxEta\
+                and (jet.jetId > self.jetId):
+
                 leptons = self.leptonCollection(event)
                 leptonsToFind = self.leptonFinderCollection(event)
 
@@ -96,9 +90,12 @@ class JetSelection(Module):
                     if mindr < self.dRCleaning:
                         unselectedJets.append(jet)
                         continue
+
                 if self.dRCleaning > 0. and leptonsToFind is not None and len(leptonsToFind) > 0:
                     mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsToFind))
                     setattr(jet, "muon_DeltaR", mindr)
+
+                selectedJets.append(jet)
 
             else:
                 unselectedJets.append(jet)
@@ -106,6 +103,7 @@ class JetSelection(Module):
 
             if self.flagDA:
                 flagsDA[jet._index] = 1.
+            '''
             if not self.globalOptions["isData"]:
                 if jet.genJetIdx == -1:
                     selectedJets.append(jet)
@@ -115,12 +113,12 @@ class JetSelection(Module):
                     continue
                 else:
                     genJet = genJets[jet.genJetIdx]
-                if genJet.pt > self.genJetMinPt and jet.pt/genJet.pt > self.minRatio:
                     selectedJets.append(jet)
                 else:
                     unselectedJets.append(jet)
             else:
                 selectedJets.append(jet)
+            '''
 
         if self.addSize:
             self.out.fillBranch("n"+self.outputName, len(selectedJets))
