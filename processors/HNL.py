@@ -176,12 +176,6 @@ if isMC:
         )
 
         analyzerChain.append(
-            EventSkim(
-                selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
-            )
-        )
-
-        analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
                 outputName="selectedJets_"+systName,
@@ -257,6 +251,19 @@ if isMC:
             )
         )
 
+        analyzerChain.append(
+            EventSkim(
+                selection=lambda event: getattr(event, "nselectedJets_nominal") > 0 or
+                                        getattr(event, "nselectedJets_jesTotalUp") > 0 or
+                                        getattr(event, "nselectedJets_jesTotalDown") > 0 or
+                                        getattr(event, "nselectedJets_jerUp") > 0 or
+                                        getattr(event, "nselectedJets_jerDown") > 0 or
+                                        getattr(event, "nselectedJets_unclEnUp") > 0 or
+                                        getattr(event, "nselectedJets_unclEnDown") > 0
+            )
+        )
+
+
 else:
     analyzerChain.append(
         JetSelection(
@@ -264,12 +271,6 @@ else:
             outputName="selectedJets_nominal",
             storeKinematics=['pt', 'eta'],
             globalOptions=globalOptions
-        )
-    )
-
-    analyzerChain.append(
-        EventSkim(
-            selection=lambda event: event.nselectedJets_nominal > 0
         )
     )
 
@@ -306,6 +307,13 @@ else:
             outputName="EventObservables_nominal"
         )
     )
+
+analyzerChain.append(
+    EventSkim(
+        selection=lambda event: event.nselectedJets_nominal > 0
+    )
+)
+
 
 
 # Event level BDT

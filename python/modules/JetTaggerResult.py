@@ -39,7 +39,7 @@ class JetTaggerResult(Module):
         self.out = wrappedOutputTree
         for ctau in self.logctauValues:
             for label in self.predictionLabels:
-                self.out.branch(self.outputName+"_"+self.taggerName+"_"+str(ctau).replace(".", "p")+"_"+label,"F",lenVar="n"+self.outputName)
+                self.out.branch(self.outputName+"_"+self.taggerName+"_"+str(ctau).replace(".", "p").replace("-", "m")+"_"+label,"F",lenVar="n"+self.outputName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -61,7 +61,7 @@ class JetTaggerResult(Module):
   
         for ctau in self.logctauValues:
             for label in self.predictionLabels:
-                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+str(ctau).replace(".", "p")+"_"+label,
+                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+str(ctau).replace(".", "p").replace("-", "m")+"_"+label,
                                     taggerResults[ctau][label])
 
         return True
