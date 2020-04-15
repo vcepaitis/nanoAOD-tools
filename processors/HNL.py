@@ -222,10 +222,6 @@ if isMC:
         ("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
         ("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
     ]:
-<<<<<<< HEAD
-=======
-
->>>>>>> 1168c5721829de13584f2e3dbc6879580f301d8b
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=lepJet,
@@ -235,19 +231,6 @@ if isMC:
         )
 
         analyzerChain.append(
-<<<<<<< HEAD
-=======
-            TaggerEvaluation(
-                modelPath=modelPath[year],
-                featureDictFile = featureDictFile,
-                logctauValues=range(-1, 4),
-                inputCollections=[lepJet],
-                taggerName="llpdnnx_"+systName,
-            )
-        )
-
-        analyzerChain.append(
->>>>>>> 1168c5721829de13584f2e3dbc6879580f301d8b
             JetTaggerResult(
                 inputCollection=lepJet,
                 taggerName="llpdnnx",
