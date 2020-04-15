@@ -5,7 +5,7 @@ import json
 import argparse
 import random
 import ROOT
-from importlib import import_module
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor \
     import PostProcessor
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel \
@@ -133,11 +133,12 @@ analyzerChain.append(
     )
 )
 
-
-modelPath = {2016: "PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
-             2017: "PhysicsTools/NanoAODTools/data/nn/weight2017_68.pb",
-             2018: "PhysicsTools/NanoAODTools/data/nn/weight2018_73.pb"
-             }
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
+modelPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2017_attention.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2018_attention.pb"
+}
 
 
 analyzerChain.append(
@@ -163,7 +164,7 @@ if isMC:
         ("jerDown", lambda event: event.jets_jerDown),
         ("jesTotalUp", lambda event: event.jets_jesUp["Total"]),
         ("jesTotalDown", lambda event: event.jets_jesDown["Total"]),
-            ]:
+    ]:
 
         analyzerChain.append(
             JetSelection(
@@ -174,7 +175,13 @@ if isMC:
                 globalOptions=globalOptions
             )
         )
-
+        '''
+        analyzerChain.append(
+            EventSkim(
+                selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
+            )
+        )
+        '''
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
@@ -191,14 +198,30 @@ if isMC:
             )
         )
 
+
+    analyzerChain.append(
+        TaggerEvaluation(
+            modelPath=modelPath[year],
+            featureDictFile = featureDictFile,
+            logctauValues=range(-1, 4),
+            inputCollections=[
+                lambda event: event.lepJet_nominal,
+                lambda event: event.lepJet_jerUp,
+                lambda event: event.lepJet_jerDown,
+                lambda event: event.lepJet_jesTotalUp,
+                lambda event: event.lepJet_jesTotalDown
+            ],
+            taggerName="llpdnnx",
+        )
+    )
+    
     for systName, lepJet in [
         ("nominal", lambda event: event.lepJet_nominal),
         ("jerUp", lambda event: event.lepJet_jerUp),
         ("jerDown", lambda event: event.lepJet_jerDown),
         ("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
         ("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
-            ]:
-
+    ]:
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=lepJet,
@@ -208,18 +231,9 @@ if isMC:
         )
 
         analyzerChain.append(
-            TaggerEvaluation(
-                modelPath=modelPath[year],
-                logctauValues=range(-1, 4),
-                inputCollections=[lepJet],
-                taggerName="llpdnnx_"+systName,
-            )
-        )
-
-        analyzerChain.append(
             JetTaggerResult(
                 inputCollection=lepJet,
-                taggerName="llpdnnx_"+systName,
+                taggerName="llpdnnx",
                 outputName="lepJet_"+systName,
                 logctauValues=range(-1, 4),
             )
@@ -252,14 +266,14 @@ if isMC:
         )
 
         analyzerChain.append(
-            EventSkim(
-                selection=lambda event: getattr(event, "nselectedJets_nominal") > 0 or
-                                        getattr(event, "nselectedJets_jesTotalUp") > 0 or
-                                        getattr(event, "nselectedJets_jesTotalDown") > 0 or
-                                        getattr(event, "nselectedJets_jerUp") > 0 or
-                                        getattr(event, "nselectedJets_jerDown") > 0 or
-                                        getattr(event, "nselectedJets_unclEnUp") > 0 or
-                                        getattr(event, "nselectedJets_unclEnDown") > 0
+            EventSkim(selection=lambda event: \
+                getattr(event, "nselectedJets_nominal") > 0 or
+                getattr(event, "nselectedJets_jesTotalUp") > 0 or
+                getattr(event, "nselectedJets_jesTotalDown") > 0 or
+                getattr(event, "nselectedJets_jerUp") > 0 or
+                getattr(event, "nselectedJets_jerDown") > 0 or
+                getattr(event, "nselectedJets_unclEnUp") > 0 or
+                getattr(event, "nselectedJets_unclEnDown") > 0
             )
         )
 
@@ -285,6 +299,7 @@ else:
     analyzerChain.append(
         TaggerEvaluation(
             modelPath=modelPath[year],
+            featureDictFile=featureDictFile,
             logctauValues=range(-1, 4),
             inputCollections=[lambda event: event.lepJet_nominal],
             taggerName="llpdnnx_nominal",
@@ -370,4 +385,4 @@ p = PostProcessor(
 )
 
 p.run()
-            
+
