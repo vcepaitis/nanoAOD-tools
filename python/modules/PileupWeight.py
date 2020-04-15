@@ -76,8 +76,7 @@ class PileupWeight(Module):
                 w[-1] = 0
 
         #w_up >= w >= w_down
-        if not (w[0] >= w[1] >= w[2]):
-            w = numpy.sort(w)[::-1]
+        w = numpy.sort(w)[::-1]
 
         return w
 
@@ -147,7 +146,7 @@ class PileupWeight(Module):
         if not self.globalOptions["isData"] and self.n>0 and (self.sum2/(1.*self.n))>(self.sum**2/(1.*self.n**2)):
             avg = 1.*self.sum/self.n
             sig = math.sqrt(self.sum2/(1.*self.n)-self.sum**2/(1.*self.n**2))
-            
+
             print "Average pileup weight (%s): %6.3f +- %6.3f"%(self.outputName,avg,sig)
 
     def analyze(self, event):
