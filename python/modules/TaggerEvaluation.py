@@ -104,17 +104,19 @@ class TaggerEvaluation(Module):
     def analyze(self, event):
 
         jetglobal = Collection(event, "global")
+        jetorigin = Collection(event, "jetorigin")
         jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
 
-        
         jetOriginIndices = set() # superset of all indices to evaluate
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
             for ijet, jet in enumerate(jets):
                 global_jet_index = jetglobal_indices.index(jet._index)
-                jetOriginIndices.add(jet._index)
+                jetOriginIndices.add(global_jet_index)
+                setattr(jet, "globalIdx", global_jet_index)
                 #print "jet pt, jet eta, phi, index, global jet pt, eta, phi, index:", jet.pt,jet.eta, jet.phi, jet._index, jetglobal[global_jet_index].eta, jetglobal[global_jet_index].phi, jetglobal[global_jet_index].jetIdx
+
                 '''
                 if jet._index >= len(jetglobal):
                     print "Jet not filled"
@@ -132,6 +134,7 @@ class TaggerEvaluation(Module):
             self.setup(event._tree)
             
         self.nJets = len(jetglobal)
+
         if len(jetOriginIndices)==0:
             return True
             
@@ -154,18 +157,15 @@ class TaggerEvaluation(Module):
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
-            for ijet,jet in enumerate(jets):
+            for ijet, jet in enumerate(jets):
                 taggerOutput = {}
 
-                for ictau,ctau in enumerate(self.evalValues):
+                for ictau, ctau in enumerate(self.evalValues):
                     taggerOutput[self.evalValues[ictau]] = {}
 
                     for iclass, classLabel in enumerate(self.predictionLabels):  
-                        if jet._index<len(jetglobal):
                             taggerOutput[self.evalValues[ictau]][classLabel] = \
-                                    predictionsPerIndexAndCtau[jet._index][ctau][iclass]
-                        else:
-                            taggerOutput[self.evalValues[ictau]][classLabel] = -1
+                                    predictionsPerIndexAndCtau[jet.globalIdx][ctau][iclass]
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
