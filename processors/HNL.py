@@ -5,7 +5,7 @@ import json
 import argparse
 import random
 import ROOT
-from importlib import import_module
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor \
     import PostProcessor
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel \
@@ -133,11 +133,12 @@ analyzerChain.append(
     )
 )
 
-
-modelPath = {2016: "PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
-             2017: "PhysicsTools/NanoAODTools/data/nn/weight2017_68.pb",
-             2018: "PhysicsTools/NanoAODTools/data/nn/weight2018_73.pb"
-             }
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
+modelPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2017_attention.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2018_attention.pb"
+}
 
 
 analyzerChain.append(
@@ -163,7 +164,7 @@ if isMC:
         ("jerDown", lambda event: event.jets_jerDown),
         ("jesTotalUp", lambda event: event.jets_jesUp["Total"]),
         ("jesTotalDown", lambda event: event.jets_jesDown["Total"]),
-            ]:
+    ]:
 
         analyzerChain.append(
             JetSelection(
@@ -174,13 +175,13 @@ if isMC:
                 globalOptions=globalOptions
             )
         )
-
+        '''
         analyzerChain.append(
             EventSkim(
                 selection=lambda event: getattr(event, "nselectedJets_"+systName) > 0
             )
         )
-
+        '''
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=collection,
@@ -203,7 +204,7 @@ if isMC:
         ("jerDown", lambda event: event.lepJet_jerDown),
         ("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
         ("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
-            ]:
+    ]:
 
         analyzerChain.append(
             JetTruthFlags(
@@ -216,6 +217,7 @@ if isMC:
         analyzerChain.append(
             TaggerEvaluation(
                 modelPath=modelPath[year],
+                featureDictFile = featureDictFile,
                 logctauValues=range(-1, 4),
                 inputCollections=[lepJet],
                 taggerName="llpdnnx_"+systName,
@@ -284,6 +286,7 @@ else:
     analyzerChain.append(
         TaggerEvaluation(
             modelPath=modelPath[year],
+            featureDictFile=featureDictFile,
             logctauValues=range(-1, 4),
             inputCollections=[lambda event: event.lepJet_nominal],
             taggerName="llpdnnx_nominal",
@@ -362,4 +365,4 @@ p = PostProcessor(
 )
 
 p.run()
-            
+

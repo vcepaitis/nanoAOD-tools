@@ -6,7 +6,7 @@ import ROOT
 import random
 import numpy
 import time
-from importlib import import_module
+import imp
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -18,6 +18,7 @@ class TaggerEvaluation(Module):
     def __init__(
         self,
         modelPath,
+        featureDictFile,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
         predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
@@ -30,7 +31,12 @@ class TaggerEvaluation(Module):
         self.logctauValues = logctauValues
         self.logctau = numpy.array(logctauValues,dtype=numpy.float32)
         
-        self.modelPath = modelPath
+        self.modelPath = os.path.expandvars(modelPath)
+        print featureDictFile
+        self.featureDict = imp.load_source(
+            'feature_dict', 
+            os.path.expandvars(featureDictFile)
+        ).featureDict
         self.taggerName = taggerName
  
     def beginJob(self):
@@ -44,7 +50,7 @@ class TaggerEvaluation(Module):
         self.setup(inputTree)
                 
 
-    def setupTFEval(self,tree,modelFile,featureDict):
+    def setupTFEval(self,tree,modelFile):
         print "Building TFEval object"
         tfEval = ROOT.TFEval()
         print "Succesfully built TFEval object"
@@ -53,7 +59,7 @@ class TaggerEvaluation(Module):
             sys.exit(1)
         tfEval.addOutputNodeName("prediction")
         print "--- Model: ",modelFile," ---"
-        for groupName,featureCfg in featureDict.iteritems():
+        for groupName,featureCfg in self.featureDict.iteritems():
             if featureCfg.has_key("max"):
                 print "building group ... %s, shape=[%i,%i], length=%s"%(groupName,featureCfg["max"],len(featureCfg["branches"]),featureCfg["length"])
                 lengthBranch = ROOT.TFEval.createAccessor(tree.arrayReader(featureCfg["length"]))
@@ -81,8 +87,7 @@ class TaggerEvaluation(Module):
         return tfEval
         
     def setup(self,tree):
-        from PhysicsTools.NanoAODTools import featureDict
-        self.tfEvalParametric = self.setupTFEval(tree,self.modelPath,featureDict)
+        self.tfEvalParametric = self.setupTFEval(tree,self.modelPath)
         print "setup model successfully..."
         
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
