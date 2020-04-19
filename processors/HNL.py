@@ -152,18 +152,18 @@ analyzerChain.append(
 if isMC:
     analyzerChain.append(
         JetMetUncertainties(
-            era=globalOptions["year"],
-            globalTag=jecTags[globalOptions["year"]],
-            jerTag=jerTags[globalOptions["year"]],
-            )
+            jesUncertaintyFile='${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt',
+            jerResolutionFileName='${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt',
+            jerSFUncertaintyFileName='${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_25nsV1_MC_SF_AK4PFchs.txt'        
+        )
     )
 
     for systName, collection in [
         ("nominal", lambda event: event.jets_nominal),
         ("jerUp", lambda event: event.jets_jerUp),
         ("jerDown", lambda event: event.jets_jerDown),
-        ("jesTotalUp", lambda event: event.jets_jesUp["Total"]),
-        ("jesTotalDown", lambda event: event.jets_jesDown["Total"]),
+        ("jesTotalUp", lambda event: event.jets_jesTotalUp),
+        ("jesTotalDown", lambda event: event.jets_jesTotalDown),
     ]:
 
         analyzerChain.append(
@@ -249,9 +249,9 @@ if isMC:
         ("jerDown", lambda event: event.selectedJets_jerDown,
             lambda event: event.met_jerDown),
         ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
-            lambda event: event.met_jesUp["Total"]),
+            lambda event: event.met_jesTotalUp),
         ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown,
-            lambda event: event.met_jesDown["Total"]),
+            lambda event: event.met_jesTotalDown),
         ("unclEnUp", lambda event: event.selectedJets_nominal,
             lambda event: event.met_unclEnUp),
         ("unclEnDown", lambda event: event.selectedJets_nominal,
