@@ -139,7 +139,22 @@ modelPath = {
     2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2017_attention.pb",
     2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2018_attention.pb"
 }
+jesUncertaintyFile = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Fall17_17Nov2017_V32_MC_Uncertainty_AK4PFchs.txt",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Autumn18_V19_MC_Uncertainty_AK4PFchs.txt"
+}
+jerResolutionFile = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Fall17_V3_MC_PtResolution_AK4PFchs.txt",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Autumn18_V7_MC_PtResolution_AK4PFchs.txt"
+}
 
+jerSFUncertaintyFile = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_25nsV1_MC_SF_AK4PFchs.txt",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Fall17_V3_MC_SF_AK4PFchs.txt",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Autumn18_V7_MC_SF_AK4PFchs.txt"
+}
 
 analyzerChain.append(
      MetFilter(
@@ -152,9 +167,9 @@ analyzerChain.append(
 if isMC:
     analyzerChain.append(
         JetMetUncertainties(
-            jesUncertaintyFile='${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt',
-            jerResolutionFileName='${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt',
-            jerSFUncertaintyFileName='${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_25nsV1_MC_SF_AK4PFchs.txt'        
+            jesUncertaintyFile=jesUncertaintyFile[year],
+            jerResolutionFileName=jerResolutionFile[year],
+            jerSFUncertaintyFileName=jerSFUncertaintyFile[year]
         )
     )
 
