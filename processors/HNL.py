@@ -186,7 +186,6 @@ if isMC:
                 inputCollection=collection,
                 leptonCollection=lambda event: event.tightMuon,
                 outputName="selectedJets_"+systName,
-                storeKinematics=['pt', 'eta'],
                 globalOptions=globalOptions
             )
         )
