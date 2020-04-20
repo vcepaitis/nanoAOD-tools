@@ -25,7 +25,7 @@ class JetSelection(Module):
          dRCleaning=0.4,
          flagDA=False,
          addSize=True,
-         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'btagCMVA', 'btagDeepB', 'btagDeepFlavB', "muonSubtrFactor", "muon_DeltaR"],
+         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'btagCMVA', 'btagDeepB', 'btagDeepFlavB', 'muonSubtrFactor', 'muon_DeltaR', 'nConstituents'],
          globalOptions={"isData": False},
          jetId=-1
          ):

@@ -15,10 +15,12 @@ class LepJetFinder(Module):
         jetCollection,
         leptonCollection,
         outputName="lepJet",
+        storeKinematics=['pt', 'eta', 'phi', 'jetId', 'deltaR', 'nConstituents', 'jetIdx'],
     ):
         self.jetCollection = jetCollection
         self.leptonCollection = leptonCollection
         self.outputName = outputName
+        self.storeKinematics = storeKinematics
 
     def beginJob(self):
         pass
@@ -28,16 +30,9 @@ class LepJetFinder(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch(self.outputName+"_jetIdx",
-                        "I", lenVar="n"+self.outputName)
-        self.out.branch(self.outputName+"_pt",
-                        "F", lenVar="n"+self.outputName)
-        self.out.branch(self.outputName+"_eta",
-                        "F", lenVar="n"+self.outputName)
-        self.out.branch(self.outputName+"_phi",
-                        "F", lenVar="n"+self.outputName)
-        self.out.branch(self.outputName+"_deltaR",
-                        "F", lenVar="n"+self.outputName)
+
+        for variable in self.storeKinematics:
+            self.out.branch(self.outputName+"_"+variable, "F", lenVar="n"+self.outputName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -45,11 +40,6 @@ class LepJetFinder(Module):
     def analyze(self, event):
         jetCollection = self.jetCollection(event)
         leptonCollection = self.leptonCollection(event)
-        jet_idxs = []
-        jet_pts = []
-        jet_etas = []
-        jet_phis = []
-        jet_deltaRs = []
         lepJets = []
 
         if len(jetCollection) == 0:
@@ -66,17 +56,12 @@ class LepJetFinder(Module):
                     deltaR = _deltaR
 
             lepJets.append(jet)
-            jet_deltaRs.append(lepton.p4().DeltaR(jet.p4()))
-            jet_pts.append(jet.pt)
-            jet_etas.append(jet.eta)
-            jet_phis.append(jet.phi)
-            jet_idxs.append(jet._index)
+            setattr(jet, "deltaR", deltaR)
+            setattr(jet, "jetIdx", jet._index)
 
-        self.out.fillBranch(self.outputName+"_jetIdx", jet_idxs)
-        self.out.fillBranch(self.outputName+"_pt", jet_pts)
-        self.out.fillBranch(self.outputName+"_eta", jet_etas)
-        self.out.fillBranch(self.outputName+"_phi", jet_phis)
-        self.out.fillBranch(self.outputName+"_deltaR", jet_deltaRs)
+        for variable in self.storeKinematics:
+            self.out.fillBranch(self.outputName+"_"+variable,
+                                map(lambda jet: getattr(jet, variable), lepJets))
         setattr(event, self.outputName, lepJets)
 
         return True
