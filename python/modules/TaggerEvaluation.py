@@ -6,7 +6,7 @@ import ROOT
 import random
 import numpy
 import time
-from importlib import import_module
+import imp
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -18,19 +18,25 @@ class TaggerEvaluation(Module):
     def __init__(
         self,
         modelPath,
+        featureDictFile,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
         predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
-        logctauValues = range(-1, 4),
+        evalValues = range(-1, 4),
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
         self.predictionLabels = predictionLabels
-        self.logctauValues = logctauValues
-        self.logctau = numpy.array(logctauValues,dtype=numpy.float32)
+        self.evalValues = evalValues
+        self.logctau = numpy.array(evalValues,dtype=numpy.float32)
         
-        self.modelPath = modelPath
+        self.modelPath = os.path.expandvars(modelPath)
+        print featureDictFile
+        self.featureDict = imp.load_source(
+            'feature_dict', 
+            os.path.expandvars(featureDictFile)
+        ).featureDict
         self.taggerName = taggerName
  
     def beginJob(self):
@@ -44,7 +50,7 @@ class TaggerEvaluation(Module):
         self.setup(inputTree)
                 
 
-    def setupTFEval(self,tree,modelFile,featureDict):
+    def setupTFEval(self,tree,modelFile):
         print "Building TFEval object"
         tfEval = ROOT.TFEval()
         print "Succesfully built TFEval object"
@@ -53,7 +59,7 @@ class TaggerEvaluation(Module):
             sys.exit(1)
         tfEval.addOutputNodeName("prediction")
         print "--- Model: ",modelFile," ---"
-        for groupName,featureCfg in featureDict.iteritems():
+        for groupName,featureCfg in self.featureDict.iteritems():
             if featureCfg.has_key("max"):
                 print "building group ... %s, shape=[%i,%i], length=%s"%(groupName,featureCfg["max"],len(featureCfg["branches"]),featureCfg["length"])
                 lengthBranch = ROOT.TFEval.createAccessor(tree.arrayReader(featureCfg["length"]))
@@ -81,8 +87,7 @@ class TaggerEvaluation(Module):
         return tfEval
         
     def setup(self,tree):
-        from PhysicsTools.NanoAODTools import featureDict
-        self.tfEvalParametric = self.setupTFEval(tree,self.modelPath,featureDict)
+        self.tfEvalParametric = self.setupTFEval(tree,self.modelPath)
         print "setup model successfully..."
         
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
@@ -99,27 +104,34 @@ class TaggerEvaluation(Module):
     def analyze(self, event):
 
         jetglobal = Collection(event, "global")
-        
-        jetOriginIndices = set() #superset of all indices to evaluate
+        jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
+
+        jetOriginIndices = set() # superset of all indices to evaluate
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
-            for ijet,jet in enumerate(jets):
-                if jet._index>=len(jetglobal):
-                    print "Jet not filled"
-                    continue
-                jetOriginIndices.add(jet._index)
+            for ijet, jet in enumerate(jets):
+                global_jet_index = jetglobal_indices.index(jet._index)
+                global_jet = jetglobal[global_jet_index]
+
+                if abs(jet.eta - global_jet.eta) > 0.01 or \
+                   abs(jet.phi - global_jet.phi) > 0.01:
+                       print "Warning ->> jet might be mismatched!"
+                jetOriginIndices.add(global_jet_index)
+                setattr(jet, "globalIdx", global_jet_index)
                 
         jetOriginIndices = list(jetOriginIndices)
+
         
         evaluationIndices = []
         for index in jetOriginIndices:
-            evaluationIndices.extend([index]*len(self.logctauValues))
+            evaluationIndices.extend([index]*len(self.evalValues))
                 
         if event._tree._ttreereaderversion > self._ttreereaderversion:
             self.setup(event._tree)
             
         self.nJets = len(jetglobal)
+
         if len(jetOriginIndices)==0:
             return True
             
@@ -134,27 +146,24 @@ class TaggerEvaluation(Module):
         for ijet,jetIndex in enumerate(jetOriginIndices):
             predictionsPerIndexAndCtau[jetIndex] = {}
 
-            for ictau,ctau in enumerate(self.logctauValues):
-                predictionIndex = ijet*len(self.logctauValues)+ictau
+            for ictau,ctau in enumerate(self.evalValues):
+                predictionIndex = ijet*len(self.evalValues)+ictau
                 predictionsPerIndexAndCtau[jetIndex][ctau] = result.get("prediction",predictionIndex)
                 
                 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
-            for ijet,jet in enumerate(jets):
+            for ijet, jet in enumerate(jets):
                 taggerOutput = {}
 
-                for ictau,ctau in enumerate(self.logctauValues):
-                    taggerOutput[self.logctauValues[ictau]] = {}
+                for ictau, ctau in enumerate(self.evalValues):
+                    taggerOutput[self.evalValues[ictau]] = {}
 
                     for iclass, classLabel in enumerate(self.predictionLabels):  
-                        if jet._index<len(jetglobal):
-                            taggerOutput[self.logctauValues[ictau]][classLabel] = \
-                                    predictionsPerIndexAndCtau[jet._index][ctau][iclass]
-                        else:
-                            taggerOutput[self.logctauValues[ictau]][classLabel] = -1
+                            taggerOutput[self.evalValues[ictau]][classLabel] = \
+                                    predictionsPerIndexAndCtau[jet.globalIdx][ctau][iclass]
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
-            
+
