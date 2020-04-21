@@ -24,8 +24,7 @@ class JetSelection(Module):
          jetMaxEta=2.4,
          dRCleaning=0.4,
          flagDA=False,
-         addSize=True,
-         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'btagCMVA', 'btagDeepB', 'btagDeepFlavB', "muonSubtrFactor", "muon_DeltaR"],
+         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'muonSubtrFactor', 'muon_DeltaR', 'nConstituents'],
          globalOptions={"isData": False},
          jetId=-1
          ):
@@ -39,7 +38,6 @@ class JetSelection(Module):
         self.jetMaxEta = jetMaxEta
         self.dRCleaning = dRCleaning
         self.flagDA = flagDA
-        self.addSize = addSize
         self.storeKinematics = storeKinematics
         self.jetId = jetId
 
@@ -51,9 +49,6 @@ class JetSelection(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        if self.addSize:
-            self.out.branch("n"+self.outputName, "I")
-            self.out.branch("nfailedId"+self.outputName, "I")
         if self.flagDA:
             self.out.branch(self.outputName+"_forDA", "F", lenVar="nJet")
 
@@ -65,17 +60,14 @@ class JetSelection(Module):
 
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
+
         jets = self.inputCollection(event)
-        origJets = Collection(event,"Jet")
-        if not self.globalOptions["isData"]:
-            genJets = Collection(event,"GenJet")
+
         selectedJets = []
         unselectedJets = []
 
         if self.flagDA:
             flagsDA = [0.]*event.nJet
-
-        failedId = 0
 
         for jet in jets:
             if jet.pt > self.jetMinPt and jet.pt < self.jetMaxPt\
@@ -94,6 +86,9 @@ class JetSelection(Module):
                 if self.dRCleaning > 0. and leptonsToFind is not None and len(leptonsToFind) > 0:
                     mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsToFind))
                     setattr(jet, "muon_DeltaR", mindr)
+                else:
+                    setattr(jet, "muon_DeltaR", -1)
+
 
                 selectedJets.append(jet)
 
@@ -103,6 +98,7 @@ class JetSelection(Module):
 
             if self.flagDA:
                 flagsDA[jet._index] = 1.
+
             '''
             if not self.globalOptions["isData"]:
                 if jet.genJetIdx == -1:
@@ -120,11 +116,9 @@ class JetSelection(Module):
                 selectedJets.append(jet)
             '''
 
-        if self.addSize:
-            self.out.fillBranch("n"+self.outputName, len(selectedJets))
-            self.out.fillBranch("nfailedId"+self.outputName, failedId)
         if self.flagDA:
             self.out.fillBranch(self.outputName+"_forDA", flagsDA)
+
         for variable in self.storeKinematics:
             self.out.fillBranch(self.outputName+"_"+variable,
                                 map(lambda jet: getattr(jet, variable), selectedJets))

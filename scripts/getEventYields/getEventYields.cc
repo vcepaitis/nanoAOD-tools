@@ -11,6 +11,7 @@ using json = nlohmann::json;
 
 int main(int argc, char **argv){
     std::string path{argv[1]};
+    std::string output_path{argv[2]};
     std::map<std::string, TH1F> pileupHists;
     std::map<std::string, double> processDict;
     //std::map<std::string, TH1F> mapOfHists;
@@ -59,7 +60,7 @@ int main(int argc, char **argv){
                 std::cout << x.first << " => " << x.second << '\n';
     }  
 
-    std::string output_string = (path+"/pileup.root");
+    std::string output_string = (output_path+"/pileup.root");
 
     TFile *rootFile = TFile::Open(output_string.c_str(), "RECREATE");
     for (std::pair<std::string, TH1F> x: pileupHists) {
@@ -71,7 +72,7 @@ int main(int argc, char **argv){
     json j_map(processDict);
 
 
-    output_string = path+"/eventyields.json";
+    output_string = output_path+"/eventyields.json";
     std::ofstream o(output_string.c_str());
     o << j_map << std::endl;
 
