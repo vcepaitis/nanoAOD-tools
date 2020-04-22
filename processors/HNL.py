@@ -1,7 +1,6 @@
 import os
 import sys
 import math
-import json
 import argparse
 import random
 import ROOT
@@ -248,6 +247,14 @@ if isMC:
         )
 
         analyzerChain.append(
+            JetTaggerIntegral(
+                inputCollection=lepJet,
+                taggerName="llpdnnx",
+                outputName="lepJet_"+systName,
+            )
+        )
+
+        analyzerChain.append(
             JetTaggerResult(
                 inputCollection=lepJet,
                 taggerName="llpdnnx",
@@ -305,6 +312,14 @@ else:
             featureDictFile=featureDictFile,
             inputCollections=[lambda event: event.lepJet_nominal],
             taggerName="llpdnnx_nominal",
+        )
+    )
+
+    analyzerChain.append(
+        JetTaggerIntegral(
+            inputCollection=lambda event: event.lepJet_nominal,
+            taggerName="llpdnnx_nominal",
+            outputName="lepJet_nominal",
         )
     )
 

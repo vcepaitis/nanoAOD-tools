@@ -4,14 +4,14 @@ import math
 import json
 import ROOT
 import random
-import numpy
+import numpy as np
 import time
 import imp
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getCtauLabel
+from utils import getCtauLabel, getAbscissasAndWeights
 
 class TaggerEvaluation(Module):
 
@@ -23,13 +23,15 @@ class TaggerEvaluation(Module):
         taggerName = "llpdnnx",
         predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
         evalValues = range(-1, 4),
+        integrateDisplacementOrder = 3,
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
         self.predictionLabels = predictionLabels
-        self.evalValues = evalValues
-        self.logctau = numpy.array(evalValues,dtype=numpy.float32)
+        self.evalValues = list(evalValues)
+        self.nEvalValues = len(evalValues)
+        self.integrateDisplacementOrder = integrateDisplacementOrder
         
         self.modelPath = os.path.expandvars(modelPath)
         print featureDictFile
@@ -38,7 +40,25 @@ class TaggerEvaluation(Module):
             os.path.expandvars(featureDictFile)
         ).featureDict
         self.taggerName = taggerName
- 
+        if self.integrateDisplacementOrder != -1:
+            self.integrate = True
+            self.abscissas, self.weights = getAbscissasAndWeights(self.integrateDisplacementOrder)
+        else:
+            self.integrate = False
+
+        if self.integrate:
+            file_path = "PhysicsTools/NanoAODTools/data/hnl/tau.json"
+            with open(file_path) as json_file:
+                tau_values = json.load(json_file)
+            for sample, tau in tau_values.iteritems():
+                print sample, tau
+                for abscissa in self.abscissas:
+                    logDisplacement = math.log10(abscissa) - (tau-1)*abscissa
+                    self.evalValues.append(logDisplacement)
+
+        self.evalValues = np.array(self.evalValues, dtype=np.float32)
+        print "Evaluation values:" , self.evalValues
+
     def beginJob(self):
         pass
         
@@ -92,7 +112,8 @@ class TaggerEvaluation(Module):
         
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
         self.nJets = 0
-        genFeatureGroup.addFeature(ROOT.TFEval.PyAccessor(lambda: self.nJets, lambda jetIndex,batchIndex: self.logctau[batchIndex%len(self.logctau)]))
+            
+        genFeatureGroup.addFeature(ROOT.TFEval.PyAccessor(lambda: self.nJets, lambda jetIndex, batchIndex: self.evalValues[batchIndex%len(self.evalValues)]))
         self.tfEvalParametric.addFeatureGroup(genFeatureGroup)
         
         self._ttreereaderversion = tree._ttreereaderversion
@@ -138,22 +159,22 @@ class TaggerEvaluation(Module):
 
         if len(jetOriginIndices)==0:
             return True
+
             
-        evaluationIndices = numpy.array(evaluationIndices,numpy.int64)
+        evaluationIndices = np.array(evaluationIndices,np.int64)
         result = self.tfEvalParametric.evaluate(
             evaluationIndices.shape[0],
             evaluationIndices
         )
 
-        predictionsPerIndexAndCtau = {}
+        predictionsPerIndexAndValue = {}
 
         for ijet,jetIndex in enumerate(jetOriginIndices):
-            predictionsPerIndexAndCtau[jetIndex] = {}
+            predictionsPerIndexAndValue[jetIndex] = {}
 
-            for ictau,ctau in enumerate(self.evalValues):
-                predictionIndex = ijet*len(self.evalValues)+ictau
-                predictionsPerIndexAndCtau[jetIndex][ctau] = result.get("prediction",predictionIndex)
-                
+            for ivalue, value in enumerate(self.evalValues):
+                predictionIndex = ijet*len(self.evalValues)+ivalue
+                predictionsPerIndexAndValue[jetIndex][value] = result.get("prediction",predictionIndex)
                 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
@@ -161,12 +182,12 @@ class TaggerEvaluation(Module):
             for ijet, jet in enumerate(jets):
                 taggerOutput = {}
 
-                for ictau, ctau in enumerate(self.evalValues):
-                    taggerOutput[self.evalValues[ictau]] = {}
+                for ivalue, value in enumerate(self.evalValues):
+                    taggerOutput[self.evalValues[ivalue]] = {}
 
                     for iclass, classLabel in enumerate(self.predictionLabels):  
-                            taggerOutput[self.evalValues[ictau]][classLabel] = \
-                                    predictionsPerIndexAndCtau[jet.globalIdx][ctau][iclass]
+                            taggerOutput[self.evalValues[ivalue]][classLabel] = \
+                                    predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
