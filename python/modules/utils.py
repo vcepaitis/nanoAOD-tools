@@ -3,6 +3,8 @@ import sys
 import math
 import ROOT
 import random
+from numpy.polynomial import laguerre
+import numpy as np
 
 
 class PhysicsObject(object):
@@ -115,3 +117,19 @@ def getSFXY(hist, x, y):
         yBin = hist.GetNbinsY()
 
     return hist.GetBinContent(xBin, yBin), hist.GetBinError(xBin, yBin)
+
+
+def getAbscissasAndWeights(N=5):
+    # Laguerre polynomial roots and weights for Laguerre-Guass quadrature
+    coef = np.concatenate([np.zeros(N), [1]])
+    roots = laguerre.lagroots(coef)
+    weights = []
+    for n, root in enumerate(roots):
+        n = n+1
+        array = np.concatenate([np.zeros(N+1), [1]])
+        value = laguerre.lagval(root, array)
+        weight = root/((N+1)*value)**2
+        weights.append(weight)
+
+    return roots, weights
+

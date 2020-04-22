@@ -29,3 +29,4 @@ from WNLOWeights import WNLOWeights
 from JetFeatures import JetFeatures
 from LepJetFinder import LepJetFinder
 from XGBEvaluation import XGBEvaluation
+from JetTaggerIntegral import JetTaggerIntegral
