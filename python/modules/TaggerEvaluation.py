@@ -47,13 +47,13 @@ class TaggerEvaluation(Module):
             self.integrate = False
 
         if self.integrate:
-            file_path = "PhysicsTools/NanoAODTools/data/hnl/tau.json"
+            file_path = "PhysicsTools/NanoAODTools/data/hnl/L0.json"
             with open(file_path) as json_file:
-                tau_values = json.load(json_file)
-            for sample, tau in tau_values.iteritems():
-                print sample, tau
+                L0_values = json.load(json_file)
+            for sample, L0 in L0_values.iteritems():
+                print sample, L0
                 for abscissa in self.abscissas:
-                    logDisplacement = math.log10(abscissa) - (tau-1)*abscissa
+                    logDisplacement = math.log10(L0*abscissa)
                     self.evalValues.append(logDisplacement)
 
         self.evalValues = np.array(self.evalValues, dtype=np.float32)

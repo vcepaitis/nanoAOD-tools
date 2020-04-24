@@ -39,15 +39,15 @@ class JetTaggerIntegral(Module):
         self.out = wrappedOutputTree
         self.evalDict = {}
 
-        file_path = "PhysicsTools/NanoAODTools/data/hnl/tau.json"
+        file_path = "PhysicsTools/NanoAODTools/data/hnl/L0.json"
         with open(file_path) as json_file:
-            tau_values = json.load(json_file)
-        for sample, tau in tau_values.iteritems():
+            L0_values = json.load(json_file)
+        for sample, L0 in L0_values.iteritems():
             shortName = sample.replace('HeavyNeutrino_lljj_', '').replace('M-', 'M').replace('V-', 'V').replace('.', 'p')
             print(shortName)
             self.evalDict[shortName] = []
             for abscissa in self.abscissas:
-                logDisplacement = math.log10(abscissa) - (tau-1)*abscissa
+                logDisplacement = math.log10(abscissa*L0)
                 self.evalDict[shortName].append(logDisplacement)
             self.evalDict[shortName] = np.array(self.evalDict[shortName], dtype=np.float32)
 
