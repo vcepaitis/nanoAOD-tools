@@ -111,14 +111,18 @@ class TaggerEvaluation(Module):
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
             for ijet, jet in enumerate(jets):
-                global_jet_index = jetglobal_indices.index(jet._index)
-                global_jet = jetglobal[global_jet_index]
-
-                if abs(jet.eta - global_jet.eta) > 0.01 or \
-                   abs(jet.phi - global_jet.phi) > 0.01:
-                       print "Warning ->> jet might be mismatched!"
-                jetOriginIndices.add(global_jet_index)
-                setattr(jet, "globalIdx", global_jet_index)
+                try:
+                    global_jet_index = jetglobal_indices.index(jet._index)
+                except ValueError:
+                    print "WARNING: jet (pt: %s, eta: %s) does not have a matching global jet --> tagger cannot be evaluated!" % (jet.pt, jet.eta)
+                    continue
+                else:
+                    global_jet = jetglobal[global_jet_index]
+                    if abs(jet.eta - global_jet.eta) > 0.01 or \
+                       abs(jet.phi - global_jet.phi) > 0.01:
+                           print "Warning ->> jet might be mismatched!"
+                    jetOriginIndices.add(global_jet_index)
+                    setattr(jet, "globalIdx", global_jet_index)
                 
         jetOriginIndices = list(jetOriginIndices)
 
