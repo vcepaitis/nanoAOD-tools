@@ -53,7 +53,7 @@ class TaggerEvaluation(Module):
             for sample, L0 in L0_values.iteritems():
                 print sample, L0
                 for abscissa in self.abscissas:
-                    logDisplacement = math.log10(L0*abscissa)
+                    logDisplacement = math.log10(abscissa/L0)
                     self.evalValues.append(logDisplacement)
 
         self.evalValues = np.array(self.evalValues, dtype=np.float32)

@@ -47,7 +47,7 @@ class JetTaggerIntegral(Module):
             print(shortName)
             self.evalDict[shortName] = []
             for abscissa in self.abscissas:
-                logDisplacement = math.log10(abscissa*L0)
+                logDisplacement = math.log10(abscissa/L0)
                 self.evalDict[shortName].append(logDisplacement)
             self.evalDict[shortName] = np.array(self.evalDict[shortName], dtype=np.float32)
 
