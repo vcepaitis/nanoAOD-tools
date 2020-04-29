@@ -30,25 +30,25 @@ class TaggerEvaluation(Module):
         self.predictionLabels = predictionLabels
         self.evalValues = evalValues
         self.logctau = numpy.array(evalValues,dtype=numpy.float32)
-        
+
         self.modelPath = os.path.expandvars(modelPath)
         print featureDictFile
         self.featureDict = imp.load_source(
-            'feature_dict', 
+            'feature_dict',
             os.path.expandvars(featureDictFile)
         ).featureDict
         self.taggerName = taggerName
- 
+
     def beginJob(self):
         pass
-        
+
     def endJob(self):
         pass
-        
+
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         self.setup(inputTree)
-                
+
 
     def setupTFEval(self,tree,modelFile):
         print "Building TFEval object"
@@ -83,24 +83,24 @@ class TaggerEvaluation(Module):
                     print branchName
                     featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
-                
+
         return tfEval
-        
+
     def setup(self,tree):
         self.tfEvalParametric = self.setupTFEval(tree,self.modelPath)
         print "setup model successfully..."
-        
+
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
         self.nJets = 0
         genFeatureGroup.addFeature(ROOT.TFEval.PyAccessor(lambda: self.nJets, lambda jetIndex,batchIndex: self.logctau[batchIndex%len(self.logctau)]))
         self.tfEvalParametric.addFeatureGroup(genFeatureGroup)
-        
+
         self._ttreereaderversion = tree._ttreereaderversion
-        
-        
+
+
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
+
     def analyze(self, event):
 
         jetglobal = Collection(event, "global")
@@ -123,22 +123,22 @@ class TaggerEvaluation(Module):
                            print "Warning ->> jet might be mismatched!"
                     jetOriginIndices.add(global_jet_index)
                     setattr(jet, "globalIdx", global_jet_index)
-                
+
         jetOriginIndices = list(jetOriginIndices)
 
-        
+
         evaluationIndices = []
         for index in jetOriginIndices:
             evaluationIndices.extend([index]*len(self.evalValues))
-                
+
         if event._tree._ttreereaderversion > self._ttreereaderversion:
             self.setup(event._tree)
-            
+
         self.nJets = len(jetglobal)
 
         if len(jetOriginIndices)==0:
             return True
-            
+
         evaluationIndices = numpy.array(evaluationIndices,numpy.int64)
         result = self.tfEvalParametric.evaluate(
             evaluationIndices.shape[0],
@@ -153,8 +153,8 @@ class TaggerEvaluation(Module):
             for ictau,ctau in enumerate(self.evalValues):
                 predictionIndex = ijet*len(self.evalValues)+ictau
                 predictionsPerIndexAndCtau[jetIndex][ctau] = result.get("prediction",predictionIndex)
-                
-                
+
+
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
@@ -164,10 +164,12 @@ class TaggerEvaluation(Module):
                 for ictau, ctau in enumerate(self.evalValues):
                     taggerOutput[self.evalValues[ictau]] = {}
 
-                    for iclass, classLabel in enumerate(self.predictionLabels):  
+                    for iclass, classLabel in enumerate(self.predictionLabels):
+                        if hasattr(jet, "globalIdx"):
                             taggerOutput[self.evalValues[ictau]][classLabel] = \
                                     predictionsPerIndexAndCtau[jet.globalIdx][ctau][iclass]
+                        else:
+                            taggerOutput[self.evalValues[ictau]][classLabel] = -1.0
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
-
