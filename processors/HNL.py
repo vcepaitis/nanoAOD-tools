@@ -227,6 +227,7 @@ if isMC:
                 lambda event: event.lepJet_jesTotalDown
             ],
             taggerName="llpdnnx",
+            integrateDisplacementOrder=5
         )
     )
     
@@ -251,6 +252,7 @@ if isMC:
                 inputCollection=lepJet,
                 taggerName="llpdnnx",
                 outputName="lepJet_"+systName,
+                integrateDisplacementOrder=5
             )
         )
 
