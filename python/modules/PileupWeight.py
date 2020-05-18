@@ -53,7 +53,7 @@ class PileupWeight(Module):
             fMC.Close()
 
             #add up and down hists in a loop
-            for var in ["_up", "", "_down"]:
+            for var in ["_up", "_nominal", "_down"]:
 
                 fData = ROOT.TFile(getattr(self, "dataFile"+var))
 
