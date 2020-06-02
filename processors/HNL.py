@@ -1,7 +1,6 @@
 import os
 import sys
 import math
-import json
 import argparse
 import random
 import ROOT
@@ -184,6 +183,7 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=collection,
+                jetMinPt=30.,
                 leptonCollection=lambda event: event.tightMuon,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -192,7 +192,7 @@ if isMC:
 
         analyzerChain.append(
             JetTruthFlags(
-                inputCollection=collection,
+                inputCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -248,10 +248,18 @@ if isMC:
         )
 
         analyzerChain.append(
+            JetTaggerIntegral(
+                taggerName="llpdnnx",
+                inputCollection=lepJet,
+                outputName="lepJet_%s" % (systName),
+            )
+        )
+
+        analyzerChain.append(
             JetTaggerResult(
                 inputCollection=lepJet,
                 taggerName="llpdnnx",
-                outputName="lepJet_"+systName,
+                outputName="lepJet_%s" % (systName),
             )
         )
 
@@ -285,8 +293,8 @@ else:
     analyzerChain.append(
         JetSelection(
             leptonCollection=lambda event: event.tightMuon,
+            jetMinPt=30.,
             outputName="selectedJets_nominal",
-            storeKinematics=['pt', 'eta'],
             globalOptions=globalOptions
         )
     )
@@ -305,6 +313,14 @@ else:
             featureDictFile=featureDictFile,
             inputCollections=[lambda event: event.lepJet_nominal],
             taggerName="llpdnnx_nominal",
+        )
+    )
+
+    analyzerChain.append(
+        JetTaggerIntegral(
+            inputCollection=lambda event: event.lepJet_nominal,
+            taggerName="llpdnnx_nominal",
+            outputName="lepJet_nominal",
         )
     )
 
