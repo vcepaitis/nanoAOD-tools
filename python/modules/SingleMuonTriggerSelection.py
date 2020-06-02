@@ -22,6 +22,8 @@ class SingleMuonTriggerSelection(Module):
         self.inputCollection = inputCollection
         self.outputName = outputName
         self.storeWeights = storeWeights
+
+        print self.globalOptions["year"]
         
         if not self.globalOptions["isData"]:
             if self.globalOptions["year"] == 2016:

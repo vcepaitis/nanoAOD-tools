@@ -23,7 +23,7 @@ class TaggerEvaluation(Module):
         taggerName = "llpdnnx",
         predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
         evalValues = range(-1, 4),
-        integrateDisplacementOrder = 3,
+        integrateDisplacementOrder = 2,
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
@@ -53,7 +53,7 @@ class TaggerEvaluation(Module):
             for sample, L0 in L0_values.iteritems():
                 print sample, L0
                 for abscissa in self.abscissas:
-                    logDisplacement = math.log10(abscissa/L0)
+                    logDisplacement = math.log10(abscissa*L0)
                     self.evalValues.append(logDisplacement)
 
         self.evalValues = np.array(self.evalValues, dtype=np.float32)
@@ -184,9 +184,12 @@ class TaggerEvaluation(Module):
                 for ivalue, value in enumerate(self.evalValues):
                     taggerOutput[self.evalValues[ivalue]] = {}
 
-                    for iclass, classLabel in enumerate(self.predictionLabels):  
-                            taggerOutput[self.evalValues[ivalue]][classLabel] = \
-                                    predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
+                    for iclass, classLabel in enumerate(self.predictionLabels):
+                         if hasattr(jet, "globalIdx"):
+                             taggerOutput[self.evalValues[ivalue]][classLabel] = \
+                                     predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
+                         else:
+                             taggerOutput[self.evalValues[ivalue]][classLabel] = -1.0
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True

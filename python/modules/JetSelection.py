@@ -87,10 +87,9 @@ class JetSelection(Module):
                     mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsToFind))
                     setattr(jet, "muon_DeltaR", mindr)
                 else:
-                    setattr(jet, "muon_DeltaR", -1)
-
-
+                    setattr(jet, "muon_DeltaR", -1.)
                 selectedJets.append(jet)
+                #print(jet.pt, jet.eta)
 
             else:
                 unselectedJets.append(jet)
@@ -99,25 +98,10 @@ class JetSelection(Module):
             if self.flagDA:
                 flagsDA[jet._index] = 1.
 
-            '''
-            if not self.globalOptions["isData"]:
-                if jet.genJetIdx == -1:
-                    selectedJets.append(jet)
-                    continue
-                elif jet.genJetIdx >= len(genJets):
-                    unselectedJets.append(jet)
-                    continue
-                else:
-                    genJet = genJets[jet.genJetIdx]
-                    selectedJets.append(jet)
-                else:
-                    unselectedJets.append(jet)
-            else:
-                selectedJets.append(jet)
-            '''
-
         if self.flagDA:
             self.out.fillBranch(self.outputName+"_forDA", flagsDA)
+
+        #print len(selectedJets)
 
         for variable in self.storeKinematics:
             self.out.fillBranch(self.outputName+"_"+variable,

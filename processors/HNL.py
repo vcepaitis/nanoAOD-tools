@@ -29,11 +29,11 @@ print "isData:",args.isData
 print "inputs:",len(args.inputFiles)
 
 for inputFile in args.inputFiles:
-    if "-2016" in inputFile:
+    if "-2016" in inputFile or "Run2016" in inputFile:
         year = 2016
-    elif "-2017" in inputFile:
+    elif "-2017" in inputFile or "Run2017" in inputFile:
         year = 2017
-    elif "-2018" in inputFile:
+    elif "-2018" in inputFile or "Run2018" in inputFile:
         year = 2018
     else:
         year = args.year
@@ -183,6 +183,7 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=collection,
+                jetMinPt=30.,
                 leptonCollection=lambda event: event.tightMuon,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -191,7 +192,7 @@ if isMC:
 
         analyzerChain.append(
             JetTruthFlags(
-                inputCollection=collection,
+                inputCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -227,7 +228,6 @@ if isMC:
                 lambda event: event.lepJet_jesTotalDown
             ],
             taggerName="llpdnnx",
-            integrateDisplacementOrder=5
         )
     )
     
@@ -249,10 +249,9 @@ if isMC:
 
         analyzerChain.append(
             JetTaggerIntegral(
-                inputCollection=lepJet,
                 taggerName="llpdnnx",
-                outputName="lepJet_"+systName,
-                integrateDisplacementOrder=5
+                inputCollection=lepJet,
+                outputName="lepJet_%s" % (systName),
             )
         )
 
@@ -260,7 +259,7 @@ if isMC:
             JetTaggerResult(
                 inputCollection=lepJet,
                 taggerName="llpdnnx",
-                outputName="lepJet_"+systName,
+                outputName="lepJet_%s" % (systName),
             )
         )
 
@@ -294,8 +293,8 @@ else:
     analyzerChain.append(
         JetSelection(
             leptonCollection=lambda event: event.tightMuon,
+            jetMinPt=30.,
             outputName="selectedJets_nominal",
-            storeKinematics=['pt', 'eta'],
             globalOptions=globalOptions
         )
     )

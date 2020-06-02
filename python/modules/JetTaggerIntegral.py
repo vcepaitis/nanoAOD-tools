@@ -20,7 +20,7 @@ class JetTaggerIntegral(Module):
         outputName="selectedJets",
         predictionLabels=["B", "C", "UDS", "G", "PU", "isLLP_QMU_QQMU", "isLLP_Q_QQ"],
         globalOptions={"isData": False},
-        integrateDisplacementOrder = 3,
+        integrateDisplacementOrder = 2,
     ):
         self.globalOptions = globalOptions
         self.taggerName = taggerName
@@ -44,13 +44,11 @@ class JetTaggerIntegral(Module):
             L0_values = json.load(json_file)
         for sample, L0 in L0_values.iteritems():
             shortName = sample.replace('HeavyNeutrino_lljj_', '').replace('M-', 'M').replace('V-', 'V').replace('.', 'p')
-            print(shortName)
             self.evalDict[shortName] = []
             for abscissa in self.abscissas:
-                logDisplacement = math.log10(abscissa/L0)
+                logDisplacement = math.log10(abscissa*L0)
                 self.evalDict[shortName].append(logDisplacement)
             self.evalDict[shortName] = np.array(self.evalDict[shortName], dtype=np.float32)
-
 
             for label in self.predictionLabels:
                 self.out.branch(self.outputName+"_"+shortName+"_"+label,"F",lenVar="n"+self.outputName)
