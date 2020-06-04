@@ -250,7 +250,7 @@ class MuonSelection(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("n"+self.outputName,"I")
+        self.out.branch("n"+self.outputName, "I")
 
         for variable in self.storeKinematics:
             self.out.branch(self.outputName+"_"+variable,"F",lenVar="n"+self.outputName)
