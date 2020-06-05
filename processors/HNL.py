@@ -62,7 +62,6 @@ minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
 
 
 if isMC:
-
     jecTags = {2016: 'Summer16_07Aug2017_V11_MC',
                2017: 'Fall17_17Nov2017_V32_MC',
                2018: 'Autumn18_V19_MC'
@@ -74,7 +73,6 @@ if isMC:
                }
 
 if args.isData:
-
     jecTags = {2016: 'Summer16_07Aug2017All_V11_DATA',
                2017: 'Fall17_17Nov2017_V32_DATA',
                2018: 'Autumn18_V19_DATA'
@@ -112,7 +110,6 @@ muonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
                          'tightId', 'charge'],
-        storeWeights=True,
         muonMinPt=5.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
@@ -123,9 +120,7 @@ muonSelection = [
         outputName="looseElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'charge'],
-        storeWeights=True,
-        #muonMinPt=minMuonPt[globalOptions["year"]],
-        #triggerMatch=True,
+        electronMinPt=5.,
         electronID=ElectronSelection.LOOSE,
         globalOptions=globalOptions
     ),
