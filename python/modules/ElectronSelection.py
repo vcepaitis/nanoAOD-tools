@@ -119,6 +119,7 @@ class ElectronSelection(Module):
             weight_id_down = 1.
 
 
+        if not self.globalOptions["isData"] and self.storeWeights:
             self.out.fillBranch(self.outputName+"_weight_id_nominal", weight_id_nominal)
             self.out.fillBranch(self.outputName+"_weight_id_up", weight_id_up)
             self.out.fillBranch(self.outputName+"_weight_id_down", weight_id_down)
