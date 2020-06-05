@@ -104,6 +104,20 @@ muonSelection = [
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
+    EventSkim(selection=lambda event: event.ntightMuon + event.ntightElectron > 0),
+    SingleMuonTriggerSelection(
+        inputCollection=lambda event: event.tightMuon,
+        outputName="IsoMuTrigger",
+        storeWeights=True,
+        globalOptions=globalOptions
+    ),
+    SingleElectronTriggerSelection(
+        inputCollection=lambda event: event.tightElectron,
+        outputName="IsoElectronTrigger",
+        storeWeights=False,
+        globalOptions=globalOptions
+    ),
+    EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
     MuonSelection(
         inputCollection=lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
@@ -124,26 +138,14 @@ muonSelection = [
         electronID=ElectronSelection.LOOSE,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuon + event.ntightElectron > 0),
+
     LeptonCollecting(
         tightMuonCollection=lambda event:event.tightMuon,
         tightElectronCollection=lambda event:event.tightElectron,
         looseMuonCollection=lambda event:event.looseMuons,
         looseElectronCollection=lambda event:event.looseElectrons
         ),
-    SingleMuonTriggerSelection(
-        inputCollection=lambda event: event.tightMuon,
-        outputName="IsoMuTrigger",
-        storeWeights=True,
-        globalOptions=globalOptions
-    ),
-    SingleElectronTriggerSelection(
-        inputCollection=lambda event: event.tightElectron,
-        outputName="IsoElectronTrigger",
-        storeWeights=False,
-        globalOptions=globalOptions
-    ),
-    EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
+
     EventSkim(selection=lambda event: event.nsubleadingLepton > 0)
 ]
 
@@ -230,7 +232,7 @@ if isMC:
         analyzerChain.append(
             LepJetFinder(
                 jetCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
-                leptonCollection=lambda event: event.looseMuons+event.looseElectrons,
+                leptonCollection=lambda event: event.subleadingLepton,
                 outputName="lepJet_"+systName
             )
         )
@@ -331,7 +333,7 @@ else:
     analyzerChain.append(
         LepJetFinder(
             jetCollection=lambda event: event.selectedJets_nominal,
-            leptonCollection=lambda event: event.looseMuons+event.looseElectrons,
+            leptonCollection=lambda event: event.subleadingLepton,
             outputName="lepJet_nominal"
         )
     )
