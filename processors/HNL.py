@@ -97,10 +97,10 @@ muonSelection = [
         outputName="tightElectron",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'charge'],
-        storeWeights=True,
         electronMinPt=minElectronPt[globalOptions["year"]],
-        triggerMatch=True,
         electronID=ElectronSelection.TIGHT,
+        storeWeights=True,
+        triggerMatch=True,
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
