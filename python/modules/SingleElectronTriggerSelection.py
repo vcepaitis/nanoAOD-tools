@@ -10,12 +10,12 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from utils import getHist,combineHist2D,getSFXY
 
-class SingleMuonTriggerSelection(Module):
+class SingleElectronTriggerSelection(Module):
     def __init__(
         self,
-        inputCollection = lambda event: getattr(event,"tightMuons"),
-        storeWeights=True,
-        outputName = "IsoMuTrigger",
+        inputCollection = lambda event: getattr(event,"tightElectron"),
+        storeWeights=False,
+        outputName = "IsoElectronTrigger",
         globalOptions={"isData":False, "year":2016}
     ):
         self.globalOptions = globalOptions
@@ -23,6 +23,7 @@ class SingleMuonTriggerSelection(Module):
         self.outputName = outputName
         self.storeWeights = storeWeights
 
+        '''
         if not self.globalOptions["isData"]:
             if self.globalOptions["year"] == 2016:
 
@@ -57,6 +58,7 @@ class SingleMuonTriggerSelection(Module):
             else: 
                 print("Invalid year")
                 sys.exit(1)
+        '''
 
             
     def beginJob(self):
@@ -82,28 +84,30 @@ class SingleMuonTriggerSelection(Module):
         
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
-        muons = self.inputCollection(event)
+        electrons = self.inputCollection(event)
         
         weight_trigger_nominal = 1.
         weight_trigger_up = 1.
         weight_trigger_down = 1.
         
-        if (not self.globalOptions["isData"]) and len(muons)>0 and self.storeWeights: 
+        '''
+        if (not self.globalOptions["isData"]) and len(electrons)>0 and self.storeWeights: 
             weight_trigger,weight_trigger_err = getSFXY(self.triggerSFHist,muons[0].pt,abs(muons[0].eta))
             weight_trigger_nominal*=weight_trigger
             weight_trigger_up*=(weight_trigger+weight_trigger_err)
             weight_trigger_down*=(weight_trigger-weight_trigger_err)
+        '''
 
         trigger_flag = 0
 
         if self.globalOptions["year"] == 2016:
-            trigger_flag = event.HLT_IsoMu24>0 or event.HLT_IsoTkMu24>0
+            trigger_flag = event.HLT_Ele27_WPTight_Gsf>0
 
         elif self.globalOptions["year"] == 2017:
-            trigger_flag = event.HLT_IsoMu27
+            trigger_flag = event.HLT_Ele32_WPTight_Gsf_L1DoubleEG
 
         elif self.globalOptions["year"] == 2018:
-            trigger_flag = event.HLT_IsoMu24
+            trigger_flag = event.HLT_Ele32_WPTight_Gsf
 
         self.out.fillBranch(self.outputName+"_flag", trigger_flag)
             

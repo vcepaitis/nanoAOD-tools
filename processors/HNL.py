@@ -58,10 +58,10 @@ globalOptions = {
 isMC = not args.isData
 
 minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
+minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
 
 
 if isMC:
-
     jecTags = {2016: 'Summer16_07Aug2017_V11_MC',
                2017: 'Fall17_17Nov2017_V32_MC',
                2018: 'Autumn18_V19_MC'
@@ -73,7 +73,6 @@ if isMC:
                }
 
 if args.isData:
-
     jecTags = {2016: 'Summer16_07Aug2017All_V11_DATA',
                2017: 'Fall17_17Nov2017_V32_DATA',
                2018: 'Autumn18_V19_DATA'
@@ -94,28 +93,60 @@ muonSelection = [
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuon == 1),
-    MuonSelection(
-        inputCollection=lambda event: event.tightMuon_unselected,
-        outputName="looseMuons",
+    ElectronSelection(
+        outputName="tightElectron",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'pfRelIso04_all',
-                         'tightId', 'charge'],
+                         'dzErr', 'phi', 'charge'],
+        electronMinPt=minElectronPt[globalOptions["year"]],
+        electronID=ElectronSelection.TIGHT,
         storeWeights=True,
-        muonMinPt=5.,
-        muonID=MuonSelection.LOOSE,
-        muonIso=MuonSelection.NONE,
+        triggerMatch=True,
+        selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
-
+    EventSkim(selection=lambda event: event.ntightMuon + event.ntightElectron > 0),
     SingleMuonTriggerSelection(
         inputCollection=lambda event: event.tightMuon,
         outputName="IsoMuTrigger",
         storeWeights=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.IsoMuTrigger_flag == 1),
-    EventSkim(selection=lambda event: event.nlooseMuons > 0)
+    SingleElectronTriggerSelection(
+        inputCollection=lambda event: event.tightElectron,
+        outputName="IsoElectronTrigger",
+        storeWeights=False,
+        globalOptions=globalOptions
+    ),
+    EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
+    MuonSelection(
+        inputCollection=lambda event: event.tightMuon_unselected,
+        outputName="looseMuons",
+        storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
+                         'dzErr', 'phi', 'pfRelIso04_all',
+                         'tightId', 'charge'],
+        muonMinPt=5.,
+        muonID=MuonSelection.LOOSE,
+        muonIso=MuonSelection.NONE,
+        globalOptions=globalOptions
+    ),
+    ElectronSelection(
+        inputCollection=lambda event: event.tightElectron_unselected,
+        outputName="looseElectrons",
+        storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
+                         'dzErr', 'phi', 'charge'],
+        electronMinPt=5.,
+        electronID=ElectronSelection.LOOSE,
+        globalOptions=globalOptions
+    ),
+
+    LeptonCollecting(
+        tightMuonCollection=lambda event:event.tightMuon,
+        tightElectronCollection=lambda event:event.tightElectron,
+        looseMuonCollection=lambda event:event.looseMuons,
+        looseElectronCollection=lambda event:event.looseElectrons
+        ),
+
+    EventSkim(selection=lambda event: event.nsubleadingLepton > 0)
 ]
 
 # analyzerChain = [jetRecalibration]
@@ -126,9 +157,9 @@ analyzerChain.extend(muonSelection)
 
 analyzerChain.append(
     InvariantSystem(
-        inputCollection=lambda event: [event.looseMuons[0],
-                                       event.tightMuon[0]],
-        outputName="dimuon"
+        inputCollection=lambda event: [event.leadingLepton[0],
+                                       event.subleadingLepton[0]],
+        outputName="dilepton"
     )
 )
 
@@ -184,7 +215,7 @@ if isMC:
             JetSelection(
                 inputCollection=collection,
                 jetMinPt=30.,
-                leptonCollection=lambda event: event.tightMuon,
+                leptonCollection=lambda event: event.leadingLepton,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -201,7 +232,7 @@ if isMC:
         analyzerChain.append(
             LepJetFinder(
                 jetCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
-                leptonCollection=lambda event: event.looseMuons,
+                leptonCollection=lambda event: event.subleadingLepton,
                 outputName="lepJet_"+systName
             )
         )
@@ -283,7 +314,7 @@ if isMC:
         analyzerChain.append(
             EventObservables(
                 jetCollection=jetCollection,
-                leptonCollection=lambda event: event.tightMuon[0],
+                leptonCollection=lambda event: event.leadingLepton[0],
                 metInput=metObject,
                 outputName="EventObservables_"+systName
             )
@@ -292,7 +323,7 @@ if isMC:
 else:
     analyzerChain.append(
         JetSelection(
-            leptonCollection=lambda event: event.tightMuon,
+            leptonCollection=lambda event: event.leadingLepton,
             jetMinPt=30.,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
@@ -302,8 +333,14 @@ else:
     analyzerChain.append(
         LepJetFinder(
             jetCollection=lambda event: event.selectedJets_nominal,
-            leptonCollection=lambda event: event.looseMuons,
+            leptonCollection=lambda event: event.subleadingLepton,
             outputName="lepJet_nominal"
+        )
+    )
+
+    analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nselectedJets_nominal > 0
         )
     )
 
@@ -335,17 +372,10 @@ else:
     analyzerChain.append(
         EventObservables(
             jetCollection=lambda event: event.selectedJets_nominal,
-            leptonCollection=lambda event: event.tightMuon[0],
+            leptonCollection=lambda event: event.leadingLepton[0],
             outputName="EventObservables_nominal"
         )
     )
-
-    analyzerChain.append(
-        EventSkim(
-            selection=lambda event: event.nselectedJets_nominal > 0
-        )
-    )
-
 
 
 # Event level BDT
