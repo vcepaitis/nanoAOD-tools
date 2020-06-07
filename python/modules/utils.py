@@ -119,6 +119,7 @@ def getSFXY(hist, x, y):
     return hist.GetBinContent(xBin, yBin), hist.GetBinError(xBin, yBin)
 
 
+
 def getAbscissasAndWeights(N=5):
     # Laguerre polynomial roots and weights for Laguerre-Guass quadrature
     coef = np.concatenate([np.zeros(N), [1]])
