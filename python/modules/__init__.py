@@ -12,6 +12,7 @@ from SingleElectronTriggerSelection import SingleElectronTriggerSelection
 from JetMetUncertainties import JetMetUncertainties
 from JetSelection import JetSelection
 from TaggerEvaluation import TaggerEvaluation
+from TaggerEvaluationProfiled import TaggerEvaluationProfiled
 from EventSkim import EventSkim
 from EventObservables import EventObservables
 from MetFilter import MetFilter

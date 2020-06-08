@@ -30,7 +30,13 @@ class PhysicsObject(object):
         return self._obj.__str__()
 
 
-def deltaPhi(phi1, phi2):
+def deltaPhi(x, y):
+    phi1 = x
+    if hasattr(x,'phi'):
+        phi1 = x.phi
+    phi2 = y
+    if hasattr(y,'phi'):
+        phi2 = y.phi
     res = phi1-phi2
     while (res > math.pi):
         res -= 2 * math.pi
