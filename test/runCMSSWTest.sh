@@ -14,8 +14,8 @@ function run_test()
     echo "--- Test HNL script ---"
     # add data test
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2017 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2018 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
+    #python PhysicsTools/NanoAODTools/processors/HNL.py --year 2017 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
+    #python PhysicsTools/NanoAODTools/processors/HNL.py --year 2018 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv2p1.root . || return 1
     python PhysicsTools/NanoAODTools/processors/skimForDA.py --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv2p1.root . || return 1
 }
