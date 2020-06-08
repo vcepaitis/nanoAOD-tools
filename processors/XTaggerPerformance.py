@@ -1,31 +1,38 @@
 import os
 import sys
 import math
-import json
-import ROOT
+import argparse
 import random
-ROOT.PyConfig.IgnoreCommandLineOptions = True
-from importlib import import_module
-from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
-from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
-from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
+import numpy as np
+import ROOT
 
+from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor \
+    import PostProcessor
+from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel \
+    import Collection, Object
+from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
 
-import argparse
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--isData', dest='isData', action='store_true',default=False)
-parser.add_argument('--year', dest='year', action='store',default=2016, type=int)
-parser.add_argument('--input', dest='inputFiles', action='append',default=[])
+
+parser.add_argument('--year', dest='year',
+                    action='store', type=int, default=2016)
+parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
-print "isData:",args.isData
-print "year:",args.year
 print "inputs:",len(args.inputFiles)
+
 for inputFile in args.inputFiles:
+    if "-2016" in inputFile:
+        year = 2016
+    elif "-2017" in inputFile:
+        year = 2017
+    elif "-2018" in inputFile:
+        year = 2018
+    else:
+        year = args.year
     rootFile = ROOT.TFile.Open(inputFile)
     if not rootFile:
         print "CRITICAL - file '"+inputFile+"' not found!"
@@ -34,64 +41,107 @@ for inputFile in args.inputFiles:
     if not tree:
         print "CRITICAL - 'Events' tree not found in file '"+inputFile+"'!"
         sys.exit(1)
-    print " - ",inputFile,", events=",tree.GetEntries()
-    
-print "output directory:",args.output[0]
+    print " - ", inputFile, ", events=", tree.GetEntries()
+
+print "year:", year
+print "output directory:", args.output[0]
 
 globalOptions = {
-    "isData":False,
-    "year":args.year
+    "isData": False,
+    "year": year
 }
+
+isMC = True
+
+# analyzerChain = [jetRecalibration]
 analyzerChain = []
+
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
+modelPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2017_attention.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2018_attention.pb"
+}
+
+analyzerChain.append(
+     MetFilter(
+        globalOptions=globalOptions,
+        outputName="MET_filter"
+     )
+)
 
 analyzerChain.append(
     JetSelection(
+        leptonCollection=lambda event:None,
+        outputName="selectedJets_nominal",
+        storeKinematics=['pt', 'eta'],
+        globalOptions=globalOptions
     )
 )
 
 analyzerChain.append(
     JetTruthFlags(
-        inputCollection = lambda event: event.selectedJets,
-        outputName = "selectedJets",
-        latentVariables = ["llp_mass", "llp_pt", "displacement", "displacement_xy", "displacement_z", "decay_angle", "betagamma"]
-    )   
-)
-    
-analyzerChain.append(
-    EventSkim(selection=lambda event: 
-        len(event.selectedJets)>0
+        inputCollection= lambda event: event.selectedJets_nominal,
+        outputName="selectedJets_nominal",
+        globalOptions=globalOptions
     )
 )
 
 analyzerChain.append(
     TaggerEvaluation(
-        modelPath="PhysicsTools/NanoAODTools/data/nn/weight2016_75.pb",
-        logctauValues = [1.74],
-        #modelPath="PhysicsTools/NanoAODTools/data/nn/da.pb",
+        modelPath=modelPath[year],
+        evalValues = np.linspace(-1, 3, num=9),
+        featureDictFile = featureDictFile,
         inputCollections=[
-            lambda event: event.selectedJets,
+            lambda event: event.selectedJets_nominal,
         ],
         taggerName="llpdnnx",
+        integrateDisplacementOrder=-1
     )
 )
 
+'''
+analyzerChain.append(
+    JetTaggerIntegral(
+        taggerName="llpdnnx",
+        integrateDisplacementOrder=-1,
+        inputCollection=lambda event: event.selectedJets_nominal,
+        outputName="selectedJets_nominal",
+    )
+)
+'''
 
 analyzerChain.append(
     JetTaggerResult(
-        inputCollection = lambda event: event.selectedJets,
-        taggerName = "llpdnnx",
-        logctauValues = [1.74],
-        predictionLabels = ["LLP_Q", "LLP_QMU"],
+        inputCollection=lambda event:event.selectedJets_nominal,
+        taggerName="llpdnnx",
+        outputName="selectedJets_nominal",
     )
 )
 
- 
+analyzerChain.append(
+    EventSkim(
+        selection=lambda event: event.nselectedJets_nominal > 0
+    )
+)
 
-p=PostProcessor(
+storeVariables = [[lambda tree: tree.branch("genweight", "F"),
+                       lambda tree,
+                       event: tree.fillBranch("genweight",
+                       event.Generator_weight)]
+                ]
+
+analyzerChain.append(EventInfo(storeVariables=storeVariables))
+
+
+
+p = PostProcessor(
     args.output[0],
     [args.inputFiles],
     modules=analyzerChain,
     maxEvents=-1,
     friend=True
 )
+
 p.run()
+

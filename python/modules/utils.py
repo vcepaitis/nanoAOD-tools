@@ -3,6 +3,8 @@ import sys
 import math
 import ROOT
 import random
+from numpy.polynomial import laguerre
+import numpy as np
 
 
 class PhysicsObject(object):
@@ -28,7 +30,13 @@ class PhysicsObject(object):
         return self._obj.__str__()
 
 
-def deltaPhi(phi1, phi2):
+def deltaPhi(x, y):
+    phi1 = x
+    if hasattr(x,'phi'):
+        phi1 = x.phi
+    phi2 = y
+    if hasattr(y,'phi'):
+        phi2 = y.phi
     res = phi1-phi2
     while (res > math.pi):
         res -= 2 * math.pi
@@ -115,3 +123,20 @@ def getSFXY(hist, x, y):
         yBin = hist.GetNbinsY()
 
     return hist.GetBinContent(xBin, yBin), hist.GetBinError(xBin, yBin)
+
+
+
+def getAbscissasAndWeights(N=5):
+    # Laguerre polynomial roots and weights for Laguerre-Guass quadrature
+    coef = np.concatenate([np.zeros(N), [1]])
+    roots = laguerre.lagroots(coef)
+    weights = []
+    for n, root in enumerate(roots):
+        n = n+1
+        array = np.concatenate([np.zeros(N+1), [1]])
+        value = laguerre.lagval(root, array)
+        weight = root/((N+1)*value)**2
+        weights.append(weight)
+
+    return roots, weights
+

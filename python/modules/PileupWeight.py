@@ -53,7 +53,7 @@ class PileupWeight(Module):
             fMC.Close()
 
             #add up and down hists in a loop
-            for var in ["_up", "", "_down"]:
+            for var in ["_up", "_nominal", "_down"]:
 
                 fData = ROOT.TFile(getattr(self, "dataFile"+var))
 
@@ -69,7 +69,7 @@ class PileupWeight(Module):
         mcBin = self.mcHist.FindBin(nTrueInteractions)
         w = []
         #add w_up and down
-        for var in ["_up", "", "_down"]:
+        for var in ["_up", "_nominal", "_down"]:
             dataBin = getattr(self, "dataHist"+var).FindBin(nTrueInteractions)
             w.append(getattr(self, "dataHist"+var).GetBinContent(dataBin)/(self.mcHist.GetBinContent(mcBin)+self.mcHist.Integral()*0.0001))
             if w[-1]>5.:
@@ -134,7 +134,7 @@ class PileupWeight(Module):
 
             self.normHist(self.mcHist)
 
-            for var in ["_up", "", "_down"]:
+            for var in ["_up", "_nominal", "_down"]:
                 self.out.branch(self.outputName+var,"F")
                 self.normHist(getattr(self, "dataHist"+var))
 
@@ -157,7 +157,7 @@ class PileupWeight(Module):
             self.sum+=puWeight[1]
             self.sum2+=puWeight[1]**2
 
-            for i, var in enumerate(["_up", "", "_down"]):
+            for i, var in enumerate(["_up", "_nominal", "_down"]):
                 self.out.fillBranch(self.outputName+var,puWeight[i])
 
         return True

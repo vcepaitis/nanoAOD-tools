@@ -176,7 +176,7 @@ class JetMetUncertainties(Module):
         propagateJER = True,
         outputJetPrefix = 'jets_',
         outputMetPrefix = 'met_',
-        jetKeys=['jetId', 'muonSubtrFactor', 'nConstituents'],
+        jetKeys=['jetId'],
         metKeys = [],
         globalOptions={"isData": False}
     ):
@@ -234,7 +234,7 @@ class JetMetUncertainties(Module):
                 mass = jet.mass,
                 keys = self.jetKeys
             ))
-        newJets = sorted(newJets,key=lambda x: x.pt)
+        newJets = sorted(newJets,key=lambda x: x.pt, reverse=True)
         return newJets
         
     def makeNewMetObject(self,met,variation):

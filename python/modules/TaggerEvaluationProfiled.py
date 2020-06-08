@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from utils import getCtauLabel, getAbscissasAndWeights
 
-class TaggerEvaluation(Module):
+class TaggerEvaluationProfiled(Module):
 
     def __init__(
         self,
@@ -21,7 +21,7 @@ class TaggerEvaluation(Module):
         featureDictFile,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
-        predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
+        predictionLabels = ["B","C","UDS","G","PU","isLLP_Q","isLLP_MU","isLLP_E","isLLP_TAU"], #this is how the output array from TF is interpreted
         evalValues = range(-1, 4),
         integrateDisplacementOrder = 2,
         globalOptions = {"isData":False},
@@ -40,24 +40,7 @@ class TaggerEvaluation(Module):
             os.path.expandvars(featureDictFile)
         ).featureDict
         self.taggerName = taggerName
-        if self.integrateDisplacementOrder != -1:
-            self.integrate = True
-            self.abscissas, self.weights = getAbscissasAndWeights(self.integrateDisplacementOrder)
-        else:
-            self.integrate = False
-
-        if self.integrate:
-            file_path = "PhysicsTools/NanoAODTools/data/hnl/L0.json"
-            with open(file_path) as json_file:
-                L0_values = json.load(json_file)
-            for sample, L0 in L0_values.iteritems():
-                print sample, L0
-                for abscissa in self.abscissas:
-                    logDisplacement = math.log10(abscissa*L0)
-                    self.evalValues.append(logDisplacement)
-
-        self.evalValues = np.array(self.evalValues, dtype=np.float32)
-        print "Evaluation values:" , self.evalValues
+        
 
     def beginJob(self):
         pass
@@ -166,30 +149,43 @@ class TaggerEvaluation(Module):
             evaluationIndices
         )
 
-        predictionsPerIndexAndValue = {}
+        predictionsPerIndex = {}
+        valuePerIndex = {}
 
         for ijet,jetIndex in enumerate(jetOriginIndices):
-            predictionsPerIndexAndValue[jetIndex] = {}
+            predictionsPerIndex[jetIndex] = [-1.]*len(self.predictionLabels)
+            valuePerIndex[jetIndex] = [-100.]*len(self.predictionLabels)
 
             for ivalue, value in enumerate(self.evalValues):
                 predictionIndex = ijet*len(self.evalValues)+ivalue
-                predictionsPerIndexAndValue[jetIndex][value] = result.get("prediction",predictionIndex)
+                prediction = result.get("prediction",predictionIndex)
+                for ilabel in range(len(self.predictionLabels)):
+                    if prediction[ilabel]>predictionsPerIndex[jetIndex][ilabel]:
+                        predictionsPerIndex[jetIndex][ilabel] = prediction[ilabel]
+                        valuePerIndex[jetIndex][ilabel] = value
                 
+            #print ijet,predictionsPerIndex[jetIndex],valuePerIndex[jetIndex]
+            
+        '''
+
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
-            for ijet, jet in enumerate(jets):
-                taggerOutput = {}
+        for ijet, jet in enumerate(jets):
+            taggerOutput = {}
 
-                for ivalue, value in enumerate(self.evalValues):
-                    taggerOutput[self.evalValues[ivalue]] = {}
+            for ivalue, value in enumerate(self.evalValues):
+                taggerOutput[self.evalValues[ivalue]] = {}
 
-                    for iclass, classLabel in enumerate(self.predictionLabels):
-                         if hasattr(jet, "globalIdx"):
-                             taggerOutput[self.evalValues[ivalue]][classLabel] = \
-                                     predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
-                         else:
-                             taggerOutput[self.evalValues[ivalue]][classLabel] = -1.0
-
-                setattr(jet, self.taggerName, taggerOutput)
+                for iclass, classLabel in enumerate(self.predictionLabels):
+                     if hasattr(jet, "globalIdx"):
+                         taggerOutput[self.evalValues[ivalue]][classLabel] = \
+                                 predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
+                     else:
+                         taggerOutput[self.evalValues[ivalue]][classLabel] = -1.0
+                         
+        '''
+         
         return True
+                             
+                            
