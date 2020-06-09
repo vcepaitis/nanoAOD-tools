@@ -34,3 +34,4 @@ from LepJetFinder import LepJetFinder
 from XGBEvaluation import XGBEvaluation
 from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
+from LHEWeights import LHEWeights
