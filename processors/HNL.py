@@ -407,10 +407,15 @@ storeVariables = [
 ]
 
 if not globalOptions["isData"]:
+
     storeVariables.append([lambda tree: tree.branch("genweight", "F"),
                            lambda tree,
                            event: tree.fillBranch("genweight",
                            event.Generator_weight)])
+
+    if "HNL" in inputFile:
+        analyzerChain.append(LHEWeights())  
+
 
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))

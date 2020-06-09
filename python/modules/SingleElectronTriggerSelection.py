@@ -77,7 +77,6 @@ class SingleElectronTriggerSelection(Module):
             self.out.branch(self.outputName+"_weight_trigger_up","F")
             self.out.branch(self.outputName+"_weight_trigger_down","F")
             
-            
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -101,7 +100,7 @@ class SingleElectronTriggerSelection(Module):
         trigger_flag = 0
 
         if self.globalOptions["year"] == 2016:
-            trigger_flag = event.HLT_Ele27_WPTight_Gsf>0
+            trigger_flag = event.HLT_Ele27_WPTight_Gsf
 
         elif self.globalOptions["year"] == 2017:
             trigger_flag = event.HLT_Ele32_WPTight_Gsf_L1DoubleEG
