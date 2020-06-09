@@ -77,7 +77,6 @@ class SingleElectronTriggerSelection(Module):
             self.out.branch(self.outputName+"_weight_trigger_up","F")
             self.out.branch(self.outputName+"_weight_trigger_down","F")
             
-            
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
