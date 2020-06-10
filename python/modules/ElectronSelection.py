@@ -85,6 +85,7 @@ class ElectronSelection(Module):
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
         electrons = self.inputCollection(event)
+        muons = Collection(event, "Muon")
         
         selectedElectrons = []
         unselectedElectrons = []
@@ -95,6 +96,14 @@ class ElectronSelection(Module):
         
         for electron in electrons:
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta and (electron.cutBased>self.electronID):
+
+                if muons is not None and len(muons) > 0:
+
+                    mindr = min(map(lambda muon: deltaR(muon, electron), muons))
+                    if mindr < 0.05:
+                        unselectedElectrons.append(electron)
+                        continue
+
                 selectedElectrons.append(electron)
                 weight_id,weight_id_err = getSFXY(self.idHist,electron.eta,electron.pt)
                 weight_id_nominal.append(weight_id)
