@@ -100,7 +100,7 @@ class SingleMuonTriggerSelection(Module):
             trigger_flag = event.HLT_IsoMu24>0 or event.HLT_IsoTkMu24>0
 
         elif self.globalOptions["year"] == 2017:
-            trigger_flag = event.HLT_IsoMu27
+            trigger_flag = event.HLT_IsoMu27>0 or event.HLT_IsoMu24>0
 
         elif self.globalOptions["year"] == 2018:
             trigger_flag = event.HLT_IsoMu24
