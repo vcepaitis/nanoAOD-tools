@@ -74,6 +74,10 @@ class JetSelection(Module):
                 and math.fabs(jet.eta) < self.jetMaxEta\
                 and (jet.jetId > self.jetId):
 
+                #note: tagger only trained for these jets
+                if jet.nConstituents<4:
+                    continue
+
                 leptons = self.leptonCollection(event)
                 leptonsToFind = self.leptonFinderCollection(event)
 
