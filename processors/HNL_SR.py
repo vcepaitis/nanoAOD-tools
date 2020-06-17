@@ -180,7 +180,7 @@ if isMC:
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
-            jetKeys = ['pt', 'eta', 'jetId', 'nConstituents'],
+            jetKeys = ['pt', 'eta','phi' , 'jetId', 'nConstituents' ],
         )
     )
 
@@ -239,6 +239,26 @@ if isMC:
             evalValues = np.linspace(-5,3,8*5+1),
         )
     )
+    for systName, jetCollection in [
+        ("nominal", lambda event: event.jets_nominal),
+        ("jerUp", lambda event: event.jets_jerUp),
+        ("jerDown", lambda event: event.jets_jerDown),
+        ("jesTotalUp", lambda event: event.jets_jesTotalUp),
+        ("jesTotalDown", lambda event: event.jets_jesTotalDown),
+    ]:
+    	analyzerChain.append(
+           EventCategorization(
+		muonsTight = lambda event: event.tightMuon, 
+		electronsTight = lambda event:  event.tightElectron, 
+		muonsLoose = lambda event: event.looseMuons, 
+		electronsLoose = lambda event: event.looseElectrons, 
+		jets = lambda event, systName = systName : getattr(event, "selectedJets_"+systName),
+		tagger = 
+		outputName="category_"+systName
+           )
+   	)
+
+
     '''
     for systName, lepJet in [
         ("nominal", lambda event: event.lepJet_nominal),
