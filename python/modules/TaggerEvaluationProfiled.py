@@ -32,7 +32,7 @@ class TaggerEvaluationProfiled(Module):
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
         self.integrateDisplacementOrder = integrateDisplacementOrder
-        
+
         self.modelPath = os.path.expandvars(modelPath)
         print featureDictFile
         self.featureDict = imp.load_source(
@@ -40,10 +40,11 @@ class TaggerEvaluationProfiled(Module):
             os.path.expandvars(featureDictFile)
         ).featureDict
         self.taggerName = taggerName
-        
+
 
     def beginJob(self):
         pass
+
 
     def endJob(self):
         pass
@@ -73,7 +74,7 @@ class TaggerEvaluationProfiled(Module):
                     lengthBranch
                 )
                 for branchName in featureCfg["branches"]:
-                    print branchName
+                    #print branchName
                     featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
             else:
@@ -83,7 +84,7 @@ class TaggerEvaluationProfiled(Module):
                     len(featureCfg["branches"])
                 )
                 for branchName in featureCfg["branches"]:
-                    print branchName
+                    #print branchName
                     featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
 
@@ -95,7 +96,7 @@ class TaggerEvaluationProfiled(Module):
 
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
         self.nJets = 0
-            
+
         genFeatureGroup.addFeature(ROOT.TFEval.PyAccessor(lambda: self.nJets, lambda jetIndex, batchIndex: self.evalValues[batchIndex%len(self.evalValues)]))
         self.tfEvalParametric.addFeatureGroup(genFeatureGroup)
 
@@ -150,42 +151,46 @@ class TaggerEvaluationProfiled(Module):
         )
 
         predictionsPerIndex = {}
-        valuePerIndex = {}
+        parameterPerIndex = {}
 
         for ijet,jetIndex in enumerate(jetOriginIndices):
             predictionsPerIndex[jetIndex] = [-1.]*len(self.predictionLabels)
-            valuePerIndex[jetIndex] = [-100.]*len(self.predictionLabels)
+            parameterPerIndex[jetIndex] = [min(self.evalValues)]*len(self.predictionLabels)
 
             for ivalue, value in enumerate(self.evalValues):
                 predictionIndex = ijet*len(self.evalValues)+ivalue
                 prediction = result.get("prediction",predictionIndex)
-                for ilabel in range(len(self.predictionLabels)):
+                for ilabel,label in enumerate(self.predictionLabels):
                     if prediction[ilabel]>predictionsPerIndex[jetIndex][ilabel]:
                         predictionsPerIndex[jetIndex][ilabel] = prediction[ilabel]
-                        valuePerIndex[jetIndex][ilabel] = value
-                
-            #print ijet,predictionsPerIndex[jetIndex],valuePerIndex[jetIndex]
-            
-        '''
+                        parameterPerIndex[jetIndex][ilabel] = value
+            '''    
+            for ilabel,label in enumerate(self.predictionLabels):
+                self.out.fillBranch(self.taggerName+"_value_%s"%(label), predictionsPerIndex[jetIndex][ilabel])
+                self.out.fillBranch(self.taggerName+"_dxy_%s"%(label), parameterPerIndex[jetIndex][ilabel])
+
+            #print ijet,predictionsPerIndex[jetIndex],parameterPerIndex[jetIndex]
+
+            '''
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
-        for ijet, jet in enumerate(jets):
-            taggerOutput = {}
-
-            for ivalue, value in enumerate(self.evalValues):
-                taggerOutput[self.evalValues[ivalue]] = {}
-
-                for iclass, classLabel in enumerate(self.predictionLabels):
+            for ijet, jet in enumerate(jets):
+                taggerOutput = {}
+                for  ilabel,label in enumerate(self.predictionLabels):
                      if hasattr(jet, "globalIdx"):
-                         taggerOutput[self.evalValues[ivalue]][classLabel] = \
-                                 predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
+                         taggerOutput[label] = {
+                             'output': predictionsPerIndex[jet.globalIdx][ilabel],
+                             'parameter': parameterPerIndex[jet.globalIdx][ilabel]
+                         }
                      else:
-                         taggerOutput[self.evalValues[ivalue]][classLabel] = -1.0
-                         
-        '''
-         
+                        taggerOutput[label] = {
+                            'output': -1.0,
+                            'parameter': min(self.evalValues)
+                        }
+
+                setattr(jet, self.taggerName, taggerOutput)
+                
         return True
-                             
-                            
+        

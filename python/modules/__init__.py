@@ -13,8 +13,10 @@ from JetMetUncertainties import JetMetUncertainties
 from JetSelection import JetSelection
 from TaggerEvaluation import TaggerEvaluation
 from TaggerEvaluationProfiled import TaggerEvaluationProfiled
+from HNLJetSelection import HNLJetSelection
 from EventSkim import EventSkim
 from EventObservables import EventObservables
+from WbosonReconstruction import WbosonReconstruction
 from MetFilter import MetFilter
 from PileupWeight import PileupWeight
 from TaggerWorkingpoints import TaggerWorkingpoints
