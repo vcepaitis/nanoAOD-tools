@@ -419,12 +419,12 @@ analyzerChain.append(
 '''
 
 storeVariables = [
-    [lambda tree: tree.branch("MET_pt", "F"), lambda tree,
-     event: tree.fillBranch("MET_pt", event.MET_pt)],
-    [lambda tree: tree.branch("MET_phi", "F"), lambda tree,
-     event: tree.fillBranch("MET_phi", event.MET_phi)],
-    [lambda tree: tree.branch("MET_significance", "F"), lambda tree,
-     event: tree.fillBranch("MET_significance", event.MET_significance)],
+    #[lambda tree: tree.branch("MET_pt", "F"), lambda tree,
+    # event: tree.fillBranch("MET_pt", event.MET_pt)],
+    #[lambda tree: tree.branch("MET_phi", "F"), lambda tree,
+    # event: tree.fillBranch("MET_phi", event.MET_phi)],
+    #[lambda tree: tree.branch("MET_significance", "F"), lambda tree,
+    # event: tree.fillBranch("MET_significance", event.MET_significance)],
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,
      event: tree.fillBranch("PV_npvs", event.PV_npvs)],
     [lambda tree: tree.branch("PV_npvsGood", "I"), lambda tree,
