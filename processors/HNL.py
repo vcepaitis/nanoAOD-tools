@@ -58,7 +58,7 @@ globalOptions = {
 isMC = not args.isData
 
 minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
-minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
+minElectronPt = {2016: 30., 2017: 35., 2018: 32.}
 
 
 if isMC:
@@ -215,11 +215,26 @@ if isMC:
             JetSelection(
                 inputCollection=collection,
                 jetMinPt=30.,
+                jetMaxPt=100,
+                jetId=0,
                 leptonCollection=lambda event: event.leadingLepton,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
         )
+
+        analyzerChain.append(
+            JetSelection(
+                inputCollection=lambda event, systName=systName: getattr(event, "selectedJets_%s_unselected" % (systName)),
+                jetMinPt=30.,
+                jetMinEta=2.4,
+                jetMaxEta=5,
+                jetId=0,
+                outputName="vetoFwdJets_"+systName,
+                globalOptions=globalOptions
+            )
+        )
+
 
         analyzerChain.append(
             JetTruthFlags(
@@ -325,10 +340,25 @@ else:
         JetSelection(
             leptonCollection=lambda event: event.leadingLepton,
             jetMinPt=30.,
+            jetMaxPt=100,
+            jetId=0,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
     )
+
+    analyzerChain.append(
+        JetSelection(
+            inputCollection=lambda event: getattr(event, "selectedJets_nominal_unselected"),
+            jetMinPt=30.,
+            jetMinEta=2.4,
+            jetMaxEta=5,
+            jetId=0,
+            outputName="vetoFwdJets_nominal",
+            globalOptions=globalOptions
+        )
+    )
+
 
     analyzerChain.append(
         LepJetFinder(
@@ -389,12 +419,12 @@ analyzerChain.append(
 '''
 
 storeVariables = [
-    [lambda tree: tree.branch("MET_pt", "F"), lambda tree,
-     event: tree.fillBranch("MET_pt", event.MET_pt)],
-    [lambda tree: tree.branch("MET_phi", "F"), lambda tree,
-     event: tree.fillBranch("MET_phi", event.MET_phi)],
-    [lambda tree: tree.branch("MET_significance", "F"), lambda tree,
-     event: tree.fillBranch("MET_significance", event.MET_significance)],
+    #[lambda tree: tree.branch("MET_pt", "F"), lambda tree,
+    # event: tree.fillBranch("MET_pt", event.MET_pt)],
+    #[lambda tree: tree.branch("MET_phi", "F"), lambda tree,
+    # event: tree.fillBranch("MET_phi", event.MET_phi)],
+    #[lambda tree: tree.branch("MET_significance", "F"), lambda tree,
+    # event: tree.fillBranch("MET_significance", event.MET_significance)],
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,
      event: tree.fillBranch("PV_npvs", event.PV_npvs)],
     [lambda tree: tree.branch("PV_npvsGood", "I"), lambda tree,
@@ -416,6 +446,14 @@ if not globalOptions["isData"]:
     if "HNL" in inputFile:
         analyzerChain.append(LHEWeights())  
 
+
+
+'''
+analyzerChain.append(
+    EventSkim(selection=lambda event: getattr(event, "nvetoFwdJets_nominal") == 0
+    )
+)
+'''
 
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))

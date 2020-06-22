@@ -207,8 +207,12 @@ class MuonSelection(Module):
         if self.triggerMatch:
             trig_deltaR = math.pi
             for trig_obj in trigger_object:
+                #11 Electron
+                #13 Muon
+                if trig_obj.id != 13:
+                    continue
                 trig_deltaR = min(trig_deltaR, deltaR(trig_obj, muon))
-            if trig_deltaR < 0.1:
+            if trig_deltaR < 0.3:
                 return True
             else:
                 return False

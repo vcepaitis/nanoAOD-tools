@@ -20,7 +20,8 @@ class JetSelection(Module):
          leptonFinderCollection=lambda event: [],
          outputName="selectedJets",
          jetMinPt=15.,
-         jetMaxPt=100.,
+         jetMaxPt=1e9,
+         jetMinEta=0.,
          jetMaxEta=2.4,
          dRCleaning=0.4,
          flagDA=False,
@@ -35,6 +36,7 @@ class JetSelection(Module):
         self.outputName = outputName
         self.jetMinPt = jetMinPt
         self.jetMaxPt = jetMaxPt
+        self.jetMinEta = jetMinEta
         self.jetMaxEta = jetMaxEta
         self.dRCleaning = dRCleaning
         self.flagDA = flagDA
@@ -66,12 +68,15 @@ class JetSelection(Module):
         selectedJets = []
         unselectedJets = []
 
+
+        #print(self.outputName)
+
         if self.flagDA:
             flagsDA = [0.]*event.nJet
 
         for jet in jets:
             if jet.pt > self.jetMinPt and jet.pt < self.jetMaxPt\
-                and math.fabs(jet.eta) < self.jetMaxEta\
+                and math.fabs(jet.eta) < self.jetMaxEta and math.fabs(jet.eta) > self.jetMinEta \
                 and (jet.jetId > self.jetId):
 
                 leptons = self.leptonCollection(event)
