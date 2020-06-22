@@ -214,7 +214,7 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=collection,
-                jetMinPt=15.,
+                jetMinPt=30.,
                 jetMaxPt=100,
                 jetId=0,
                 leptonCollection=lambda event: event.leadingLepton,
@@ -339,7 +339,7 @@ else:
     analyzerChain.append(
         JetSelection(
             leptonCollection=lambda event: event.leadingLepton,
-            jetMinPt=15.,
+            jetMinPt=30.,
             jetMaxPt=100,
             jetId=0,
             outputName="selectedJets_nominal",
