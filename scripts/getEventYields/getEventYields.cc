@@ -28,7 +28,7 @@ int main(int argc, char **argv){
             std::string delimiter = ".";
             std::string process = process_string.substr(0, process_string.find(delimiter));
 
-            if (process.find("SingleMu") != std::string::npos) {
+            if (process.find("Single") != std::string::npos or process.find("EGamma") != std::string::npos) {
                 continue;
             }
 
