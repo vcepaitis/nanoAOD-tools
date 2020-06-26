@@ -130,6 +130,7 @@ leptonSelection = [
         globalOptions=globalOptions
     ),
 
+    EventSkim(selection=lambda event: (event.ntightMuon + event.ntightElectron + event.nlooseMuons + event.nlooseElectrons ) == 2),
 ]
 
 analyzerChain = []
@@ -239,32 +240,32 @@ if isMC:
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
-    for systName, jetCollection in [
-        ("nominal", lambda event: event.jets_nominal),
-        ("jerUp", lambda event: event.jets_jerUp),
-        ("jerDown", lambda event: event.jets_jerDown),
-        ("jesTotalUp", lambda event: event.jets_jesTotalUp),
-        ("jesTotalDown", lambda event: event.jets_jesTotalDown),
-    ]:
-    	analyzerChain.append(
-           EventCategorization(
-		muonsTight = lambda event: event.tightMuon, 
-		electronsTight = lambda event:  event.tightElectron, 
-		muonsLoose = lambda event: event.looseMuons, 
-		electronsLoose = lambda event: event.looseElectrons, 
-		jets = lambda event, systName = systName : getattr(event, "selectedJets_"+systName),
-		tagger = 
-		outputName="category_"+systName
-           )
-   	)
 
+    ## check with Matthias , you need to put selectedJets_nominal instead of jets_nominal.
     for systName, jetCollection in [
+        #("nominal", lambda event: event.jets_nominal),
         ("nominal", lambda event: event.selectedJets_nominal[:4]),
-        #("jerUp", lambda event: event.lepJet_jerUp),
-        #("jerDown", lambda event: event.lepJet_jerDown),
-        #("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
-        #("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
+        #("jerUp", lambda event: event.jets_jerUp),
+        #("jerDown", lambda event: event.jets_jerDown),
+        #("jesTotalUp", lambda event: event.jets_jesTotalUp),
+        #("jesTotalDown", lambda event: event.jets_jesTotalDown),
     ]:
+        
+        analyzerChain.append(
+           EventCategorization(
+		#muonsTight = lambda event: event.tightMuon, 
+		#electronsTight = lambda event:  event.tightElectron, 
+		#muonsLoose = lambda event: event.looseMuons, 
+		#electronsLoose = lambda event: event.looseElectrons, 	
+                #looseLeptons = lambda event: sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[1:],
+                #jetsCollection=jetCollection,
+		#jetsCollection = lambda event, systName = systName : getattr(event, "selectedJets_"+systName),
+                #taggerName="llpdnnx",
+                #jetLabels =['LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
+		outputName="category_"+systName ,
+           )
+        )
+        
         analyzerChain.append(
             HNLJetSelection(
                 jetCollection=jetCollection,
@@ -463,7 +464,7 @@ p = PostProcessor(
     [args.inputFiles],
     cut = "(nJet>0)&&((nElectron+nMuon)>0)",
     modules=analyzerChain,
-    maxEvents=-1,
+    maxEvents=100,
     friend=True
 )
 

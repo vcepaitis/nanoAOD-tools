@@ -13,16 +13,15 @@ class EventCategorization(Module):
     def __init__(
         self,
         globalOptions={"isData":False}, 
+        #muonsTight = None , 
+        #electronsTight = None , 
+        #muonsLoose = None , 
+        #electronsLoose = None , 
         outputName=None ,  
-        muonsTight = None , 
-        electronsTight = None , 
-        muonsLoose = None , 
-        electronsLoose = None , 
-        jetsCollection = None ,
-	looseLeptons = None , 
-        taggerName="llpdnnx",
-	latentVariables=[],
-        jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
+	#	looseLeptons = None , 
+	#        jetsCollection = None ,
+	#        taggerName="llpdnnx",
+	#        jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
 	flags={
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
@@ -33,23 +32,20 @@ class EventCategorization(Module):
             'isLLP_MU': ['isLLP_MU','isLLP_QMU','isLLP_QQMU'],
             'isLLP_E': ['isLLP_E','isLLP_QE','isLLP_QQE'],
             'isLLP_TAU': ['isLLP_TAU','isLLP_QTAU','isLLP_QQTAU'],
-            
-
         },
     ):
         self.globalOptions=globalOptions
         self.outputName=outputName
-        self.muonsTight = muonsTight  
-	self.electronsTight = electronsTight
-	self.muonsLoose =  muonsLoose
-	self.electronsLoose =  electronsLoose
-	self.looseLeptons = looseLeptons
-	self.jetsCollection = jetsCollection
-	self.taggerName = taggerName 
-	self.jetLabels = jetLabels
+        #self.muonsTight = muonsTight  
+	#self.electronsTight = electronsTight
+	#self.muonsLoose =  muonsLoose
+	#self.electronsLoose =  electronsLoose
+	#self.looseLeptons = looseLeptons
+	#self.jetsCollection = jetsCollection
+	#self.taggerName = taggerName 
+	#self.jetLabels = jetLabels
 	self.flags = flags
-	self.latentVariables = latentVariables
-        
+    '''    
     def beginJob(self):
         pass
         
@@ -58,19 +54,23 @@ class EventCategorization(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
+	
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
-        self.out.branch(self.outputName+"muonmuon1jet", "F") 
-	self.out.branch(self.outputName+"muonmuonNjets", "F")
-	self.out.branch(self.outputName+"electronelectron1jet", "F")
-	self.out.branch(self.outputName+"electronelectronNjets", "F")
-	self.out.branch(self.outputName+"muonelectron1jet", "F")
-	self.out.branch(self.outputName+"muonelectronNjets", "F")
-	self.out.branch(self.outputName+"electronmuon1jet", "F")
-	self.out.branch(self.outputName+"electronmuonNjets", "F")
+        self.out.branch(self.outputName+"_muonmuon1jet", "F") 
+	self.out.branch(self.outputName+"_muonmuonNjets", "F")
+	self.out.branch(self.outputName+"_electronelectron1jet", "F")
+	self.out.branch(self.outputName+"_electronelectronNjets", "F")
+	self.out.branch(self.outputName+"_muonelectron1jet", "F")
+	self.out.branch(self.outputName+"_muonelectronNjets", "F")
+	self.out.branch(self.outputName+"_electronmuon1jet", "F")
+	self.out.branch(self.outputName+"_electronmuonNjets", "F")
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
-
+        for k in sorted(self.flags.keys()):
+            for originFlag in self.flags[k]:
+		self.out.branch(self.outputName+"_"+originFlag+"_flag", "F" )		 
+	
         for label in self.jetLabels:
         	self.out.branch(self.outputName+"_"+label+"_lepton_deltaR","F")
 		self.out.branch(self.outputName+"_"+label+"_lepton_dxy_sig","F")
@@ -78,10 +78,10 @@ class EventCategorization(Module):
         	self.out.branch(self.outputName+"_"+label+"_jet_output","F")
         	self.out.branch(self.outputName+"_"+label+"_jet_parameter","F")
         	## declare branches here.
-            
+         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
+     
     def analyze(self, event):
 	## you need to add the variables you want to store and to fill the branches afterword.
 	jets = self.jetsCollection(event) 
@@ -99,8 +99,10 @@ class EventCategorization(Module):
 	muonelectronNjets = 0
 	electronmuonNjets = 0
 	dict = {'LLP_Q' : 0 ,'LLP_MU' : 1,'LLP_E': 2 ,'LLP_TAU' : 3 }
+	dictTruth = {'isLLP_Q' : 0 ,'isLLP_MU' : 1,'isLLP_E': 2 ,'isLLP_TAU' : 3  , 'isUDS' : 4 , 'isG' : 5 , 'isPU':6 , 'isC' : 7 , 'isB':8 }
 	
-	## flavour categorisation :
+       	## flavour categorisation :
+	
 	if len(tightMuon)  == 1 and len(looseMuons) == 1 and  len(jets) == 1 :
 		muonmuon1jet = 1
 	elif len(tightMuon) == 1 and len(looseMuons) == 1  and len(jets) > 1 :
@@ -128,31 +130,21 @@ class EventCategorization(Module):
 	## highest probability jet categorisation
 	jetOrigin = Collection(event, "jetorigin")	
         bestJetsPerLabel = {}
+	bestIndexPerLabel = {}
         for label in self.jetLabels:
             bestJetsPerLabel[label] = jets[0]
 
 
 	flavors = {}
-
+	flav_dict = {}
+	
         for k in sorted(self.flags.keys()):
             flavors[k] = [-1.]*len(jets)
             self.out.branch(self.outputName+"_"+k, "F",
                             lenVar="n"+self.outputName)
-
+	
         for ijet , jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
-            ## include the jetorigin here. 
-            for k in sorted(self.flags.keys()):
-                flavorFlag = 0.
-                for originFlag in self.flags[k]:
-                    flagValue = getattr(jetOrigin[jet._index], originFlag)
-                    if (flagValue > 0.5):
-                        flavorFlag = 1.
-                        break
- 		flavors[k][ijet] = flavorFlag
-		
-
-	#######
             for label in self.jetLabels:
                 if getattr(bestJetsPerLabel[label],self.taggerName)[label]['output']<taggerOutput[label]['output']:
                     bestJetsPerLabel[label] = jet
@@ -163,8 +155,16 @@ class EventCategorization(Module):
 	    if taggerResult['output'] > bestResult :
 		bestResult = taggerResult['output']
 		bestLabel = dict[label]
-	   	
-
+                for k in sorted(self.flags.keys()):
+                   flavorFlag = 0.
+                   for originFlag in self.flags[k]:
+                     flagValue = getattr(jetOrigin[jet._index], originFlag)
+                     if (flagValue > 0.5):
+                        flavorFlag = 1.
+                        break
+                     #self.out.fillBranch(self.outputName+"_"+originFlag+"_flag",flavorFlag)
+                   flavors[k] = flavorFlag
+ 		
  
             closestLepton = None
             minDeltaR = 100.
@@ -182,19 +182,22 @@ class EventCategorization(Module):
                     self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",-1)
                 else:
                     self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",math.fabs(closestLepton.dxy)/math.fabs(closestLepton.dxyErr))
+            
             self.out.fillBranch(self.outputName+"_"+label+"_jet_pt",jet.pt)
             self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult['output'])
             self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
-	self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult ) 
+	## Best label will give you the index in the dictionary. 
+	
+	self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult )
 	self.out.fillBranch(self.outputName+"_TaggerBestOutputLabel", bestLabel )		 
-        self.out.fillBranch(self.outputName+"muonmuon1jet", muonmuon1jet) 
-	self.out.fillBranch(self.outputName+"muonmuonNjets", muonmuonNjets)
-	self.out.fillBranch(self.outputName+"electronelectron1jet", electronelectron1jet)
-	self.out.fillBranch(self.outputName+"electronelectronNjets", electronelectronNjets)
-	self.out.fillBranch(self.outputName+"muonelectron1jet", muonelectron1jet)
-	self.out.fillBranch(self.outputName+"muonelectronNjets", muonelectronNjets)
-	self.out.fillBranch(self.outputName+"electronmuon1jet", electronmuon1jet)
-	self.out.fillBranch(self.outputName+"electronmuonNjets", electronmuonNjets)
+        self.out.fillBranch(self.outputName+"_muonmuon1jet", muonmuon1jet) 
+	self.out.fillBranch(self.outputName+"_muonmuonNjets", muonmuonNjets)
+	self.out.fillBranch(self.outputName+"_electronelectron1jet", electronelectron1jet)
+	self.out.fillBranch(self.outputName+"_electronelectronNjets", electronelectronNjets)
+	self.out.fillBranch(self.outputName+"_muonelectron1jet", muonelectron1jet)
+	self.out.fillBranch(self.outputName+"_muonelectronNjets", muonelectronNjets)
+	self.out.fillBranch(self.outputName+"_electronmuon1jet", electronmuon1jet)
+	self.out.fillBranch(self.outputName+"_electronmuonNjets", electronmuonNjets)'''
 
 
     
