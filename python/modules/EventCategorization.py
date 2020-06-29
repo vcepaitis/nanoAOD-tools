@@ -99,7 +99,6 @@ class EventCategorization(Module):
 	muonelectronNjets = 0
 	electronmuonNjets = 0
 	dict = {'LLP_Q' : 0 ,'LLP_MU' : 1,'LLP_E': 2 ,'LLP_TAU' : 3 }
-	dictTruth = {'isLLP_Q' : 0 ,'isLLP_MU' : 1,'isLLP_E': 2 ,'isLLP_TAU' : 3  , 'isUDS' : 4 , 'isG' : 5 , 'isPU':6 , 'isC' : 7 , 'isB':8 }
 	
        	## flavour categorisation :
 	
@@ -136,11 +135,6 @@ class EventCategorization(Module):
 
 
 	flavors = {}
-	
-        for k in sorted(self.flags.keys()):
-            flavors[k] = [-1.]*len(jets)
-            self.out.branch(self.outputName+"_"+k, "F",
-                            lenVar="n"+self.outputName)
 	
         for ijet , jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
