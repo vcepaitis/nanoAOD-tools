@@ -253,12 +253,12 @@ if isMC:
         
         analyzerChain.append(
            EventCategorization(
-		#muonsTight = lambda event: event.tightMuon, 
-		#electronsTight = lambda event:  event.tightElectron, 
-		#muonsLoose = lambda event: event.looseMuons, 
-		#electronsLoose = lambda event: event.looseElectrons, 	
-                #looseLeptons = lambda event: sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[1:],
-                #jetsCollection=jetCollection,
+		muonsTight = lambda event: event.tightMuon, 
+		electronsTight = lambda event:  event.tightElectron, 
+		muonsLoose = lambda event: event.looseMuons, 
+		electronsLoose = lambda event: event.looseElectrons, 	
+                looseLeptons = lambda event: sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[1:],
+                jetsCollection=jetCollection,
 		#jetsCollection = lambda event, systName = systName : getattr(event, "selectedJets_"+systName),
                 #taggerName="llpdnnx",
                 #jetLabels =['LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
@@ -464,7 +464,7 @@ p = PostProcessor(
     [args.inputFiles],
     cut = "(nJet>0)&&((nElectron+nMuon)>0)",
     modules=analyzerChain,
-    maxEvents=100,
+    maxEvents=-1,
     friend=True
 )
 

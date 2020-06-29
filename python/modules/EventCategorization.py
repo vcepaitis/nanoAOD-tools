@@ -13,15 +13,15 @@ class EventCategorization(Module):
     def __init__(
         self,
         globalOptions={"isData":False}, 
-        #muonsTight = None , 
-        #electronsTight = None , 
-        #muonsLoose = None , 
-        #electronsLoose = None , 
+        muonsTight = None , 
+        electronsTight = None , 
+        muonsLoose = None , 
+        electronsLoose = None , 
         outputName=None ,  
-	#	looseLeptons = None , 
-	#        jetsCollection = None ,
-	#        taggerName="llpdnnx",
-	#        jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
+	looseLeptons = None , 
+        jetsCollection = None ,
+        taggerName="llpdnnx",
+        jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
 	flags={
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
@@ -36,16 +36,16 @@ class EventCategorization(Module):
     ):
         self.globalOptions=globalOptions
         self.outputName=outputName
-        #self.muonsTight = muonsTight  
-	#self.electronsTight = electronsTight
-	#self.muonsLoose =  muonsLoose
-	#self.electronsLoose =  electronsLoose
-	#self.looseLeptons = looseLeptons
-	#self.jetsCollection = jetsCollection
-	#self.taggerName = taggerName 
-	#self.jetLabels = jetLabels
+        self.muonsTight = muonsTight  
+	self.electronsTight = electronsTight
+	self.muonsLoose =  muonsLoose
+	self.electronsLoose =  electronsLoose
+	self.looseLeptons = looseLeptons
+	self.jetsCollection = jetsCollection
+	self.taggerName = taggerName 
+	self.jetLabels = jetLabels
 	self.flags = flags
-    '''    
+       
     def beginJob(self):
         pass
         
@@ -69,7 +69,7 @@ class EventCategorization(Module):
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
         for k in sorted(self.flags.keys()):
             for originFlag in self.flags[k]:
-		self.out.branch(self.outputName+"_"+originFlag+"_flag", "F" )		 
+		self.out.branch(self.outputName+"_truth_"+originFlag+"_flag", "F" )		 
 	
         for label in self.jetLabels:
         	self.out.branch(self.outputName+"_"+label+"_lepton_deltaR","F")
@@ -136,7 +136,6 @@ class EventCategorization(Module):
 
 
 	flavors = {}
-	flav_dict = {}
 	
         for k in sorted(self.flags.keys()):
             flavors[k] = [-1.]*len(jets)
@@ -149,7 +148,7 @@ class EventCategorization(Module):
                 if getattr(bestJetsPerLabel[label],self.taggerName)[label]['output']<taggerOutput[label]['output']:
                     bestJetsPerLabel[label] = jet
 	bestResult = 0.00
-        for label in self.jetLabels:
+	for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
             taggerResult = getattr(jet, self.taggerName)[label]
 	    if taggerResult['output'] > bestResult :
@@ -162,7 +161,7 @@ class EventCategorization(Module):
                      if (flagValue > 0.5):
                         flavorFlag = 1.
                         break
-                     #self.out.fillBranch(self.outputName+"_"+originFlag+"_flag",flavorFlag)
+                     self.out.fillBranch(self.outputName+"_truth_"+originFlag+"_flag",flavorFlag)
                    flavors[k] = flavorFlag
  		
  
@@ -182,13 +181,12 @@ class EventCategorization(Module):
                     self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",-1)
                 else:
                     self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",math.fabs(closestLepton.dxy)/math.fabs(closestLepton.dxyErr))
-            
             self.out.fillBranch(self.outputName+"_"+label+"_jet_pt",jet.pt)
             self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult['output'])
             self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
 	## Best label will give you the index in the dictionary. 
 	
-	self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult )
+ 	self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult )
 	self.out.fillBranch(self.outputName+"_TaggerBestOutputLabel", bestLabel )		 
         self.out.fillBranch(self.outputName+"_muonmuon1jet", muonmuon1jet) 
 	self.out.fillBranch(self.outputName+"_muonmuonNjets", muonmuonNjets)
@@ -197,7 +195,8 @@ class EventCategorization(Module):
 	self.out.fillBranch(self.outputName+"_muonelectron1jet", muonelectron1jet)
 	self.out.fillBranch(self.outputName+"_muonelectronNjets", muonelectronNjets)
 	self.out.fillBranch(self.outputName+"_electronmuon1jet", electronmuon1jet)
-	self.out.fillBranch(self.outputName+"_electronmuonNjets", electronmuonNjets)'''
+	self.out.fillBranch(self.outputName+"_electronmuonNjets", electronmuonNjets)
+	return True 
 
 
     
