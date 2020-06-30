@@ -7,8 +7,8 @@ if (ROOT.gSystem.Load("libPhysicsToolsNanoAODTools.so")!=0):
     sys.exit(1)
 
 from MuonSelection import MuonSelection
-from MuonVeto import MuonVeto
 from SingleMuonTriggerSelection import SingleMuonTriggerSelection
+from SingleElectronTriggerSelection import SingleElectronTriggerSelection
 from JetMetUncertainties import JetMetUncertainties
 from JetSelection import JetSelection
 from TaggerEvaluation import TaggerEvaluation
@@ -18,7 +18,7 @@ from MetFilter import MetFilter
 from PileupWeight import PileupWeight
 from TaggerWorkingpoints import TaggerWorkingpoints
 from EventInfo import EventInfo
-from ElectronVeto import ElectronVeto
+from ElectronSelection import ElectronSelection
 from DataFlag import DataFlag
 from EventDump import EventDump
 from InvariantSystem import InvariantSystem
@@ -29,3 +29,7 @@ from WNLOWeights import WNLOWeights
 from JetFeatures import JetFeatures
 from LepJetFinder import LepJetFinder
 from XGBEvaluation import XGBEvaluation
+from JetTaggerIntegral import JetTaggerIntegral
+from LeptonCollecting import LeptonCollecting
+from LHEWeights import LHEWeights
+#from DiLeptonGenSelection import DiLeptonGenSelection

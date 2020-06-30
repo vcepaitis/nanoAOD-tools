@@ -20,7 +20,8 @@ class JetSelection(Module):
          leptonFinderCollection=lambda event: [],
          outputName="selectedJets",
          jetMinPt=15.,
-         jetMaxPt=100.,
+         jetMaxPt=1e9,
+         jetMinEta=0.,
          jetMaxEta=2.4,
          dRCleaning=0.4,
          flagDA=False,
@@ -35,6 +36,7 @@ class JetSelection(Module):
         self.outputName = outputName
         self.jetMinPt = jetMinPt
         self.jetMaxPt = jetMaxPt
+        self.jetMinEta = jetMinEta
         self.jetMaxEta = jetMaxEta
         self.dRCleaning = dRCleaning
         self.flagDA = flagDA
@@ -66,12 +68,15 @@ class JetSelection(Module):
         selectedJets = []
         unselectedJets = []
 
+
+        #print(self.outputName)
+
         if self.flagDA:
             flagsDA = [0.]*event.nJet
 
         for jet in jets:
             if jet.pt > self.jetMinPt and jet.pt < self.jetMaxPt\
-                and math.fabs(jet.eta) < self.jetMaxEta\
+                and math.fabs(jet.eta) < self.jetMaxEta and math.fabs(jet.eta) > self.jetMinEta \
                 and (jet.jetId > self.jetId):
 
                 leptons = self.leptonCollection(event)
@@ -87,10 +92,9 @@ class JetSelection(Module):
                     mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsToFind))
                     setattr(jet, "muon_DeltaR", mindr)
                 else:
-                    setattr(jet, "muon_DeltaR", -1)
-
-
+                    setattr(jet, "muon_DeltaR", -1.)
                 selectedJets.append(jet)
+                #print(jet.pt, jet.eta)
 
             else:
                 unselectedJets.append(jet)
@@ -99,25 +103,10 @@ class JetSelection(Module):
             if self.flagDA:
                 flagsDA[jet._index] = 1.
 
-            '''
-            if not self.globalOptions["isData"]:
-                if jet.genJetIdx == -1:
-                    selectedJets.append(jet)
-                    continue
-                elif jet.genJetIdx >= len(genJets):
-                    unselectedJets.append(jet)
-                    continue
-                else:
-                    genJet = genJets[jet.genJetIdx]
-                    selectedJets.append(jet)
-                else:
-                    unselectedJets.append(jet)
-            else:
-                selectedJets.append(jet)
-            '''
-
         if self.flagDA:
             self.out.fillBranch(self.outputName+"_forDA", flagsDA)
+
+        #print len(selectedJets)
 
         for variable in self.storeKinematics:
             self.out.fillBranch(self.outputName+"_"+variable,

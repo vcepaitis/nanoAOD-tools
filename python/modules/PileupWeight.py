@@ -135,8 +135,11 @@ class PileupWeight(Module):
             self.normHist(self.mcHist)
 
             for var in ["_up", "", "_down"]:
-                self.out.branch(self.outputName+var,"F")
                 self.normHist(getattr(self, "dataHist"+var))
+                if var == "":
+                    self.out.branch(self.outputName+"_nominal","F")
+                else:
+                    self.out.branch(self.outputName+var,"F")
 
             self.sum2 = 0
             self.sum = 0
@@ -157,7 +160,7 @@ class PileupWeight(Module):
             self.sum+=puWeight[1]
             self.sum2+=puWeight[1]**2
 
-            for i, var in enumerate(["_up", "", "_down"]):
+            for i, var in enumerate(["_up", "_nominal", "_down"]):
                 self.out.fillBranch(self.outputName+var,puWeight[i])
 
         return True
