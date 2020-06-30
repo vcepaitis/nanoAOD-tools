@@ -205,7 +205,7 @@ if isMC:
                 globalOptions=globalOptions
             )
         )
-        '''
+        
         analyzerChain.append(
             JetTruthFlags(
                 inputCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
@@ -213,7 +213,7 @@ if isMC:
                 globalOptions=globalOptions
             )
         )
-        '''
+        
     analyzerChain.append(
         EventSkim(selection=lambda event: \
             getattr(event, "nselectedJets_nominal") > 0

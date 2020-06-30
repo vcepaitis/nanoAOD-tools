@@ -54,7 +54,8 @@ class EventCategorization(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-	
+	self.out.branch(self.outputName+"_TaggerBestJet_deltaR", "F")
+        self.out.branch(self.outputName+"_TaggerBestOutputValue_truth","F" )	
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
         self.out.branch(self.outputName+"_muonmuon1jet", "F") 
@@ -69,8 +70,7 @@ class EventCategorization(Module):
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
         for k in sorted(self.flags.keys()):
             for originFlag in self.flags[k]:
-		self.out.branch(self.outputName+"_truth_"+originFlag+"_flag", "F" )		 
-	
+		self.out.branch(self.outputName+"_truth_"+originFlag+"_flag", "F" )		 	
         for label in self.jetLabels:
         	self.out.branch(self.outputName+"_"+label+"_lepton_deltaR","F")
 		self.out.branch(self.outputName+"_"+label+"_lepton_dxy_sig","F")
@@ -98,7 +98,18 @@ class EventCategorization(Module):
 	electronmuon1jet = 0
 	muonelectronNjets = 0
 	electronmuonNjets = 0
+	deltaRBestLabel = -1.
 	dict = {'LLP_Q' : 0 ,'LLP_MU' : 1,'LLP_E': 2 ,'LLP_TAU' : 3 }
+	dictTruth = { 'isB': 0,
+            'isC': 7,
+            'isUDS': 6,
+            'isG': 5,
+            'isPU': 4,
+            'isLLP_Q': 0,
+            'isLLP_MU': 1,
+            'isLLP_E': 2,
+            'isLLP_TAU': 3,
+       }
 	
        	## flavour categorisation :
 	
@@ -130,11 +141,10 @@ class EventCategorization(Module):
 	jetOrigin = Collection(event, "jetorigin")	
         bestJetsPerLabel = {}
 	bestIndexPerLabel = {}
+	indexFlag = {}
+
         for label in self.jetLabels:
             bestJetsPerLabel[label] = jets[0]
-
-
-	flavors = {}
 	
         for ijet , jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
@@ -144,21 +154,23 @@ class EventCategorization(Module):
 	bestResult = 0.00
 	for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
-            taggerResult = getattr(jet, self.taggerName)[label]
-	    if taggerResult['output'] > bestResult :
-		bestResult = taggerResult['output']
-		bestLabel = dict[label]
-                for k in sorted(self.flags.keys()):
+            ### looking for the truth labeling for each best jet per label. 
+            for k in sorted(self.flags.keys()):
                    flavorFlag = 0.
                    for originFlag in self.flags[k]:
                      flagValue = getattr(jetOrigin[jet._index], originFlag)
                      if (flagValue > 0.5):
                         flavorFlag = 1.
-                        break
+			indexFlag[label] = dictTruth[k]
                      self.out.fillBranch(self.outputName+"_truth_"+originFlag+"_flag",flavorFlag)
-                   flavors[k] = flavorFlag
- 		
- 
+	    ### selecting best LLP jet  per event. You loop over the best jet per label list and you peack the best one.  
+            taggerResult = getattr(jet, self.taggerName)[label]
+	    if taggerResult['output'] > bestResult :
+		bestResult = taggerResult['output']
+		bestLabel = dict[label]
+		bestLabelTruth = indexFlag[label]
+		deltaRBestLabel = deltaR(looseLeptons[0],jet)
+		 
             closestLepton = None
             minDeltaR = 100.
             for looseLepton in looseLeptons:
@@ -179,7 +191,8 @@ class EventCategorization(Module):
             self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult['output'])
             self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
 	## Best label will give you the index in the dictionary. 
-	
+	self.out.fillBranch(self.outputName+"_TaggerBestJet_deltaR", deltaRBestLabel )
+        self.out.fillBranch(self.outputName+"_TaggerBestOutputValue_truth", bestLabelTruth ) 
  	self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult )
 	self.out.fillBranch(self.outputName+"_TaggerBestOutputLabel", bestLabel )		 
         self.out.fillBranch(self.outputName+"_muonmuon1jet", muonmuon1jet) 
