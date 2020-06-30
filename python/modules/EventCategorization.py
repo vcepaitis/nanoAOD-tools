@@ -100,7 +100,7 @@ class EventCategorization(Module):
 	electronmuonNjets = 0
 	deltaRBestLabel = -1.
 	dict = {'LLP_Q' : 0 ,'LLP_MU' : 1,'LLP_E': 2 ,'LLP_TAU' : 3 }
-	dictTruth = { 'isB': 0,
+	dictTruth = { 'isB': 8,
             'isC': 7,
             'isUDS': 6,
             'isG': 5,
@@ -154,22 +154,27 @@ class EventCategorization(Module):
 	bestResult = 0.00
 	for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
+
             ### looking for the truth labeling for each best jet per label. 
             for k in sorted(self.flags.keys()):
+		   ##loop over general truth flags 
                    flavorFlag = 0.
+		   ## loop over sub true flags 
                    for originFlag in self.flags[k]:
                      flagValue = getattr(jetOrigin[jet._index], originFlag)
                      if (flagValue > 0.5):
                         flavorFlag = 1.
 			indexFlag[label] = dictTruth[k]
+			print "indexFlag[label] is : ", indexFlag[label]
                      self.out.fillBranch(self.outputName+"_truth_"+originFlag+"_flag",flavorFlag)
-		   if flavorFlag == 0 : 
-		    indexFlag[label] = -1 	
+
 	    ### selecting best LLP jet  per event. You loop over the best jet per label list and you peack the best one.  
             taggerResult = getattr(jet, self.taggerName)[label]
 	    if taggerResult['output'] > bestResult :
 		bestResult = taggerResult['output']
 		bestLabel = dict[label]
+		print "label is : " , label
+		print "indexFlag is : " , indexFlag
 		bestLabelTruth = indexFlag[label]
 		deltaRBestLabel = deltaR(looseLeptons[0],jet)
 		 
