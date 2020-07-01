@@ -145,13 +145,14 @@ class EventCategorization(Module):
 
         for label in self.jetLabels:
             bestJetsPerLabel[label] = jets[0]
+	    indexFlag[label] = -1 
+	    bestIndexPerLabel[label] = -1
 	
         for ijet , jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
             for label in self.jetLabels:
                 if getattr(bestJetsPerLabel[label],self.taggerName)[label]['output']<taggerOutput[label]['output']:
                     bestJetsPerLabel[label] = jet
-	bestResult = 0.00
 	for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
 
@@ -165,16 +166,17 @@ class EventCategorization(Module):
                      if (flagValue > 0.5):
                         flavorFlag = 1.
 			indexFlag[label] = dictTruth[k]
-			print "indexFlag[label] is : ", indexFlag[label]
                      self.out.fillBranch(self.outputName+"_truth_"+originFlag+"_flag",flavorFlag)
 
-	    ### selecting best LLP jet  per event. You loop over the best jet per label list and you peack the best one.  
+	    ### selecting best LLP jet  per event. You loop over the best jet per label list and you peack the best one. 
+	#print indexFlag  
+	bestResult = 0.00
+	for label in self.jetLabels:
+            jet = bestJetsPerLabel[label]
             taggerResult = getattr(jet, self.taggerName)[label]
 	    if taggerResult['output'] > bestResult :
 		bestResult = taggerResult['output']
 		bestLabel = dict[label]
-		print "label is : " , label
-		print "indexFlag is : " , indexFlag
 		bestLabelTruth = indexFlag[label]
 		deltaRBestLabel = deltaR(looseLeptons[0],jet)
 		 
