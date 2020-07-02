@@ -1,5 +1,7 @@
+import os
 import pickle
 import pandas as pd
+import numpy
 from xgboost import XGBClassifier, Booster, DMatrix
 from sklearn.preprocessing import LabelEncoder
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
@@ -11,53 +13,44 @@ class XGBEvaluation(Module):
         modelPath,
     ):
         self.modelPath = modelPath
-        
+
     def beginJob(self):
         pass
     def endJob(self):
         pass
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
+
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
-    def analyze(self, event):
-        array_list = ["lepJet_llpdnnx_-1_isLLP_QMU_QQMU", "lepJet_llpdnnx_0_isLLP_QMU_QQMU", "lepJet_llpdnnx_1_isLLP_QMU_QQMU", "lepJet_llpdnnx_2_isLLP_QMU_QQMU",
-        "dimuon_mass", "dimuon_deltaR",
-        "lepJet_pt", "lepJet_eta", "lepJet_deltaR",
-        "MET_pt", "MET_phi",
-        "looseMuons_pt", "looseMuons_eta", "looseMuons_dxy",
-        "tightMuons_pt", "tightMuons_eta", "tightMuons_dxy"
-        ]
-        data = pd.DataFrame(data={
-            "lepJet_llpdnnx_-1_isLLP_QMU_QQMU" : getattr(event, "lepJet_llpdnnx_-1_isLLP_QMU_QQMU"),
-            "lepJet_llpdnnx_0_isLLP_QMU_QQMU" : event.lepJet_llpdnnx_0_isLLP_QMU_QQMU,
-            "lepJet_llpdnnx_1_isLLP_QMU_QQMU" : event.lepJet_llpdnnx_1_isLLP_QMU_QQMU,
-            "lepJet_llpdnnx_2_isLLP_QMU_QQMU" : event.lepJet_llpdnnx_2_isLLP_QMU_QQMU,
-            "dimuon_mass" : event.dimuon_mass,
-            "dimuon_deltaR" : event.dimuon_deltaR,
-            "lepJet_pt" : event.lepJet_pt,
-            "lepJet_eta" : event.lepJet_eta,
-            "lepJet_deltaR" : event.lepJet_deltaR,
-            "MET_pt" : event.MET_pt,
-            "MET_phi" : event.MET_phi,
-            "looseMuons_pt" : event.looseMuons_pt,
-            "looseMuons_eta" : event.looseMuons_eta,
-            "looseMuons_dxy" : event.looseMuons_dxy,
-            "tightMuons_pt" : event.tightMuons_pt,
-            "tightMuons_eta" : event.tightMuons_eta,
-            "tightMuons_dxy" : event.tightMuons_dxy,
-        },columns=array_list,index=[0])
 
+    def analyze(self, event):
+
+        with open(os.path.expandvars('${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt')) as f:
+            array_list = [line.rstrip() for line in f]
+
+        if event.nselectedJets_nominal == 0 or event.ntightMuon == 0 or event.nlooseMuons == 0:
+            setattr(event, "bdt_score", "-999.")
+            return True
+
+        dict_list = {}
+        for feature in array_list:
+            value = getattr(event, feature)
+            if isinstance(value, list):
+                if len(value) > 0:
+                    dict_list[feature] = value[0]
+            else:
+                dict_list[feature] = value
+        data = pd.DataFrame(data=dict_list, index=[0])
+
+        #print dict_list
 
         model = XGBClassifier()
         booster = Booster()
         #model._le = LabelEncoder().fit([1])
         booster.load_model(self.modelPath)
-        booster.feature_names = array_list
+        booster.feature_names = sorted(array_list)
         model._Booster = booster
         bdt_score = model.predict_proba(data)
         setattr(event, "bdt_score", bdt_score[:, 1])
         return True
-        
