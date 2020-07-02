@@ -413,7 +413,7 @@ else:
 
 analyzerChain.append(
     XGBEvaluation(
-        modelPath="PhysicsTools/NanoAODTools/data/nn/bdt.model",
+
     )
 )
 
