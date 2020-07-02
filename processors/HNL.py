@@ -276,7 +276,7 @@ if isMC:
             taggerName="llpdnnx",
         )
     )
-    
+
     for systName, lepJet in [
         ("nominal", lambda event: event.lepJet_nominal),
         ("jerUp", lambda event: event.lepJet_jerUp),
@@ -410,13 +410,13 @@ else:
 
 # Event level BDT
 # To do!
-'''
+
 analyzerChain.append(
     XGBEvaluation(
         modelPath="PhysicsTools/NanoAODTools/data/nn/bdt.model",
     )
 )
-'''
+
 
 storeVariables = [
     #[lambda tree: tree.branch("MET_pt", "F"), lambda tree,
@@ -444,7 +444,7 @@ if not globalOptions["isData"]:
                            event.Generator_weight)])
 
     if "HNL" in inputFile:
-        analyzerChain.append(LHEWeights())  
+        analyzerChain.append(LHEWeights())
 
 
 
@@ -475,4 +475,3 @@ p = PostProcessor(
 )
 
 p.run()
-
