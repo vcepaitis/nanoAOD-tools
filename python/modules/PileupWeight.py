@@ -24,17 +24,17 @@ class PileupWeight(Module):
         if not self.globalOptions["isData"]:
             if self.globalOptions["year"] == 2016:
                 #read in up and down files
-                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/data_pileup_2016_69200.root")
+                self.dataFile_nominal = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/data_pileup_2016_69200.root")
                 self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/data_pileup_2016_72500.root")
                 self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/data_pileup_2016_65500.root")
                 self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2016/pileup.root")
             elif self.globalOptions["year"] == 2017:
-                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_69200.root")
+                self.dataFile_nominal = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_69200.root")
                 self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_72500.root")
                 self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/data_pileup_2017_65500.root")
                 self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2017/pileup.root")
             elif self.globalOptions["year"] == 2018:
-                self.dataFile = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_69200.root")
+                self.dataFile_nominal = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_69200.root")
                 self.dataFile_up = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_72500.root")
                 self.dataFile_down = os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/data_pileup_2018_65500.root")
                 self.mcFile =  os.path.expandvars("$CMSSW_BASE/src/PhysicsTools/NanoAODTools/data/pu/2018/pileup.root")
@@ -53,7 +53,7 @@ class PileupWeight(Module):
             fMC.Close()
 
             #add up and down hists in a loop
-            for var in ["_up", "", "_down"]:
+            for var in ["_up", "_nominal", "_down"]:
 
                 fData = ROOT.TFile(getattr(self, "dataFile"+var))
 
@@ -69,7 +69,7 @@ class PileupWeight(Module):
         mcBin = self.mcHist.FindBin(nTrueInteractions)
         w = []
         #add w_up and down
-        for var in ["_up", "", "_down"]:
+        for var in ["_up", "_nominal", "_down"]:
             dataBin = getattr(self, "dataHist"+var).FindBin(nTrueInteractions)
             w.append(getattr(self, "dataHist"+var).GetBinContent(dataBin)/(self.mcHist.GetBinContent(mcBin)+self.mcHist.Integral()*0.0001))
             if w[-1]>5.:
@@ -134,12 +134,9 @@ class PileupWeight(Module):
 
             self.normHist(self.mcHist)
 
-            for var in ["_up", "", "_down"]:
+            for var in ["_up", "_nominal", "_down"]:
                 self.normHist(getattr(self, "dataHist"+var))
-                if var == "":
-                    self.out.branch(self.outputName+"_nominal","F")
-                else:
-                    self.out.branch(self.outputName+var,"F")
+                self.out.branch(self.outputName+var,"F")
 
             self.sum2 = 0
             self.sum = 0

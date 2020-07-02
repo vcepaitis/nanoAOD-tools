@@ -10,27 +10,33 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 class XGBEvaluation(Module):
     def __init__(
         self,
-        modelPath,
+        modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt.model",
+        featurePath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt",
+        outputName ="bdt_score"
     ):
         self.modelPath = modelPath
+        self.featurePath = featurePath
+        self.outputName = outputName
 
     def beginJob(self):
         pass
     def endJob(self):
         pass
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
+        self.out = wrappedOutputTree
+        self.out.branch(self.outputName,"F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
     def analyze(self, event):
 
-        with open(os.path.expandvars('${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt')) as f:
+        with open(os.path.expandvars(self.featurePath)) as f:
             array_list = [line.rstrip() for line in f]
 
         if event.nselectedJets_nominal == 0 or event.ntightMuon == 0 or event.nlooseMuons == 0:
             setattr(event, "bdt_score", "-999.")
+            self.out.fillBranch(self.outputName,-999.)
             return True
 
         dict_list = {}
@@ -48,9 +54,12 @@ class XGBEvaluation(Module):
         model = XGBClassifier()
         booster = Booster()
         #model._le = LabelEncoder().fit([1])
-        booster.load_model(self.modelPath)
+        booster.load_model(os.path.expandvars(self.modelPath))
         booster.feature_names = sorted(array_list)
         model._Booster = booster
         bdt_score = model.predict_proba(data)
         setattr(event, "bdt_score", bdt_score[:, 1])
+
+        self.out.fillBranch(self.outputName,bdt_score[:, 1])
+
         return True
