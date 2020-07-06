@@ -31,7 +31,8 @@ class EventCategorization(Module):
             'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ'],
             'isLLP_MU': ['isLLP_MU','isLLP_QMU','isLLP_QQMU'],
             'isLLP_E': ['isLLP_E','isLLP_QE','isLLP_QQE'],
-            'isLLP_TAU': ['isLLP_TAU','isLLP_QTAU','isLLP_QQTAU'],
+            'isLLP_TAU': ['isLLP_TAU','isLLP_QTAU','isLLP_QQTAU'],	
+	    'isUndefined': ['isUndefined'] , 
         },
     ):
         self.globalOptions=globalOptions
@@ -109,6 +110,8 @@ class EventCategorization(Module):
             'isLLP_MU': 1,
             'isLLP_E': 2,
             'isLLP_TAU': 3,
+	    'isUndefined': 9, 
+	    
        }
 	
        	## flavour categorisation :
@@ -153,6 +156,7 @@ class EventCategorization(Module):
             for label in self.jetLabels:
                 if getattr(bestJetsPerLabel[label],self.taggerName)[label]['output']<taggerOutput[label]['output']:
                     bestJetsPerLabel[label] = jet
+	#print "best jet per label : ", bestJetsPerLabel
 	for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
 
@@ -178,8 +182,10 @@ class EventCategorization(Module):
 		bestResult = taggerResult['output']
 		bestLabel = dict[label]
 		bestLabelTruth = indexFlag[label]
+		if bestLabelTruth == -1 : 
+			print "you still have anomaly "
 		deltaRBestLabel = deltaR(looseLeptons[0],jet)
-		 
+            		 
             closestLepton = None
             minDeltaR = 100.
             for looseLepton in looseLeptons:
@@ -216,7 +222,4 @@ class EventCategorization(Module):
 
 
     
-            
-
-
-          
+             
