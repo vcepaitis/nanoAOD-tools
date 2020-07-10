@@ -1,5 +1,6 @@
 import os
 import pickle
+print pickle.__version__
 import pandas as pd
 import numpy
 from xgboost import XGBClassifier, Booster, DMatrix
@@ -34,7 +35,7 @@ class XGBEvaluation(Module):
         with open(os.path.expandvars(self.featurePath)) as f:
             array_list = [line.rstrip() for line in f]
 
-        if event.nselectedJets_nominal == 0 or event.ntightMuon == 0 or event.nlooseMuons == 0:
+        if event.nselectedJets_nominal == 0 or event.leadingLepton == 0 or event.nsubleadingLepton == 0:
             setattr(event, "bdt_score", "-999.")
             self.out.fillBranch(self.outputName,-999.)
             return True
@@ -48,18 +49,12 @@ class XGBEvaluation(Module):
             else:
                 dict_list[feature] = value
         data = pd.DataFrame(data=dict_list, index=[0])
-
-        #print dict_list
-
+        data = data.reindex(sorted(data.columns), axis=1)
         model = XGBClassifier()
-        booster = Booster()
-        #model._le = LabelEncoder().fit([1])
-        booster.load_model(os.path.expandvars(self.modelPath))
-        booster.feature_names = sorted(array_list)
+        booster = Booster(model_file=os.path.expandvars(self.modelPath))
         model._Booster = booster
         bdt_score = model.predict_proba(data)
         setattr(event, "bdt_score", bdt_score[:, 1])
-
         self.out.fillBranch(self.outputName,bdt_score[:, 1])
 
         return True
