@@ -25,7 +25,7 @@ class JetSelection(Module):
          jetMaxEta=2.4,
          dRCleaning=0.4,
          flagDA=False,
-         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'muonSubtrFactor', 'muon_DeltaR', 'nConstituents'],
+         storeKinematics=['pt', 'eta', 'phi', 'jetId', 'muon_DeltaR', 'nConstituents'],
          globalOptions={"isData": False},
          jetId=-1
          ):
@@ -78,6 +78,10 @@ class JetSelection(Module):
             if jet.pt > self.jetMinPt and jet.pt < self.jetMaxPt\
                 and math.fabs(jet.eta) < self.jetMaxEta and math.fabs(jet.eta) > self.jetMinEta \
                 and (jet.jetId > self.jetId):
+
+                #note: tagger only trained for these jets
+                if jet.nConstituents<4:
+                    continue
 
                 leptons = self.leptonCollection(event)
                 leptonsToFind = self.leptonFinderCollection(event)

@@ -176,7 +176,7 @@ class JetMetUncertainties(Module):
         propagateJER = True,
         outputJetPrefix = 'jets_',
         outputMetPrefix = 'met_',
-        jetKeys=['jetId', 'muonSubtrFactor', 'nConstituents'],
+        jetKeys=['jetId', 'nConstituents'],
         metKeys = [],
         globalOptions={"isData": False}
     ):

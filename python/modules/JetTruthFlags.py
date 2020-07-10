@@ -24,17 +24,11 @@ class JetTruthFlags(Module):
             'isUDS': ['isS', 'isUD'],
             'isG': ['isG'],
             'isPU': ['isPU'],
-            'isLLP_QMU': ['isLLP_QMU'],
-            'isLLP_QQMU': ['isLLP_QQMU'],
-            'isLLP_Q': ['isLLP_Q'],
-            'isLLP_QQ': ['isLLP_QQ'],
-            'isLLP_MU': ['isLLP_MU'],
-            'isLLP_Merged': ['isLLP_QMU', 'isLLP_QQMU'],
-            'isLLP_Resolved': ['isLLP_Q', 'isLLP_QQ'],
-            'isLLP_Q': ['isLLP_Q'],
-            'isLLP_QQ': ['isLLP_QQ'],
-            'isLLP_MU': ['isLLP_MU'],
-            'isLLP_RAD': ['isLLP_RAD']
+            'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ'],
+            'isLLP_MU': ['isLLP_MU','isLLP_QMU','isLLP_QQMU'],
+            'isLLP_E': ['isLLP_E','isLLP_QE','isLLP_QQE'],
+            'isLLP_TAU': ['isLLP_TAU','isLLP_QTAU','isLLP_QQTAU'],
+            
 
         },
         globalOptions={"isData": False}
