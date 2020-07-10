@@ -410,7 +410,7 @@ else:
     )
     analyzerChain.append(
         HNLJetSelection(
-            jetCollection=event.selectedJets_nominal[:4],
+            jetCollection=lambda event:event.selectedJets_nominal[:4],
             promptLeptonCollection=lambda event: event.leadingLepton,
             looseLeptonsCollection=lambda event: event.subleadingLepton,
             taggerName="llpdnnx",
@@ -421,13 +421,11 @@ else:
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='tightMuon',
-            metObject=lambda event: event.met_nominal,
             globalOptions=globalOptions,
             outputName="nominal"
         ),
         WbosonReconstruction(
             leptonCollectionName='tightElectron',
-            metObject=lambda event: event.met_nominal,
             globalOptions=globalOptions,
             outputName="nominal"
         )
@@ -437,7 +435,6 @@ else:
         EventObservables(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.leadingLepton[0],
-            metInput=lambda event: event.met_nominal,
             outputName="EventObservables_nominal"
         )
     )
