@@ -136,6 +136,7 @@ class TaggerEvaluationProfiled(Module):
         for index in jetOriginIndices:
             evaluationIndices.extend([index]*len(self.evalValues))
 
+
         if event._tree._ttreereaderversion > self._ttreereaderversion:
             self.setup(event._tree)
 
@@ -145,6 +146,7 @@ class TaggerEvaluationProfiled(Module):
             return True
 
         evaluationIndices = np.array(evaluationIndices,np.int64)
+
         result = self.tfEvalParametric.evaluate(
             evaluationIndices.shape[0],
             evaluationIndices
@@ -168,9 +170,7 @@ class TaggerEvaluationProfiled(Module):
             for ilabel,label in enumerate(self.predictionLabels):
                 self.out.fillBranch(self.taggerName+"_value_%s"%(label), predictionsPerIndex[jetIndex][ilabel])
                 self.out.fillBranch(self.taggerName+"_dxy_%s"%(label), parameterPerIndex[jetIndex][ilabel])
-
             #print ijet,predictionsPerIndex[jetIndex],parameterPerIndex[jetIndex]
-
             '''
 
         for jetCollection in self.inputCollections:
@@ -193,4 +193,3 @@ class TaggerEvaluationProfiled(Module):
                 setattr(jet, self.taggerName, taggerOutput)
                 
         return True
-        

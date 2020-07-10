@@ -30,7 +30,7 @@ class TaggerEvaluation(Module):
         self.inputCollections = inputCollections
         self.predictionLabels = predictionLabels
         self.evalValues = evalValues
-        self.logctau = numpy.array(evalValues,dtype=numpy.float32)
+        self.logctau = np.array(evalValues,dtype=np.float32)
 
         self.modelPath = os.path.expandvars(modelPath)
         print featureDictFile
