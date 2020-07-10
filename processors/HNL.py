@@ -416,7 +416,6 @@ else:
 
 analyzerChain.append(
     XGBEvaluation(
-
     )
 )
 

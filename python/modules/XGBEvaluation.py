@@ -1,6 +1,5 @@
 import os
 import pickle
-print pickle.__version__
 import pandas as pd
 import numpy
 from xgboost import XGBClassifier, Booster, DMatrix
@@ -39,6 +38,16 @@ class XGBEvaluation(Module):
             setattr(event, "bdt_score", "-999.")
             self.out.fillBranch(self.outputName,-999.)
             return True
+
+        dict_list = {}
+        for feature in array_list:
+            value = getattr(event, feature)
+            if isinstance(value, list):
+                if len(value) > 0:
+                    dict_list[feature] = value[0]
+            else:
+                dict_list[feature] = value
+        data = pd.DataFrame(data=dict_list, index=[0])
 
         dict_list = {}
         for feature in array_list:
