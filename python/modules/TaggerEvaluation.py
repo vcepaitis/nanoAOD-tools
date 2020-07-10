@@ -29,10 +29,9 @@ class TaggerEvaluation(Module):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
         self.predictionLabels = predictionLabels
-        self.evalValues = list(evalValues)
-        self.nEvalValues = len(evalValues)
-        self.integrateDisplacementOrder = integrateDisplacementOrder
-        
+        self.evalValues = evalValues
+        self.logctau = numpy.array(evalValues,dtype=numpy.float32)
+
         self.modelPath = os.path.expandvars(modelPath)
         print featureDictFile
         self.featureDict = imp.load_source(
@@ -40,24 +39,6 @@ class TaggerEvaluation(Module):
             os.path.expandvars(featureDictFile)
         ).featureDict
         self.taggerName = taggerName
-        if self.integrateDisplacementOrder != -1:
-            self.integrate = True
-            self.abscissas, self.weights = getAbscissasAndWeights(self.integrateDisplacementOrder)
-        else:
-            self.integrate = False
-
-        if self.integrate:
-            file_path = "PhysicsTools/NanoAODTools/data/hnl/L0.json"
-            with open(file_path) as json_file:
-                L0_values = json.load(json_file)
-            for sample, L0 in L0_values.iteritems():
-                print sample, L0
-                for abscissa in self.abscissas:
-                    logDisplacement = math.log10(abscissa*L0)
-                    self.evalValues.append(logDisplacement)
-
-        self.evalValues = np.array(self.evalValues, dtype=np.float32)
-        print "Evaluation values:" , self.evalValues
 
     def beginJob(self):
         pass
@@ -171,10 +152,9 @@ class TaggerEvaluation(Module):
         for ijet,jetIndex in enumerate(jetOriginIndices):
             predictionsPerIndexAndValue[jetIndex] = {}
 
-            for ivalue, value in enumerate(self.evalValues):
-                predictionIndex = ijet*len(self.evalValues)+ivalue
-                predictionsPerIndexAndValue[jetIndex][value] = result.get("prediction",predictionIndex)
-                
+            for ictau,ctau in enumerate(self.evalValues):
+                predictionIndex = ijet*len(self.evalValues)+ictau
+                predictionsPerIndexAndCtau[jetIndex][ctau] = result.get("prediction",predictionIndex)
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
@@ -185,11 +165,11 @@ class TaggerEvaluation(Module):
                     taggerOutput[self.evalValues[ivalue]] = {}
 
                     for iclass, classLabel in enumerate(self.predictionLabels):
-                         if hasattr(jet, "globalIdx"):
-                             taggerOutput[self.evalValues[ivalue]][classLabel] = \
-                                     predictionsPerIndexAndValue[jet.globalIdx][value][iclass]
-                         else:
-                             taggerOutput[self.evalValues[ivalue]][classLabel] = -1.0
+                        if hasattr(jet, "globalIdx"):
+                            taggerOutput[self.evalValues[ictau]][classLabel] = \
+                                    predictionsPerIndexAndCtau[jet.globalIdx][ctau][iclass]
+                        else:
+                            taggerOutput[self.evalValues[ictau]][classLabel] = -1.0
 
                 setattr(jet, self.taggerName, taggerOutput)
         return True
