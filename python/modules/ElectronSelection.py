@@ -11,28 +11,27 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from utils import getGraph, getHist, combineHist2D, getSFXY, deltaR
 
 class ElectronSelection(Module):
-
     def __init__(
         self,
         inputCollection = lambda event: Collection(event, "Electron"),
         outputName = "tightElectrons",
-        triggerMatch = False,
         electronID = "Iso_WP90",
         electronMinPt = 5.,
         electronMaxEta = 2.4,
         storeKinematics=['pt','eta'],
         storeWeights=False,
         selectLeadingOnly=False,
-        globalOptions={"isData":False, "year":2016}
+        globalOptions={"isData":False, "year":2016},
+        triggerMatch = False
     ):
         IDs = ["Iso_WP80",
-           "Iso_WP90",
-           "Iso_WPL",
-           "noIso_WP80",
-           "noIso_WP90",
-           "noIso_WPL"
+               "Iso_WP90",
+               "Iso_WPL",
+               "noIso_WP80",
+               "noIso_WP90",
+               "noIso_WPL",
+               "None"
               ]
-        self.globalOptions = globalOptions
         self.inputCollection = inputCollection
         self.outputName = outputName
         self.electronMinPt = electronMinPt
@@ -40,17 +39,19 @@ class ElectronSelection(Module):
         self.storeKinematics = storeKinematics
         self.storeWeights = storeWeights
         self.selectLeadingOnly = selectLeadingOnly
+        self.globalOptions = globalOptions
         self.triggerMatch = triggerMatch
         if electronID not in IDs:
             print("Undefined electron ID! Choose one of the following")
             print(IDs)
             sys.exit(1)
+        elif electronID == "None":
+            self.electronID = lambda electron: True
         else:
             self.electronID = lambda electron: getattr(electron, "mvaFall17V2"+electronID)
 
         if triggerMatch:
             self.trigger_object = lambda event: Collection(event, "TrigObj")
-
 
         id_hist_dict = {
                 2016: "2016LegacyReReco_ElectronMVAREPLACE_Fall17V2.root",
@@ -72,6 +73,19 @@ class ElectronSelection(Module):
                 "EGamma_SF2D"
             )
 
+    def triggerMatched(self, electron, trigger_object):
+        if self.triggerMatch:
+            trig_deltaR = math.pi
+            for trig_obj in trigger_object:
+                if trig_obj.id != 11:
+                    continue
+                trig_deltaR = min(trig_deltaR, deltaR(trig_obj, electron))
+            if trig_deltaR < 0.3:
+                return True
+            else:
+                return False
+        else:
+            return True
  
     def beginJob(self):
         pass
@@ -99,6 +113,11 @@ class ElectronSelection(Module):
         """process event, return True (go to next module) or False (fail, go to next event)"""
         electrons = self.inputCollection(event)
         muons = Collection(event, "Muon")
+
+        if self.triggerMatch:
+            trigger_object = self.trigger_object(event)
+        else:
+            trigger_object = None
         
         selectedElectrons = []
         unselectedElectrons = []
@@ -108,7 +127,8 @@ class ElectronSelection(Module):
         weight_id_down = []
         
         for electron in electrons:
-            if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta and self.electronID(electron):
+            if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
+                and self.electronID(electron) and self.triggerMatched(electron, trigger_object):
 
                 if muons is not None and len(muons) > 0:
                     mindr = min(map(lambda muon: deltaR(muon, electron), muons))
@@ -140,13 +160,10 @@ class ElectronSelection(Module):
             weight_id_up = 1.
             weight_id_down = 1.
 
-
         if not self.globalOptions["isData"] and self.storeWeights:
             self.out.fillBranch(self.outputName+"_weight_id_nominal", weight_id_nominal)
             self.out.fillBranch(self.outputName+"_weight_id_up", weight_id_up)
             self.out.fillBranch(self.outputName+"_weight_id_down", weight_id_down)
-        
-
 
         self.out.fillBranch("n"+self.outputName,len(selectedElectrons))
         for variable in self.storeKinematics:

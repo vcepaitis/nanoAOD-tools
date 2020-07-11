@@ -62,8 +62,7 @@ globalOptions = {
 isMC = not args.isData
 
 minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
-minElectronPt = {2016: 30., 2017: 35., 2018: 32.}
-
+minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
 
 if isMC:
     jecTags = {2016: 'Summer16_07Aug2017_V11_MC',
@@ -127,7 +126,7 @@ leptonSelection = [
         outputName="looseMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
-                         'tightId', 'charge'],
+                         'looseId', 'mediumId', 'tightId', 'charge'],
         muonMinPt=5.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
@@ -137,7 +136,11 @@ leptonSelection = [
         inputCollection=lambda event: event.tightElectron_unselected,
         outputName="looseElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'charge', 'pfRelIso03_all'],
+                         'dzErr', 'phi', 'charge', 'pfRelIso03_all',
+                         'mvaFall17V2noIso_WP80', 'mvaFall17V2noIso_WP90', 'mvaFall17V2noIso_WPL',
+                         'mvaFall17V2Iso_WP80', 'mvaFall17V2Iso_WP90', 'mvaFall17V2Iso_WPL',
+                         'cutBased'],
+
         electronMinPt=5.,
         electronID="noIso_WPL",
         globalOptions=globalOptions
