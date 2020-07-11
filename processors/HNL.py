@@ -62,8 +62,7 @@ globalOptions = {
 isMC = not args.isData
 
 minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
-minElectronPt = {2016: 30., 2017: 35., 2018: 32.}
-
+minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
 
 if isMC:
     jecTags = {2016: 'Summer16_07Aug2017_V11_MC',
@@ -102,7 +101,7 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso03_all', 'charge'],
         electronMinPt=minElectronPt[globalOptions["year"]],
-        electronID=ElectronSelection.TIGHT,
+        electronID="Iso_WP90",
         storeWeights=True,
         triggerMatch=True,
         selectLeadingOnly=True,
@@ -127,7 +126,7 @@ leptonSelection = [
         outputName="looseMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
-                         'tightId', 'charge'],
+                         'looseId', 'mediumId', 'tightId', 'charge'],
         muonMinPt=5.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
@@ -137,9 +136,13 @@ leptonSelection = [
         inputCollection=lambda event: event.tightElectron_unselected,
         outputName="looseElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'charge', 'pfRelIso03_all'],
+                         'dzErr', 'phi', 'charge', 'pfRelIso03_all',
+                         'mvaFall17V2noIso_WP80', 'mvaFall17V2noIso_WP90', 'mvaFall17V2noIso_WPL',
+                         'mvaFall17V2Iso_WP80', 'mvaFall17V2Iso_WP90', 'mvaFall17V2Iso_WPL',
+                         'cutBased'],
+
         electronMinPt=5.,
-        electronID=ElectronSelection.LOOSE,
+        electronID="noIso_WPL",
         globalOptions=globalOptions
     ),
 
@@ -271,7 +274,8 @@ if isMC:
             modelPath=modelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
+                lambda event: event.lepJet_nominal,
+                #lambda event: event.selectedJets_nominal[:4],
                 #lambda event: event.selectedJets_jesTotalUp[:4],
                 #lambda event: event.selectedJets_jesTotalDown[:4],
                 #lambda event: event.selectedJets_jerUp[:4],
@@ -283,6 +287,12 @@ if isMC:
         )
     )
 
+    analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nlepJet_nominal > 0
+        )
+    )
+    
     for systName, lepJet in [
         ("nominal", lambda event: event.lepJet_nominal),
         #("jerUp", lambda event: event.lepJet_jerUp),
@@ -299,16 +309,9 @@ if isMC:
             )
         )
 
-    for systName, jetCollection in [
-        ("nominal", lambda event: event.selectedJets_nominal[:4]),
-        #("jerUp", lambda event: event.selectedJets_jerUp[:4]),
-        #("jerDown", lambda event: event.selectedJets_jerDown[:4]),
-        #("jesTotalUp", lambda event: event.selectedJets_jesTotalUp[:4]),
-        #("jesTotalDown", lambda event: event.selectedJets_jesTotalDown[:4]),
-    ]:
         analyzerChain.append(
             HNLJetSelection(
-                jetCollection=jetCollection,
+                jetCollection=lepJet,
                 promptLeptonCollection=lambda event: event.leadingLepton,
                 looseLeptonsCollection=lambda event: event.subleadingLepton,
                 taggerName="llpdnnx",
@@ -316,7 +319,7 @@ if isMC:
                 outputName="hnlJets_"+systName,
             )
         )
-        
+
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
@@ -401,16 +404,25 @@ else:
             modelPath=modelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=[
-                lambda event: event.selectedJets_nominal[:4]
+                lambda event: event.lepJet_nominal,
+                #lambda event: event.selectedJets_nominal[:4]
             ],
             taggerName="llpdnnx",
             predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
+
+    analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nlepJet_nominal > 0
+        )
+    )
+
     analyzerChain.append(
         HNLJetSelection(
-            jetCollection=lambda event:event.selectedJets_nominal[:4],
+            jetCollection=lambda event:event.lepJet_nominal,
+            #jetCollection=lambda event:event.selectedJets_nominal[:4],
             promptLeptonCollection=lambda event: event.leadingLepton,
             looseLeptonsCollection=lambda event: event.subleadingLepton,
             taggerName="llpdnnx",

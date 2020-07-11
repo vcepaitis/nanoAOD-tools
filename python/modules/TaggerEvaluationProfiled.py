@@ -143,6 +143,17 @@ class TaggerEvaluationProfiled(Module):
         self.nJets = len(jetglobal)
 
         if len(jetOriginIndices)==0:
+            for jetCollection in self.inputCollections:
+                jets = jetCollection(event)
+                for ijet, jet in enumerate(jets):
+                    taggerOutput = {}
+                    for ilabel, label in enumerate(self.predictionLabels):
+                        print("Jet output set to -1!")
+                        taggerOutput[label] = {
+                            'output': -1.0,
+                            'parameter': min(self.evalValues)
+                        }
+                    setattr(jet, self.taggerName, taggerOutput)
             return True
 
         evaluationIndices = np.array(evaluationIndices,np.int64)
@@ -178,13 +189,14 @@ class TaggerEvaluationProfiled(Module):
 
             for ijet, jet in enumerate(jets):
                 taggerOutput = {}
-                for  ilabel,label in enumerate(self.predictionLabels):
-                     if hasattr(jet, "globalIdx"):
-                         taggerOutput[label] = {
-                             'output': predictionsPerIndex[jet.globalIdx][ilabel],
-                             'parameter': parameterPerIndex[jet.globalIdx][ilabel]
-                         }
-                     else:
+                for ilabel, label in enumerate(self.predictionLabels):
+                    if hasattr(jet, "globalIdx"):
+                        taggerOutput[label] = {
+                            'output': predictionsPerIndex[jet.globalIdx][ilabel],
+                            'parameter': parameterPerIndex[jet.globalIdx][ilabel]
+                        }
+                    else:
+                        print("Jet output set to -1!")
                         taggerOutput[label] = {
                             'output': -1.0,
                             'parameter': min(self.evalValues)
