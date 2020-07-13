@@ -45,7 +45,7 @@ class EventCategorization(Module):
         self.jetsCollection = jetsCollection
         self.taggerName = taggerName 
         self.jetLabels = jetLabels
-	self.flags = flags
+        self.flags = flags
        
     def beginJob(self):
         pass
@@ -54,12 +54,12 @@ class EventCategorization(Module):
         pass
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        self.out = wrappedOutputTree
+	self.out = wrappedOutputTree
 	self.out.branch(self.outputName+"_TaggerBestJet_deltaR", "F")
-        self.out.branch(self.outputName+"_TaggerBestOutputValue_truth","F" )	
+	self.out.branch(self.outputName+"_TaggerBestOutputValue_truth","F" )	
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
-        self.out.branch(self.outputName+"_muonmuon", "F") 
+	self.out.branch(self.outputName+"_muonmuon", "F") 
 	self.out.branch(self.outputName+"_electronelectron", "F")
 	self.out.branch(self.outputName+"_muonelectron", "F")
 	self.out.branch(self.outputName+"_electronmuon", "F")
@@ -67,10 +67,10 @@ class EventCategorization(Module):
 	self.out.branch(self.outputName+"_electronjets", "F")
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
-        for k in sorted(self.flags.keys()):
+	for k in sorted(self.flags.keys()):
             for originFlag in self.flags[k]:
 		self.out.branch(self.outputName+"_truth_"+originFlag+"_flag", "F" )		 	
-        for label in self.jetLabels:
+	for label in self.jetLabels:
         	self.out.branch(self.outputName+"_"+label+"_lepton_deltaR","F")
 		self.out.branch(self.outputName+"_"+label+"_lepton_dxy_sig","F")
         	self.out.branch(self.outputName+"_"+label+"_jet_pt","F")

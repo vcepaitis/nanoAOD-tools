@@ -239,7 +239,7 @@ if isMC:
                 inputCollection=lambda event, systName=systName: getattr(event, "selectedJets_%s_unselected" % (systName)),
                 jetMinPt=30.,
                 jetMinEta=2.4,
-                jetMaxEta=5,
+                jetMaxEta=5.,
                 jetId=0,
                 outputName="vetoFwdJets_"+systName,
                 globalOptions=globalOptions
@@ -290,23 +290,23 @@ if isMC:
         )
     )
     for systName, jetCollection in [
-        ("nominal", lambda event: event.selectedJets_nominal),
-        ("jerUp", lambda event: event.selectedJets_jerUp),
-        ("jerDown", lambda event: event.selectedJets_jerDown),
-        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp),
-        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown),
+        ("nominal", lambda event: event.selectedJets_nominal[:4]),
+        ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
+        ("jerDown", lambda event: event.selectedJets_jerDown[:4]),
+        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp[:4]),
+        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown[:4]),
     ]:
 
 
         analyzerChain.append(
            EventCategorization(
-		muonsTight = lambda event: event.tightMuon, 
-		electronsTight = lambda event:  event.tightElectron, 
-		muonsLoose = lambda event: event.looseMuons, 
-		electronsLoose = lambda event: event.looseElectrons, 	
+                muonsTight = lambda event: event.tightMuon, 
+                electronsTight = lambda event:  event.tightElectron, 
+                muonsLoose = lambda event: event.looseMuons, 
+                electronsLoose = lambda event: event.looseElectrons, 	
                 looseLeptons = lambda event: event.subleadingLepton,
                 jetsCollection=jetCollection,
-		outputName="category_"+systName ,
+                outputName="category_"+systName ,
            )
         )
 
