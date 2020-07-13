@@ -266,16 +266,6 @@ if isMC:
            )
         )
         
-        analyzerChain.append(
-            HNLJetSelection(
-                jetCollection=jetCollection,
-                promptLeptonCollection=lambda event: sorted(event.tightMuon+event.tightElectron, key=lambda x: -x.pt)[0],
-                looseLeptonsCollection=lambda event: sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[1:],
-                taggerName="llpdnnx",
-                jetLabels = ['LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
-                outputName="hnlJets",
-            )
-        )
         
         
     for systName, metObject in [
