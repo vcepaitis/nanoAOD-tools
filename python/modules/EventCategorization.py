@@ -18,11 +18,11 @@ class EventCategorization(Module):
         muonsLoose = None , 
         electronsLoose = None , 
         outputName=None ,  
-	looseLeptons = None , 
+        looseLeptons = None , 
         jetsCollection = None ,
         taggerName="llpdnnx",
         jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
-	flags={
+        flags={
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
             'isUDS': ['isS', 'isUD'],
@@ -38,13 +38,13 @@ class EventCategorization(Module):
         self.globalOptions=globalOptions
         self.outputName=outputName
         self.muonsTight = muonsTight  
-	self.electronsTight = electronsTight
-	self.muonsLoose =  muonsLoose
-	self.electronsLoose =  electronsLoose
-	self.looseLeptons = looseLeptons
-	self.jetsCollection = jetsCollection
-	self.taggerName = taggerName 
-	self.jetLabels = jetLabels
+        self.electronsTight = electronsTight
+        self.muonsLoose =  muonsLoose
+        self.electronsLoose =  electronsLoose
+        self.looseLeptons = looseLeptons
+        self.jetsCollection = jetsCollection
+        self.taggerName = taggerName 
+        self.jetLabels = jetLabels
 	self.flags = flags
        
     def beginJob(self):
