@@ -4,6 +4,7 @@ import math
 import argparse
 import random
 import ROOT
+import numpy as np
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor \
     import PostProcessor
@@ -16,6 +17,8 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--testMode', dest='testMode', action='store_true', default=False)
 parser.add_argument('--isData', dest='isData',
+                    action='store_true', default=False)
+parser.add_argument('--isSignal', dest='isSignal',
                     action='store_true', default=False)
 parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
@@ -139,6 +142,7 @@ leptonSelection = [
         globalOptions=globalOptions
     ),
 
+    EventSkim(selection=lambda event: (event.ntightMuon + event.ntightElectron + event.nlooseMuons + event.nlooseElectrons ) <= 2),
     LeptonCollecting(
         tightMuonCollection=lambda event:event.tightMuon,
         tightElectronCollection=lambda event:event.tightElectron,
@@ -146,19 +150,19 @@ leptonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons
         ),
 
-    EventSkim(selection=lambda event: event.nsubleadingLepton <= 1)
+    #EventSkim(selection=lambda event: event.nsubleadingLepton <= 1)
 ]
 
 # analyzerChain = [jetRecalibration]
 analyzerChain = []
 
-analyzerChain.extend(muonSelection)
+analyzerChain.extend(leptonSelection)
 
 
 analyzerChain.append(
     InvariantSystem(
-        inputCollection=lambda event: [event.leadingLepton[0],
-                                       event.subleadingLepton[0]],
+        inputCollection= lambda event:
+            sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[:2],
         outputName="dilepton"
     )
 )
@@ -375,6 +379,13 @@ storeVariables = [
     # lambda tree,event: tree.fillBranch("bdt_score", event.bdt_score)]
 ]
 
+if args.isSignal:
+    for coupling in range(1,68):
+        storeVariables.append([
+            lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
+            lambda tree, event, coupling=coupling: tree.fillBranch('LHEWeights_coupling_%i'%coupling,getattr(event,"LHEWeights_coupling_%i"%coupling)),
+        ])
+
 if not globalOptions["isData"]:
     storeVariables.append([lambda tree: tree.branch("genweight", "F"),
                            lambda tree,
@@ -384,13 +395,6 @@ if not globalOptions["isData"]:
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
-if not testMode:
-    analyzerChain.append(
-        PileupWeight(
-            outputName ="puweight",
-            globalOptions=globalOptions
-        )
-    )
 
 p = PostProcessor(
     args.output[0],
