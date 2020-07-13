@@ -167,7 +167,7 @@ class EventCategorization(Module):
                         if (flagValue > 0.5):
                             flavorFlag = 1.
                             indexFlag[label] = dictTruth[k]
-                    self.out.fillBranch(self.outputName+"_truth_"+originFlag+"_flag",flavorFlag)
+                        self.out.fillBranch(self.outputName+"_truth_"+originFlag+"_flag",flavorFlag)
 
         ### selecting best LLP jet  per event. You loop over the best jet per label list and you peack the best one. 
         #print indexFlag  
