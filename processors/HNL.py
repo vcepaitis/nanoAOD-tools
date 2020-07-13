@@ -298,17 +298,16 @@ if isMC:
 
         analyzerChain.append(
            EventCategorization(
-                muonsTight = lambda event: event.tightMuon, 
-                electronsTight = lambda event:  event.tightElectron, 
-                muonsLoose = lambda event: event.looseMuons, 
-                electronsLoose = lambda event: event.looseElectrons, 	
-                looseLeptons = lambda event: event.subleadingLepton,
+                muonsTight=lambda event: event.tightMuon, 
+                electronsTight=lambda event: event.tightElectron, 
+                muonsLoose=lambda event: event.looseMuons, 
+                electronsLoose=lambda event: event.looseElectrons, 	
+                looseLeptons=lambda event: event.subleadingLepton,
                 jetsCollection=jetCollection,
                 outputName="category_"+systName,
                 globalOptions=globalOptions
            )
         )
-
 
 
     for systName, jetCollection, metObject in [
@@ -345,6 +344,13 @@ if isMC:
                 outputName="EventObservables_"+systName
             )
         )
+        if not testMode:
+             analyzerChain.append(
+                 PileupWeight(
+                     outputName="puweight",
+                     globalOptions=globalOptions
+                 )
+             )
 
 else:
     analyzerChain.append(
@@ -394,24 +400,23 @@ else:
             ],
             taggerName="llpdnnx",
             predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
-            evalValues = np.linspace(-3,2,5*5+1),
-            globalOptions=globalOptions
+            globalOptions=globalOptions,
+            evalValues = np.linspace(-3,2,5*5+1)
         )
     )
 
     analyzerChain.append(
        EventCategorization(
-            muonsTight = lambda event: event.tightMuon, 
-            electronsTight = lambda event:  event.tightElectron, 
-            muonsLoose = lambda event: event.looseMuons, 
-            electronsLoose = lambda event: event.looseElectrons,    
-            looseLeptons = lambda event: event.subleadingLepton,
-            jetsCollection= lambda event: event.selectedJets_nominal[:4],
+            muonsTight=lambda event: event.tightMuon, 
+            electronsTight=lambda event: event.tightElectron, 
+            muonsLoose=lambda event: event.looseMuons, 
+            electronsLoose=lambda event: event.looseElectrons,    
+            looseLeptons=lambda event: event.subleadingLepton,
+            jetsCollection=lambda event: event.selectedJets_nominal[:4],
             outputName="category_nominal",
             globalOptions=globalOptions
        )
     )
-
 
     analyzerChain.extend([
         WbosonReconstruction(
@@ -436,13 +441,6 @@ analyzerChain.append(
     )
 )
 
-if not testMode:
-     analyzerChain.append(
-         PileupWeight(
-             outputName ="puweight",
-             globalOptions=globalOptions
-         )
-     )
 
 storeVariables = [
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,
@@ -454,15 +452,8 @@ storeVariables = [
                             event.fixedGridRhoFastjetAll)],
 ]
 
-if args.isSignal:
-    for coupling in range(1,68):
-        storeVariables.append([
-            lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
-            lambda tree, event, coupling=coupling: tree.fillBranch('LHEWeights_coupling_%i'%coupling,getattr(event,"LHEWeights_coupling_%i"%coupling)),
-        ])
 
 if not globalOptions["isData"]:
-
     storeVariables.append([lambda tree: tree.branch("genweight", "F"),
                            lambda tree,
                            event: tree.fillBranch("genweight",
