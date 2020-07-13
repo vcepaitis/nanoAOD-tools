@@ -4,6 +4,7 @@ import math
 import json
 import ROOT
 import random
+import numpy as np
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -30,7 +31,8 @@ class ElectronSelection(Module):
                "noIso_WP80",
                "noIso_WP90",
                "noIso_WPL",
-               "None"
+               "None",
+               "Custom"
               ]
         self.inputCollection = inputCollection
         self.outputName = outputName
@@ -46,7 +48,18 @@ class ElectronSelection(Module):
             print(IDs)
             sys.exit(1)
         elif electronID == "None":
+            self.storeWeights = False
             self.electronID = lambda electron: True
+        elif electronID == "Custom":
+            self.storeWeights = False
+            self.electronID = lambda electron:  \
+                                electron.GsfEleSCEtaMultiRangeCut>0 and \
+                                electron.GsfEleDEtaInSeedCut>0 and \
+                                electron.GsfEleDPhiInCut>0 and \
+                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>0 and \
+                                electron.GsfEleHadronicOverEMEnergyScaledCut>0 and \
+                                electron.GsfEleEInverseMinusPInverseCut>0 and \
+                                electron.GsfEleConversionVetoCut>0
         else:
             self.electronID = lambda electron: getattr(electron, "mvaFall17V2"+electronID)
 
@@ -77,7 +90,7 @@ class ElectronSelection(Module):
         if self.triggerMatch:
             trig_deltaR = math.pi
             for trig_obj in trigger_object:
-                if trig_obj.id != 11:
+                if abs(trig_obj.id) != 11:
                     continue
                 trig_deltaR = min(trig_deltaR, deltaR(trig_obj, electron))
             if trig_deltaR < 0.3:
@@ -127,6 +140,34 @@ class ElectronSelection(Module):
         weight_id_down = []
         
         for electron in electrons:
+            bitmap = electron.vidNestedWPBitmap
+            # decision for each cut represented by 3 bits (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
+            # Electron_vidNestedWPBitmap 
+            cuts = np.empty(10)
+
+            for i in range(10):
+                cuts[i] = (bitmap >> i*3) & 0x7
+
+            electron.MinPtCut = cuts[0]
+            electron.GsfEleSCEtaMultiRangeCut = cuts[1]
+            electron.GsfEleDEtaInSeedCut = cuts[2]
+            electron.GsfEleDPhiInCut = cuts[3]
+            electron.GsfEleFull5x5SigmaIEtaIEtaCut = cuts[4]
+            electron.GsfEleHadronicOverEMEnergyScaledCut = cuts[5]
+            electron.GsfEleEInverseMinusPInverseCut = cuts[6]
+            electron.GsfEleRelPFIsoScaledCut = cuts[7]
+            electron.GsfEleConversionVetoCut = cuts[8]
+            electron.GsfEleMissingHitsCut = cuts[9]
+
+            electron.customID = electron.GsfEleSCEtaMultiRangeCut>0 and \
+                                electron.GsfEleDEtaInSeedCut>0 and \
+                                electron.GsfEleDPhiInCut>0 and \
+                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>0 and \
+                                electron.GsfEleEInverseMinusPInverseCut>0 and \
+                                electron.GsfEleConversionVetoCut>0
+                                #electron.GsfEleHadronicOverEMEnergyScaledCut>0 and \
+
+
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
                 and self.electronID(electron) and self.triggerMatched(electron, trigger_object):
 
@@ -137,6 +178,7 @@ class ElectronSelection(Module):
                         continue
 
                 selectedElectrons.append(electron)
+
                 if self.storeWeights:
                     weight_id,weight_id_err = getSFXY(self.idHist,electron.eta,electron.pt)
                     weight_id_nominal.append(weight_id)
@@ -168,7 +210,7 @@ class ElectronSelection(Module):
         self.out.fillBranch("n"+self.outputName,len(selectedElectrons))
         for variable in self.storeKinematics:
             self.out.fillBranch(self.outputName+"_"+variable,map(lambda electron: getattr(electron,variable),selectedElectrons))
- 
+
 
         setattr(event,self.outputName,selectedElectrons)
         setattr(event,self.outputName+"_unselected",unselectedElectrons)

@@ -142,7 +142,7 @@ leptonSelection = [
                          'cutBased'],
 
         electronMinPt=5.,
-        electronID="noIso_WPL",
+        electronID="Custom",
         globalOptions=globalOptions
     ),
 
