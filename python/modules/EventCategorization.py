@@ -59,14 +59,12 @@ class EventCategorization(Module):
         self.out.branch(self.outputName+"_TaggerBestOutputValue_truth","F" )	
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
-        self.out.branch(self.outputName+"_muonmuon1jet", "F") 
-	self.out.branch(self.outputName+"_muonmuonNjets", "F")
-	self.out.branch(self.outputName+"_electronelectron1jet", "F")
-	self.out.branch(self.outputName+"_electronelectronNjets", "F")
-	self.out.branch(self.outputName+"_muonelectron1jet", "F")
-	self.out.branch(self.outputName+"_muonelectronNjets", "F")
-	self.out.branch(self.outputName+"_electronmuon1jet", "F")
-	self.out.branch(self.outputName+"_electronmuonNjets", "F")
+        self.out.branch(self.outputName+"_muonmuon", "F") 
+	self.out.branch(self.outputName+"_electronelectron", "F")
+	self.out.branch(self.outputName+"_muonelectron", "F")
+	self.out.branch(self.outputName+"_electronmuon", "F")
+	self.out.branch(self.outputName+"_muonjets", "F")
+	self.out.branch(self.outputName+"_electronjets", "F")
 	self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
 	self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )		 
         for k in sorted(self.flags.keys()):
@@ -91,14 +89,12 @@ class EventCategorization(Module):
 	looseMuons = self.muonsLoose(event)
 	looseElectrons = self.electronsLoose(event)
 	looseLeptons = self.looseLeptons(event)
-	muonmuon1jet = 0 
-	muonmuonNjets = 0
-	electronelectron1jet = 0
-	electronelectronNjets = 0
-	muonelectron1jet = 0 
-	electronmuon1jet = 0
-	muonelectronNjets = 0
-	electronmuonNjets = 0
+	muonmuon = 0 
+	electronelectron = 0
+	muonelectron = 0 
+	electronmuon = 0
+	muonjets = 0 
+	electronjets = 0
 	deltaRBestLabel = -1.
 	dict = {'LLP_Q' : 0 ,'LLP_MU' : 1,'LLP_E': 2 ,'LLP_TAU' : 3 }
 	dictTruth = { 'isB': 8,
@@ -116,29 +112,27 @@ class EventCategorization(Module):
 	
        	## flavour categorisation :
 	
-	if len(tightMuon)  == 1 and len(looseMuons) == 1 and  len(jets) == 1 :
-		muonmuon1jet = 1
-	elif len(tightMuon) == 1 and len(looseMuons) == 1  and len(jets) > 1 :
-		muonmuonNjets = 1
-	elif len(tightElectron) == 1 and len(looseElectrons) == 1 and len(jets) == 1 : 
-		electronelectron1jet = 1 
-	elif len(tightElectron) == 1 and len(looseElectrons) == 1 and  len(jets) > 1 : 
-		electronelectronNjets = 1 
-	elif len(tightMuon) == 1 and len(looseElectrons) == 1 and len(jets) == 1 : 
-		muonelectron1jet = 1 
-	elif len(tightMuon) == 1 and len(tightElectron) == 1  and len(jets) == 1 : 
-		if tightMuon[0].pt > tightElectron[0].pt :
-			muonelectron1jet = 1 
-		else : 
-			electronmuon1jet = 1
 
-	elif len(tightMuon) == 1 and  len(looseElectrons) == 1  and len(jets) > 1 : 
-		muonelectronNjets = 1
-	elif len(tightMuon) == 1 and  len(tightElectron) == 1 and len(jets) > 1 : 
-		if tightMuon[0].pt > tightElectron[0].pt :
-			muonelectronNjets = 1
-		else: 
-			electronmuonNjets = 1
+	if len(tightMuon)  == 1 and len(looseMuons) == 1 : 
+		muonmuon = 1
+		 
+	elif len(tightElectron) == 1 and len(looseElectrons) == 1 :
+		electronelectron = 1 
+
+	elif len(tightMuon) == 1 and len(looseElectrons) == 1 :
+		muonelectron = 1 
+
+	elif len(tightMuon) == 1 and len(tightElectron) == 1  :
+                if tightMuon[0].pt > tightElectron[0].pt :
+                        muonelectron = 1
+                else :
+                        electronmuon = 1
+	elif len(tightMuon) == 1 and len(tightElectron) == 0 and len(looseMuons) == 0 and len(looseElectrons) == 0  :
+		muonjets = 1 
+	elif len(tightMuon) == 0 and len(tightElectron) == 1  and len(looseMuons) == 0 and len(looseElectrons) == 0 :
+		electronjets = 1
+
+	
  
 	## highest probability jet categorisation
 	jetOrigin = Collection(event, "jetorigin")	
@@ -175,6 +169,7 @@ class EventCategorization(Module):
 	    ### selecting best LLP jet  per event. You loop over the best jet per label list and you peack the best one. 
 	#print indexFlag  
 	bestResult = 0.00
+	deltaRBestLabel = 100.
 	for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
             taggerResult = getattr(jet, self.taggerName)[label]
@@ -182,9 +177,10 @@ class EventCategorization(Module):
 		bestResult = taggerResult['output']
 		bestLabel = dict[label]
 		bestLabelTruth = indexFlag[label]
-		if bestLabelTruth == -1 : 
-			print "you still have anomaly "
-		deltaRBestLabel = deltaR(looseLeptons[0],jet)
+		if len(looseLeptons) == 0 : 
+			deltaRBestLabel = -1. 
+		else : 
+			deltaRBestLabel = deltaR(looseLeptons[0],jet)
             		 
             closestLepton = None
             minDeltaR = 100.
@@ -210,14 +206,12 @@ class EventCategorization(Module):
         self.out.fillBranch(self.outputName+"_TaggerBestOutputValue_truth", bestLabelTruth ) 
  	self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult )
 	self.out.fillBranch(self.outputName+"_TaggerBestOutputLabel", bestLabel )		 
-        self.out.fillBranch(self.outputName+"_muonmuon1jet", muonmuon1jet) 
-	self.out.fillBranch(self.outputName+"_muonmuonNjets", muonmuonNjets)
-	self.out.fillBranch(self.outputName+"_electronelectron1jet", electronelectron1jet)
-	self.out.fillBranch(self.outputName+"_electronelectronNjets", electronelectronNjets)
-	self.out.fillBranch(self.outputName+"_muonelectron1jet", muonelectron1jet)
-	self.out.fillBranch(self.outputName+"_muonelectronNjets", muonelectronNjets)
-	self.out.fillBranch(self.outputName+"_electronmuon1jet", electronmuon1jet)
-	self.out.fillBranch(self.outputName+"_electronmuonNjets", electronmuonNjets)
+        self.out.fillBranch(self.outputName+"_muonmuon", muonmuon) 
+	self.out.fillBranch(self.outputName+"_electronelectron", electronelectron)
+	self.out.fillBranch(self.outputName+"_muonelectron", muonelectron)
+	self.out.fillBranch(self.outputName+"_electronmuon", electronmuon)
+	self.out.fillBranch(self.outputName+"_muonjets", muonjets)
+	self.out.fillBranch(self.outputName+"_electronjets", electronjets)
 	return True 
 
 

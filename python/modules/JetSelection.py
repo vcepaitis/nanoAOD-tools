@@ -21,7 +21,7 @@ class JetSelection(Module):
          outputName="selectedJets",
          jetMinPt=15.,
          jetMaxPt=100.,
-         jetMaxEta=2.4,
+         jetMaxEta=2.395,
          dRCleaning=0.4,
          flagDA=False,
          storeKinematics=['pt', 'eta', 'phi', 'jetId', 'muonSubtrFactor', 'muon_DeltaR', 'nConstituents'],

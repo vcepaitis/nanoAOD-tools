@@ -130,7 +130,7 @@ leptonSelection = [
         globalOptions=globalOptions
     ),
 
-    EventSkim(selection=lambda event: (event.ntightMuon + event.ntightElectron + event.nlooseMuons + event.nlooseElectrons ) == 2),
+    EventSkim(selection=lambda event: (event.ntightMuon + event.ntightElectron + event.nlooseMuons + event.nlooseElectrons ) <= 2),
 ]
 
 analyzerChain = []
