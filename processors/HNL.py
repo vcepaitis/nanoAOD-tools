@@ -79,7 +79,7 @@ if args.isData:
                }
 
 
-muonSelection = [
+leptonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj > 0),
     MuonSelection(
         outputName="tightMuon",
@@ -96,7 +96,7 @@ muonSelection = [
     ElectronSelection(
         outputName="tightElectron",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'charge'],
+                         'dzErr', 'phi','pfRelIso03_all', 'charge'],
         electronMinPt=minElectronPt[globalOptions["year"]],
         electronID=ElectronSelection.TIGHT,
         storeWeights=True,
@@ -133,7 +133,7 @@ muonSelection = [
         inputCollection=lambda event: event.tightElectron_unselected,
         outputName="looseElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-                         'dzErr', 'phi', 'charge'],
+                         'dzErr', 'phi','pfRelIso03_all', 'charge'],
         electronMinPt=5.,
         electronID=ElectronSelection.LOOSE,
         globalOptions=globalOptions
@@ -146,7 +146,7 @@ muonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons
         ),
 
-    EventSkim(selection=lambda event: event.nsubleadingLepton > 0)
+    EventSkim(selection=lambda event: event.nsubleadingLepton <= 1)
 ]
 
 # analyzerChain = [jetRecalibration]
@@ -199,11 +199,12 @@ if isMC:
         JetMetUncertainties(
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
-            jerSFUncertaintyFileName=jerSFUncertaintyFile[year]
+            jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
+            jetKeys = ['pt', 'eta','phi' , 'jetId', 'nConstituents' ],
         )
     )
 
-    for systName, collection in [
+    for systName, jetCollection in [
         ("nominal", lambda event: event.jets_nominal),
         ("jerUp", lambda event: event.jets_jerUp),
         ("jerDown", lambda event: event.jets_jerDown),
@@ -213,8 +214,8 @@ if isMC:
 
         analyzerChain.append(
             JetSelection(
-                inputCollection=collection,
-                jetMinPt=30.,
+                inputCollection=jetCollection,
+                jetMinPt=15.,
                 leptonCollection=lambda event: event.leadingLepton,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -248,51 +249,43 @@ if isMC:
     )
 
     analyzerChain.append(
-        TaggerEvaluation(
-            modelPath=modelPath[year],
-            featureDictFile = featureDictFile,
+        TaggerEvaluationProfiled(
+            modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention_all_nconstit.pb",
+            featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict_all.py",
             inputCollections=[
-                lambda event: event.lepJet_nominal,
-                lambda event: event.lepJet_jerUp,
-                lambda event: event.lepJet_jerDown,
-                lambda event: event.lepJet_jesTotalUp,
-                lambda event: event.lepJet_jesTotalDown
+                lambda event: event.selectedJets_nominal,
+                lambda event: event.selectedJets_jesTotalUp,
+                lambda event: event.selectedJets_jesTotalDown,
+                lambda event: event.selectedJets_jerUp,
+                lambda event: event.selectedJets_jerDown
             ],
             taggerName="llpdnnx",
+            predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
+            evalValues = np.linspace(-3,2,5*5+1),
         )
     )
-    
-    for systName, lepJet in [
-        ("nominal", lambda event: event.lepJet_nominal),
-        ("jerUp", lambda event: event.lepJet_jerUp),
-        ("jerDown", lambda event: event.lepJet_jerDown),
-        ("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
-        ("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
+    for systName, jetCollection in [
+        ("nominal", lambda event: event.selectedJets_nominal),
+        ("jerUp", lambda event: event.selectedJets_jerUp),
+        ("jerDown", lambda event: event.selectedJets_jerDown),
+        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp),
+        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown),
     ]:
 
-        analyzerChain.append(
-            JetTruthFlags(
-                inputCollection=lepJet,
-                outputName="lepJet_"+systName,
-                globalOptions=globalOptions
-            )
-        )
 
         analyzerChain.append(
-            JetTaggerIntegral(
-                taggerName="llpdnnx",
-                inputCollection=lepJet,
-                outputName="lepJet_%s" % (systName),
-            )
+           EventCategorization(
+		muonsTight = lambda event: event.tightMuon, 
+		electronsTight = lambda event:  event.tightElectron, 
+		muonsLoose = lambda event: event.looseMuons, 
+		electronsLoose = lambda event: event.looseElectrons, 	
+                looseLeptons = lambda event: event.subleadingLepton,
+                jetsCollection=jetCollection,
+		outputName="category_"+systName ,
+           )
         )
 
-        analyzerChain.append(
-            JetTaggerResult(
-                inputCollection=lepJet,
-                taggerName="llpdnnx",
-                outputName="lepJet_%s" % (systName),
-            )
-        )
+
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
@@ -324,7 +317,7 @@ else:
     analyzerChain.append(
         JetSelection(
             leptonCollection=lambda event: event.leadingLepton,
-            jetMinPt=30.,
+            jetMinPt=15.,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -344,30 +337,6 @@ else:
         )
     )
 
-    analyzerChain.append(
-        TaggerEvaluation(
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[lambda event: event.lepJet_nominal],
-            taggerName="llpdnnx_nominal",
-        )
-    )
-
-    analyzerChain.append(
-        JetTaggerIntegral(
-            inputCollection=lambda event: event.lepJet_nominal,
-            taggerName="llpdnnx_nominal",
-            outputName="lepJet_nominal",
-        )
-    )
-
-    analyzerChain.append(
-        JetTaggerResult(
-            inputCollection=lambda event: event.lepJet_nominal,
-            taggerName="llpdnnx_nominal",
-            outputName="lepJet_nominal",
-        )
-    )
 
     analyzerChain.append(
         EventObservables(
