@@ -99,11 +99,7 @@ leptonSelection = [
     ElectronSelection(
         outputName="tightElectron",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-<<<<<<< HEAD
                          'dzErr', 'phi','pfRelIso03_all', 'charge'],
-=======
-                         'dzErr', 'phi', 'pfRelIso03_all', 'charge'],
->>>>>>> upstream/HNL
         electronMinPt=minElectronPt[globalOptions["year"]],
         electronID="Iso_WP90",
         storeWeights=True,
@@ -140,15 +136,11 @@ leptonSelection = [
         inputCollection=lambda event: event.tightElectron_unselected,
         outputName="looseElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
-<<<<<<< HEAD
-                         'dzErr', 'phi','pfRelIso03_all', 'charge'],
-=======
-                         'dzErr', 'phi', 'charge', 'pfRelIso03_all',
+                         'dzErr', 'phi','pfRelIso03_all', 'charge',
                          'mvaFall17V2noIso_WP80', 'mvaFall17V2noIso_WP90', 'mvaFall17V2noIso_WPL',
                          'mvaFall17V2Iso_WP80', 'mvaFall17V2Iso_WP90', 'mvaFall17V2Iso_WPL',
                          'cutBased'],
 
->>>>>>> upstream/HNL
         electronMinPt=5.,
         electronID="noIso_WPL",
         globalOptions=globalOptions
@@ -161,11 +153,8 @@ leptonSelection = [
         looseMuonCollection=lambda event:event.looseMuons,
         looseElectronCollection=lambda event:event.looseElectrons
         ),
-<<<<<<< HEAD
 
     #EventSkim(selection=lambda event: event.nsubleadingLepton <= 1)
-=======
->>>>>>> upstream/HNL
 ]
 
 analyzerChain = []
@@ -175,11 +164,7 @@ analyzerChain.extend(leptonSelection)
 
 analyzerChain.append(
     InvariantSystem(
-<<<<<<< HEAD
         inputCollection= lambda event:
-=======
-        inputCollection=lambda event:
->>>>>>> upstream/HNL
             sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[:2],
         outputName="dilepton"
     )
@@ -290,31 +275,17 @@ if isMC:
 
     analyzerChain.append(
         TaggerEvaluationProfiled(
-<<<<<<< HEAD
             modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention_all_nconstit.pb",
             featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict_all.py",
             inputCollections=[
-                lambda event: event.selectedJets_nominal,
-                lambda event: event.selectedJets_jesTotalUp,
-                lambda event: event.selectedJets_jesTotalDown,
-                lambda event: event.selectedJets_jerUp,
-                lambda event: event.selectedJets_jerDown
-=======
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.lepJet_nominal,
-                #lambda event: event.selectedJets_nominal[:4],
-                #lambda event: event.selectedJets_jesTotalUp[:4],
-                #lambda event: event.selectedJets_jesTotalDown[:4],
-                #lambda event: event.selectedJets_jerUp[:4],
-                #lambda event: event.selectedJets_jerDown[:4]
->>>>>>> upstream/HNL
+                lambda event: event.selectedJets_nominal[:4],
+                lambda event: event.selectedJets_jesTotalUp[:4],
+                lambda event: event.selectedJets_jesTotalDown[:4],
+                lambda event: event.selectedJets_jerUp[:4],
+                lambda event: event.selectedJets_jerDown[:4]
             ],
             predictionLabels=['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             taggerName="llpdnnx",
-<<<<<<< HEAD
-            predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
@@ -324,29 +295,10 @@ if isMC:
         ("jerDown", lambda event: event.selectedJets_jerDown),
         ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp),
         ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown),
-=======
-            evalValues=np.linspace(-3, 2, 5*5+1),
-        )
-    )
-
-    analyzerChain.append(
-        EventSkim(
-            selection=lambda event: event.nlepJet_nominal > 0
-        )
-    )
-    
-    for systName, lepJet in [
-        ("nominal", lambda event: event.lepJet_nominal),
-        #("jerUp", lambda event: event.lepJet_jerUp),
-        #("jerDown", lambda event: event.lepJet_jerDown),
-        #("jesTotalUp", lambda event: event.lepJet_jesTotalUp),
-        #("jesTotalDown", lambda event: event.lepJet_jesTotalDown),
->>>>>>> upstream/HNL
     ]:
 
 
         analyzerChain.append(
-<<<<<<< HEAD
            EventCategorization(
 		muonsTight = lambda event: event.tightMuon, 
 		electronsTight = lambda event:  event.tightElectron, 
@@ -359,18 +311,6 @@ if isMC:
         )
 
 
-=======
-            HNLJetSelection(
-                jetCollection=lepJet,
-                promptLeptonCollection=lambda event: event.leadingLepton,
-                looseLeptonsCollection=lambda event: event.subleadingLepton,
-                taggerName="llpdnnx",
-                jetLabels = ['LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
-                outputName="hnlJets_"+systName,
-            )
-        )
-
->>>>>>> upstream/HNL
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
@@ -415,15 +355,10 @@ if isMC:
 else:
     analyzerChain.append(
         JetSelection(
-<<<<<<< HEAD
             leptonCollection=lambda event: event.leadingLepton,
-            jetMinPt=15.,
-=======
-            leptonCollection=lambda event: [sorted(event.tightMuon+event.tightElectron, key=lambda x: -x.pt)[0]],
             jetMinPt=15.,
             jetMaxPt=100,
             jetId=0,
->>>>>>> upstream/HNL
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -455,15 +390,12 @@ else:
         )
     )
 
-<<<<<<< HEAD
-=======
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=[
-                lambda event: event.lepJet_nominal,
-                #lambda event: event.selectedJets_nominal[:4]
+                lambda event: event.selectedJets_nominal[:4]
             ],
             taggerName="llpdnnx",
             predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
@@ -473,21 +405,10 @@ else:
 
     analyzerChain.append(
         EventSkim(
-            selection=lambda event: event.nlepJet_nominal > 0
+            selection=lambda event: nselectedJets_nominal  > 0
         )
     )
 
-    analyzerChain.append(
-        HNLJetSelection(
-            jetCollection=lambda event:event.lepJet_nominal,
-            #jetCollection=lambda event:event.selectedJets_nominal[:4],
-            promptLeptonCollection=lambda event: event.leadingLepton,
-            looseLeptonsCollection=lambda event: event.subleadingLepton,
-            taggerName="llpdnnx",
-            jetLabels = ['LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
-            outputName="hnlJets_nominal"
-        )
-    )
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='tightMuon',
@@ -500,7 +421,6 @@ else:
             outputName="nominal"
         )
     ])
->>>>>>> upstream/HNL
 
     analyzerChain.append(
         EventObservables(
