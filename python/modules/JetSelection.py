@@ -22,7 +22,7 @@ class JetSelection(Module):
          jetMinPt=15.,
          jetMaxPt=-1000.,
 	 jetMinEta = 0.,
-         jetMaxEta=2.395,
+         jetMaxEta=2.4,
          dRCleaning=0.4,
          flagDA=False,
          storeKinematics=['pt', 'eta', 'phi', 'jetId', 'muon_DeltaR', 'nConstituents'],
