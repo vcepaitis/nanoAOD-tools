@@ -35,4 +35,4 @@ from XGBEvaluation import XGBEvaluation
 from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
 from EventCategorization import EventCategorization
-from HNLJetSelection import HNLJetSelection 
+from LHEWeights import LHEWeights

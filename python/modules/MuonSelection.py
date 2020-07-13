@@ -41,7 +41,7 @@ class MuonSelection(Module):
         self.selectLeadingOnly = selectLeadingOnly
         self.triggerMatch = triggerMatch
 
-        if muonID==MuonSelection.MEDIUM or muonID==MuonSelection.NONE or muonIso==MuonSelection.MEDIUM:
+        if muonID==MuonSelection.MEDIUM or muonIso==MuonSelection.MEDIUM:
             print("Unsupported ID or ISO")
             sys.exit(1)
 
@@ -174,7 +174,10 @@ class MuonSelection(Module):
             self.muonId = lambda muon: muon.tightId==1
             self.muonIdSF = self.idTightSFHist
         elif muonID==MuonSelection.LOOSE:
-            self.muonId = lambda muon: muon.isPFcand==1
+            self.muonId = lambda muon: muon.looseId==1
+            self.muonIdSF = self.idLooseSFHist
+        elif muonID==MuonSelection.NONE:
+            self.muonId = lambda muon: True
             self.muonIdSF = self.idLooseSFHist
             
         if muonIso==MuonSelection.TIGHT:
@@ -199,6 +202,8 @@ class MuonSelection(Module):
                 self.muonIsoSF = self.isoLooseTightSFHist
             elif muonID==MuonSelection.LOOSE:
                 self.muonIsoSF = self.isoLooseLooseSFHist
+            elif muonID==MuonSelection.NONE:
+                self.muonIsoSF = self.isoLooseLooseSFHist
             else:
                 print "Error - unsupported combination"
                 sys.exit(1)
@@ -207,8 +212,10 @@ class MuonSelection(Module):
         if self.triggerMatch:
             trig_deltaR = math.pi
             for trig_obj in trigger_object:
+                if trig_obj.id != 13:
+                    continue
                 trig_deltaR = min(trig_deltaR, deltaR(trig_obj, muon))
-            if trig_deltaR < 0.1:
+            if trig_deltaR < 0.3:
                 return True
             else:
                 return False

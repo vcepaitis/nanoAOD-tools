@@ -6,7 +6,7 @@ import ROOT
 import random
 import numpy as np
 
-from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
+from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from utils import deltaPhi
@@ -14,7 +14,7 @@ from utils import deltaPhi
 class WbosonReconstruction(Module):
     def __init__(self,
         leptonCollectionName = None,
-        metObject = None,
+        metObject =lambda event: Object(event, "MET"),
         globalOptions={"isData":False}, 
         outputName='nominal'
     ):
