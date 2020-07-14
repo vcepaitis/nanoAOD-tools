@@ -344,13 +344,6 @@ if isMC:
                 outputName="EventObservables_"+systName
             )
         )
-        if not testMode:
-             analyzerChain.append(
-                 PileupWeight(
-                     outputName="puweight",
-                     globalOptions=globalOptions
-                 )
-             )
 
 else:
     analyzerChain.append(
@@ -435,6 +428,13 @@ else:
         )
     )
 
+if not testMode:
+     analyzerChain.append(
+         PileupWeight(
+             outputName="puweight",
+             globalOptions=globalOptions
+         )
+     )
 
 analyzerChain.append(
     XGBEvaluation(
