@@ -177,6 +177,8 @@ class EventCategorization(Module):
         #print indexFlag  
         bestResult = 0.00
         deltaRBestLabel = 100.
+        bestLabelTruth = -1
+        bestLabel = -1
         for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
             taggerResult = getattr(jet, self.taggerName)[label]
