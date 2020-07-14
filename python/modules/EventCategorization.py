@@ -146,7 +146,8 @@ class EventCategorization(Module):
         for label in self.jetLabels:
             # Take leading jet by default
             bestJetsPerLabel[label] = jets[0]
-            indexFlag[label] = -1 
+            if not self.globalOptions["isData"]:
+                indexFlag[label] = -1 
             bestIndexPerLabel[label] = -1
 
         # Find best jet for each label
