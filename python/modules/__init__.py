@@ -36,3 +36,4 @@ from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
 from EventCategorization import EventCategorization
 from LHEWeights import LHEWeights
+from LeptonGenEfficiency import LeptonGenEfficiency

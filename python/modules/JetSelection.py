@@ -21,7 +21,7 @@ class JetSelection(Module):
          outputName="selectedJets",
          jetMinPt=15.,
          jetMaxPt=-1000.,
-	 jetMinEta = 0.,
+         jetMinEta = 0.,
          jetMaxEta=2.4,
          dRCleaning=0.4,
          flagDA=False,
