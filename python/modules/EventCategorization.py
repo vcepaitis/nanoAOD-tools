@@ -134,6 +134,15 @@ class EventCategorization(Module):
         elif len(tightMuon) == 0 and len(tightElectron) == 1 and len(looseMuons) == 0 and len(looseElectrons) == 0:
             electronjets = 1
 
+
+        if muonmuon or muonelectron or muonjets:
+            if not event.IsoMuTrigger_flag:
+                return False
+        elif electronelectron or electronmuon or electronjets:
+            if not event.IsoElectronTrigger_flag:
+                return False
+
+
         ## highest probability jet categorisation
         bestJetsPerLabel = {}
         bestIndexPerLabel = {}
