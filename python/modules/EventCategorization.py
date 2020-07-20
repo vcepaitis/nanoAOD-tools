@@ -114,7 +114,6 @@ class EventCategorization(Module):
                     }
         
         ## flavour categorisation :
-        
         if len(tightMuon) == 1 and len(looseMuons) == 1:
             muonmuon = 1
              
@@ -136,17 +135,22 @@ class EventCategorization(Module):
             electronjets = 1
 
         ## highest probability jet categorisation
-        if not self.globalOptions["isData"]:
-            jetOrigin = Collection(event, "jetorigin")  
         bestJetsPerLabel = {}
         bestIndexPerLabel = {}
-        indexFlag = {}
+
+        # only for MC: truth labels
+        if not self.globalOptions["isData"]:
+            jetOrigin = Collection(event, "jetorigin")
+            indexFlag = {}
 
         for label in self.jetLabels:
+            # Take leading jet by default
             bestJetsPerLabel[label] = jets[0]
-            indexFlag[label] = -1 
+            if not self.globalOptions["isData"]:
+                indexFlag[label] = -1 
             bestIndexPerLabel[label] = -1
 
+        # Find best jet for each label
         for ijet, jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
             for label in self.jetLabels:
@@ -156,12 +160,12 @@ class EventCategorization(Module):
         for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
 
-            ### looking for the truth labeling for each best jet per label. 
+            # looking for the truth labeling for each best jet per label. only for MC
             if not self.globalOptions["isData"]:
                 for k in sorted(self.flags.keys()):
-                    ##loop over general truth flags 
+                    # loop over general truth flags 
                     flavorFlag = 0.
-                    ## loop over sub true flags 
+                    # loop over sub true flags 
                     for originFlag in self.flags[k]:
                         flagValue = getattr(jetOrigin[jet._index], originFlag)
                         if (flagValue > 0.5):
@@ -173,18 +177,21 @@ class EventCategorization(Module):
         #print indexFlag  
         bestResult = 0.00
         deltaRBestLabel = 100.
+        bestLabelTruth = -1
+        bestLabel = -1
         for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
             taggerResult = getattr(jet, self.taggerName)[label]
             if taggerResult['output'] > bestResult:
                 bestResult = taggerResult['output']
                 bestLabel = dict[label]
-                bestLabelTruth = indexFlag[label]
+                if not self.globalOptions["isData"]:
+                    bestLabelTruth = indexFlag[label]
+            # 0 and >1 loose lepton categories
             if len(looseLeptons) == 0: 
                 deltaRBestLabel = -1. 
             else: 
                 deltaRBestLabel = deltaR(looseLeptons[0], jet)
-                         
                 closestLepton = None
                 minDeltaR = 100.
                 for looseLepton in looseLeptons:
@@ -201,12 +208,13 @@ class EventCategorization(Module):
                         self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",-1)
                     else:
                         self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",math.fabs(closestLepton.dxy)/math.fabs(closestLepton.dxyErr))
-                self.out.fillBranch(self.outputName+"_"+label+"_jet_pt",jet.pt)
-                self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult['output'])
-                self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
+            self.out.fillBranch(self.outputName+"_"+label+"_jet_pt",jet.pt)
+            self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult['output'])
+            self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
         ## Best label will give you the index in the dictionary. 
         self.out.fillBranch(self.outputName+"_TaggerBestJet_deltaR", deltaRBestLabel)
-        self.out.fillBranch(self.outputName+"_TaggerBestOutputValue_truth", bestLabelTruth) 
+        if not self.globalOptions["isData"]:
+            self.out.fillBranch(self.outputName+"_TaggerBestOutputValue_truth", bestLabelTruth) 
         self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult)
         self.out.fillBranch(self.outputName+"_TaggerBestOutputLabel", bestLabel)         
         self.out.fillBranch(self.outputName+"_muonmuon", muonmuon) 
