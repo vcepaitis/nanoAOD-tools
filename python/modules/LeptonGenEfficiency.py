@@ -11,18 +11,16 @@ from utils import deltaPhi, deltaR
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-def getDisplacement(lepton, jets):
-    llpJet = None
-    for jet in jets:
-        if abs(jet.llpId) == 9990012:
-            llpJet = jet
-            break
-    if llpJet:
-        d3 = llpJet.displacement
-        dy = llpJet.displacement_xy
-    else:
-        d3 = -999.
-        dy = -999.
+def getDisplacement(p1, p2):
+    x1 = p1.vertex_x
+    x2 = p2.vertex_x
+    y1 = p1.vertex_y
+    y2 = p2.vertex_y
+    z1 = p1.vertex_z
+    z2 = p2.vertex_z
+
+    dy = math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2)
+    d3 = math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2 + (z1-z2) ** 2)
     return d3, dy
 
 def matchLepton(genLepton, recoLeptons, minDeltaRThreshold=0.4):
@@ -47,14 +45,12 @@ class LeptonGenEfficiency(Module):
         electronCollection=lambda event: Collection(event, "Electron"),
         muonCollection=lambda event: Collection(event, "Muon"),
         jetCollection=lambda event: Collection(event, "Jet"),
-        jetoriginCollection=lambda event: Collection(event, "jetorigin"),
         globalOptions={"isData": False}
     ):
         self.genInputCollection = genInputCollection
         self.electronCollection = electronCollection
         self.muonCollection = muonCollection
         self.jetCollection = jetCollection
-        self.jetoriginCollection = jetoriginCollection
         self.globalOptions = globalOptions
         features = ["pt", "eta", "phi", "reco_pt", "reco_eta", "reco_phi", "reco_deltaR", "is_matched", "d3", "dxy"]
         self.electron_features = features + ["mvaFall17V2noIso_WPL", "customID"]
@@ -89,7 +85,6 @@ class LeptonGenEfficiency(Module):
         electrons = self.electronCollection(event)
         muons = self.muonCollection(event)
         jets = self.jetCollection(event)
-        jetsOrigin = self.jetoriginCollection(event)
 
         genElectrons = list(filter(lambda genParticle: abs(genParticle.pdgId) == 11 and genParticle.genPartIdxMother != -1, genParticles))
         genMuons = list(filter(lambda genParticle: abs(genParticle.pdgId) == 13 and genParticle.genPartIdxMother != -1, genParticles))
@@ -137,6 +132,10 @@ class LeptonGenEfficiency(Module):
             elif abs(lepton.pdgId) == 15:
                 matchedLepton = matchLepton(lepton, jets)     
 
+            d3, dxy = getDisplacement(lepton, genParticles[lepton.genPartIdxMother])
+            lepton.d3 = d3
+            lepton.dxy = dxy
+
             if matchedLepton:
                 lepton.reco_pt = matchedLepton.pt
                 lepton.reco_eta = matchedLepton.eta
@@ -152,7 +151,6 @@ class LeptonGenEfficiency(Module):
                 lepton.is_matched = 0
 
         for electron in electronsFromHNL:
-            d3, dxy = getDisplacement(electron, jetsOrigin)
             electron.d3 = d3
             electron.dxy = dxy
             if electron.is_matched:
@@ -187,7 +185,6 @@ class LeptonGenEfficiency(Module):
                 electron.customID = -1.
 
         for muon in muonsFromHNL:
-            d3, dxy = getDisplacement(muon, jetsOrigin)
             muon.d3 = d3
             muon.dxy = dxy
             if muon.is_matched:
@@ -200,7 +197,6 @@ class LeptonGenEfficiency(Module):
                 muon.tightId = -1.
 
         for tau in tausFromHNL:
-            d3, dxy = getDisplacement(tau, jetsOrigin)
             tau.d3 = d3
             tau.dxy = dxy
             if tau.is_matched:
