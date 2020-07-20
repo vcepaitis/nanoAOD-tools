@@ -123,6 +123,9 @@ class EventCategorization(Module):
         elif len(tightMuon) == 1 and len(looseElectrons) == 1:
             muonelectron = 1 
 
+        elif len(tightElectron) and len(looseMuons) == 1:
+            electronmuon = 1
+
         elif len(tightMuon) == 1 and len(tightElectron) == 1:
             if tightMuon[0].pt > tightElectron[0].pt:
                 muonelectron = 1
