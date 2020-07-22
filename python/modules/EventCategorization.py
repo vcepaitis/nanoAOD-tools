@@ -21,7 +21,8 @@ class EventCategorization(Module):
         looseLeptons = None , 
         jetsCollection = None ,
         taggerName="llpdnnx",
-        jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
+	jetLabels=['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
+        #jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
         flags={
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
@@ -99,8 +100,20 @@ class EventCategorization(Module):
         dict = {'LLP_Q': 0 ,
                 'LLP_MU': 1,
                 'LLP_E': 2,
-                'LLP_TAU' : 3
+                'LLP_TAU' : 3,
+                'B' : 8,
+                'C' : 7,
+                'UDS':6,
+                'G':  5,
+                'PU': 4,
                }
+        '''
+        dict = {'LLP_Q': 0 ,
+                'LLP_MU': 1,
+                'LLP_E': 2,
+                'LLP_TAU' : 3,
+               }
+        '''
         dictTruth = { 'isB': 8,
                       'isC': 7,
                       'isUDS': 6,
