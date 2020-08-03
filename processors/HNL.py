@@ -169,13 +169,18 @@ analyzerChain.append(
 )
 
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict_all.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict.py"
 modelPath = {
-    #2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention.pb",
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention_all_nconstit.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2017_attention.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2018_attention.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2018.pb"
 }
+modelGunPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2018.pb"
+}
+
 jesUncertaintyFile = {
     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt",
     2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Fall17_17Nov2017_V32_MC_Uncertainty_AK4PFchs.txt",
@@ -288,6 +293,25 @@ if isMC:
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
+    
+    analyzerChain.append(
+        TaggerEvaluationProfiled(
+            modelPath=modelGunPath[year],
+            featureDictFile=featureDictFile,
+            inputCollections=[
+                lambda event: event.selectedJets_nominal[:4],
+                lambda event: event.selectedJets_jesTotalUp[:4],
+                lambda event: event.selectedJets_jesTotalDown[:4],
+                lambda event: event.selectedJets_jerUp[:4],
+                lambda event: event.selectedJets_jerDown[:4]
+            ],
+            predictionLabels=['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
+            taggerName="llpdnnx_gun",
+            globalOptions=globalOptions,
+            evalValues = np.linspace(-3,2,5*5+1),
+        )
+    )
+    
     for systName, jetCollection in [
         ("nominal", lambda event: event.selectedJets_nominal[:4]),
         ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
@@ -392,6 +416,20 @@ else:
                 lambda event: event.selectedJets_nominal[:4]
             ],
             taggerName="llpdnnx",
+            predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
+            globalOptions=globalOptions,
+            evalValues = np.linspace(-3,2,5*5+1)
+        )
+    )
+    
+    analyzerChain.append(
+        TaggerEvaluationProfiled(
+            modelPath=modelGunPath[year],
+            featureDictFile=featureDictFile,
+            inputCollections=[
+                lambda event: event.selectedJets_nominal[:4]
+            ],
+            taggerName="llpdnnx_gun",
             predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1)
