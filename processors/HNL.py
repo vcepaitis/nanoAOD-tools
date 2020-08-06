@@ -56,6 +56,7 @@ print "output directory:", args.output[0]
 
 globalOptions = {
     "isData": args.isData,
+    "isSignal": args.isSignal,
     "year": year
 }
 
