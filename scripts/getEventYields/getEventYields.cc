@@ -44,6 +44,10 @@ int main(int argc, char **argv){
                     std::cout << "Reading in file: " << line << std::endl;
                     // Open with root
                     TFile *rootFile = TFile::Open(line.c_str());
+                    if (rootFile->IsZombie()) {
+                        std::cout << "Error opening file" << std::endl;
+                        continue;
+                    }
                     TTree* tree = (TTree*)rootFile->Get("Events");
                     TH1F* h = new TH1F("pu","",101,0,100);
                     tree->Project(h->GetName(),"Pileup_nTrueInt","genWeight");

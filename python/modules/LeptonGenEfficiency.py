@@ -45,10 +45,12 @@ class LeptonGenEfficiency(Module):
         electronCollection=lambda event: Collection(event, "Electron"),
         muonCollection=lambda event: Collection(event, "Muon"),
         jetCollection=lambda event: Collection(event, "Jet"),
+        photonCollection=lambda event: Collection(event, "Photon"),
         globalOptions={"isData": False}
     ):
         self.genInputCollection = genInputCollection
         self.electronCollection = electronCollection
+        self.photonCollection = photonCollection
         self.muonCollection = muonCollection
         self.jetCollection = jetCollection
         self.globalOptions = globalOptions
@@ -83,6 +85,7 @@ class LeptonGenEfficiency(Module):
     def analyze(self, event):
         genParticles = self.genInputCollection(event)
         electrons = self.electronCollection(event)
+        photons = self.photonCollection(event)
         muons = self.muonCollection(event)
         jets = self.jetCollection(event)
 
@@ -124,9 +127,19 @@ class LeptonGenEfficiency(Module):
         #for i, part in enumerate(genParticles):
             #print i, part.pdgId, part.genPartIdxMother
 
+        electronsAndPhotons = []
+        for electron in electrons:
+            electron.isElectron = 1
+            electron.isPhoton = 0
+            electronsAndPhotons.append(electron)
+        for photon in photons:
+            photon.isElectron = 0
+            photon.isPhoton = 1
+            electronsAndPhotons.append(photon)
+
         for lepton in electronsFromHNL+muonsFromHNL+tausFromHNL:
             if abs(lepton.pdgId) == 11:
-                matchedLepton = matchLepton(lepton, electrons)        
+                matchedLepton = matchLepton(lepton, electronsAndPhotons)        
             elif abs(lepton.pdgId) == 13:
                 matchedLepton = matchLepton(lepton, muons)   
             elif abs(lepton.pdgId) == 15:
@@ -153,7 +166,7 @@ class LeptonGenEfficiency(Module):
         for electron in electronsFromHNL:
             electron.d3 = d3
             electron.dxy = dxy
-            if electron.is_matched:
+            if electron.is_matched and electron.matchedLepton.isElectron:
                 electron.mvaFall17V2noIso_WPL = electron.matchedLepton.mvaFall17V2noIso_WPL
                 bitmap = electron.matchedLepton.vidNestedWPBitmap
                 # decision for each cut represented by 3 bits (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
