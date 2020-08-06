@@ -12,7 +12,7 @@ from utils import deltaR, getCtauLabel
 class EventCategorization(Module):
     def __init__(
         self,
-        globalOptions={"isData":False}, 
+        globalOptions={"isData":False, "isSignal":False}, 
         muonsTight = None , 
         electronsTight = None , 
         muonsLoose = None , 
@@ -21,17 +21,23 @@ class EventCategorization(Module):
         looseLeptons = None , 
         jetsCollection = None ,
         taggerName="llpdnnx",
-        jetLabels=['LLP_Q','LLP_MU','LLP_E','LLP_TAU'], 
+        jetLabels=['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'], 
         flags={
+            'isPrompt_MU': ['isPrompt_MU'],
+            'isPrompt_E': ['isPrompt_E'],
+            'isPrompt_TAU': ['isPrompt_TAU'],
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
             'isUDS': ['isS', 'isUD'],
             'isG': ['isG'],
             'isPU': ['isPU'],
             'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ'],
-            'isLLP_MU': ['isLLP_MU','isLLP_QMU','isLLP_QQMU'],
-            'isLLP_E': ['isLLP_E','isLLP_QE','isLLP_QQE'],
-            'isLLP_TAU': ['isLLP_TAU','isLLP_QTAU','isLLP_QQTAU'],  
+            'isLLP_MU': ['isLLP_MU'],
+            'isLLP_QMU': ['isLLP_QMU', 'isLLP_QQMU'],
+            'isLLP_E': ['isLLP_E'],
+            'isLLP_QE': ['isLLP_QE','isLLP_QQE'],
+            'isLLP_TAU': ['isLLP_TAU'],
+            'isLLP_QTAU': ['isLLP_QTAU','isLLP_QQTAU'],  
             'isUndefined': ['isUndefined'] , 
         },
     ):
@@ -67,7 +73,7 @@ class EventCategorization(Module):
         self.out.branch(self.outputName+"_electronjets", "I")
         self.out.branch(self.outputName+"_TaggerBestOutputValue" , "F" ) 
         self.out.branch(self.outputName+"_TaggerBestOutputLabel", "F" )     
-        if not self.globalOptions["isData"]:
+        if self.globalOptions["isSignal"]:
             for k in sorted(self.flags.keys()):
                 for originFlag in self.flags[k]:
                     self.out.branch(self.outputName+"_truth_"+originFlag+"_flag", "F" )         
@@ -96,21 +102,31 @@ class EventCategorization(Module):
         muonjets = 0 
         electronjets = 0
         deltaRBestLabel = -1.
-        dict = {'LLP_Q': 0 ,
+        dict = {'LLP_Q': 0,
                 'LLP_MU': 1,
-                'LLP_E': 2,
-                'LLP_TAU' : 3
+                'LLP_QMU': 2,
+                'LLP_E': 3,
+                'LLP_QE': 4,
+                'LLP_TAU': 5,
+                'LLP_QTAU': 6,
                }
-        dictTruth = { 'isB': 8,
-                      'isC': 7,
-                      'isUDS': 6,
-                      'isG': 5,
-                      'isPU': 4,
+        dictTruth = {
                       'isLLP_Q': 0,
                       'isLLP_MU': 1,
-                      'isLLP_E': 2,
-                      'isLLP_TAU': 3,
-                      'isUndefined': 9, 
+                      'isLLP_QMU': 2,
+                      'isLLP_E': 3,
+                      'isLLP_QE': 4,
+                      'isLLP_TAU': 5,
+                      'isLLP_QTAU': 6,
+                      'isPU': 7,
+                      'isUDS': 8,
+                      'isG': 9,
+                      'isB': 10,
+                      'isC': 11,
+                      'isPrompt_MU': 12,
+                      'isPrompt_E': 13,
+                      'isPrompt_TAU': 14,
+                      'isUndefined': 15, 
                     }
         
         ## flavour categorisation :
@@ -151,14 +167,14 @@ class EventCategorization(Module):
         bestIndexPerLabel = {}
 
         # only for MC: truth labels
-        if not self.globalOptions["isData"]:
+        if self.globalOptions["isSignal"]:
             jetOrigin = Collection(event, "jetorigin")
             indexFlag = {}
 
         for label in self.jetLabels:
             # Take leading jet by default
             bestJetsPerLabel[label] = jets[0]
-            if not self.globalOptions["isData"]:
+            if self.globalOptions["isSignal"]:
                 indexFlag[label] = -1 
             bestIndexPerLabel[label] = -1
 
@@ -173,7 +189,7 @@ class EventCategorization(Module):
             jet = bestJetsPerLabel[label]
 
             # looking for the truth labeling for each best jet per label. only for MC
-            if not self.globalOptions["isData"]:
+            if self.globalOptions["isSignal"]:
                 for k in sorted(self.flags.keys()):
                     # loop over general truth flags 
                     flavorFlag = 0.
@@ -197,7 +213,7 @@ class EventCategorization(Module):
             if taggerResult['output'] > bestResult:
                 bestResult = taggerResult['output']
                 bestLabel = dict[label]
-                if not self.globalOptions["isData"]:
+                if self.globalOptions["isSignal"]:
                     bestLabelTruth = indexFlag[label]
             # 0 and >1 loose lepton categories
             if len(looseLeptons) == 0: 
@@ -225,7 +241,7 @@ class EventCategorization(Module):
             self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
         ## Best label will give you the index in the dictionary. 
         self.out.fillBranch(self.outputName+"_TaggerBestJet_deltaR", deltaRBestLabel)
-        if not self.globalOptions["isData"]:
+        if not self.globalOptions["isSignal"]:
             self.out.fillBranch(self.outputName+"_TaggerBestOutputValue_truth", bestLabelTruth) 
         self.out.fillBranch(self.outputName+"_TaggerBestOutputValue" , bestResult)
         self.out.fillBranch(self.outputName+"_TaggerBestOutputLabel", bestLabel)         
