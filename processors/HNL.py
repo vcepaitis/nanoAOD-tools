@@ -287,7 +287,6 @@ if isMC:
                 lambda event: event.selectedJets_jerUp[:4],
                 lambda event: event.selectedJets_jerDown[:4]
             ],
-            predictionLabels=['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             taggerName="llpdnnx",
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1),
@@ -305,7 +304,6 @@ if isMC:
                 lambda event: event.selectedJets_jerUp[:4],
                 lambda event: event.selectedJets_jerDown[:4]
             ],
-            predictionLabels=['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             taggerName="llpdnnx_gun",
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1),
@@ -416,7 +414,6 @@ else:
                 lambda event: event.selectedJets_nominal[:4]
             ],
             taggerName="llpdnnx",
-            predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1)
         )
@@ -430,7 +427,6 @@ else:
                 lambda event: event.selectedJets_nominal[:4]
             ],
             taggerName="llpdnnx_gun",
-            predictionLabels = ['B','C','UDS','G','PU','LLP_Q','LLP_MU','LLP_E','LLP_TAU'],
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1)
         )

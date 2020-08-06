@@ -21,24 +21,27 @@ class TaggerEvaluationProfiled(Module):
         featureDictFile,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
-        predictionLabels = ["B","C","UDS","G","PU","isLLP_Q","isLLP_MU","isLLP_E","isLLP_TAU"], #this is how the output array from TF is interpreted
         evalValues = range(-1, 4),
         integrateDisplacementOrder = 2,
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
-        self.predictionLabels = predictionLabels
+        
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
         self.integrateDisplacementOrder = integrateDisplacementOrder
 
         self.modelPath = os.path.expandvars(modelPath)
-        print featureDictFile
-        self.featureDict = imp.load_source(
+        
+        feature_dict_module = imp.load_source(
             'feature_dict',
             os.path.expandvars(featureDictFile)
-        ).featureDict
+        )
+        
+        self.featureDict = feature_dict_module.featureDict
+        self.predictionLabels = feature_dict_module.predictionLabels
+        
         self.taggerName = taggerName
 
 

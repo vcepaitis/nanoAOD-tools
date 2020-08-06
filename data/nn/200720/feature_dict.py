@@ -53,6 +53,12 @@
 '''
 
 
+predictionLabels=[
+    'E','MU','TAU',
+    'B','C','UDS','G','PU',
+    'LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'
+]
+
 featureDict = {
     "globalvars": {
         "branches": [
