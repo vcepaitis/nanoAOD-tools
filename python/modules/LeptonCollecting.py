@@ -18,7 +18,7 @@ class LeptonCollecting(Module):
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "charge", "isMuon", "isElectron","relIso"]
+        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron","relIso"]
     ):
         
         self.globalOptions = globalOptions

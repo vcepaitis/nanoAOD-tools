@@ -233,7 +233,7 @@ if isMC:
                 inputCollection=jetCollection,
                 leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
                 leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
-                jetMinPt=30.,
+                jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
                 jetId=JetSelection.LOOSE,
                 storeKinematics=['pt', 'eta'],
@@ -372,14 +372,20 @@ if isMC:
             )
         )
 
-else:
+        analyzerChain.append(
+            XGBEvaluation(
+                systName=systName,
+                jetCollection=jetCollection
+            )
+        )
 
+else:
     analyzerChain.append(
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
             leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
             leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
-            jetMinPt=30.,
+            jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
             jetId=JetSelection.LOOSE,
             storeKinematics=['pt', 'eta'],
@@ -472,6 +478,14 @@ else:
         )
     )
 
+    analyzerChain.append(
+        XGBEvaluation(
+            systName="nominal",
+            jetCollection=lambda event: event.selectedJets_nominal
+        )
+    )
+
+
 if not testMode:
      analyzerChain.append(
          PileupWeight(
@@ -479,12 +493,6 @@ if not testMode:
              globalOptions=globalOptions
          )
      )
-'''
-analyzerChain.append(
-    XGBEvaluation(
-    )
-)
-'''
 
 storeVariables = [
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,

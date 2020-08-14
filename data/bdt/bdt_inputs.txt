@@ -8,8 +8,8 @@ nselectedJets_nominal
 dilepton_mass
 dilepton_deltaPhi
 dilepton_deltaR
-leadingLepton_pt
-leadingLepton_eta
-leadingLepton_phi
-subleadingLepton_pt
-subleadingLepton_eta
+leadingLeptons_pt
+leadingLeptons_eta
+leadingLeptons_phi
+subleadingLeptons_pt
+subleadingLeptons_eta
