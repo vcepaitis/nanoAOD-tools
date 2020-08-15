@@ -21,7 +21,6 @@ class TaggerEvaluation(Module):
         featureDictFile,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
-        predictionLabels = ["B","C","UDS","G","PU","isLLP_QMU_QQMU","isLLP_Q_QQ"], #this is how the output array from TF is interpreted
         evalValues = range(-1, 4),
         integrateDisplacementOrder = 2,
         globalOptions = {"isData":False},
@@ -33,11 +32,14 @@ class TaggerEvaluation(Module):
         self.logctau = np.array(evalValues,dtype=np.float32)
 
         self.modelPath = os.path.expandvars(modelPath)
-        print featureDictFile
-        self.featureDict = imp.load_source(
+        feature_dict_module = imp.load_source(
             'feature_dict',
             os.path.expandvars(featureDictFile)
-        ).featureDict
+        )
+        
+        self.featureDict = feature_dict_module.featureDict
+        self.predictionLabels = feature_dict_module.predictionLabels
+        
         self.taggerName = taggerName
 
     def beginJob(self):

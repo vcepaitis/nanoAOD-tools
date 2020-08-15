@@ -16,9 +16,9 @@ class LeptonCollecting(Module):
         tightElectronCollection = lambda event: Collection(event, "Electron"),
         looseMuonCollection = lambda event: Collection(event, "Muon"),
         looseElectronCollection = lambda event: Collection(event, "Electron"),
-        outputName = "Lepton",
+        outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron"]
+        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron","relIso"]
     ):
         
         self.globalOptions = globalOptions
@@ -63,10 +63,12 @@ class LeptonCollecting(Module):
         for lepton in tightMuon+looseMuons:
             lepton.isMuon = 1
             lepton.isElectron = 0
+            lepton.relIso = lepton.pfRelIso04_all
 
         for lepton in tightElectron+looseElectrons:
             lepton.isMuon = 0
             lepton.isElectron = 1
+            lepton.relIso = lepton.pfRelIso03_all
 
         tightLepton = []
         looseLeptons = []
@@ -77,19 +79,19 @@ class LeptonCollecting(Module):
         tightLepton = sorted(tightLepton, key=lambda x: x.pt, reverse=True)
         # select leading only, move subleading to "loose"
         looseLeptons.extend(tightLepton[1:])
-        tightLepton = [tightLepton[0]]
+        tightLeptons = [tightLepton[0]]
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
 
-        self.out.fillBranch("nleading"+self.outputName, len(tightLepton))
+        self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
         self.out.fillBranch("nsubleading"+self.outputName, len(looseLeptons))
 
         for variable in self.storeKinematics:
-            self.out.fillBranch("leading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),tightLepton))
+            self.out.fillBranch("leading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),tightLeptons))
             self.out.fillBranch("subleading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),looseLeptons))
 
 
-        setattr(event, "leadingLepton", tightLepton)
-        setattr(event, "subleadingLepton", looseLeptons)
+        setattr(event, "leading"+self.outputName, tightLeptons)
+        setattr(event, "subleading"+self.outputName, looseLeptons)
 
         return True
         

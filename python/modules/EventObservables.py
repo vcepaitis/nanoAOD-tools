@@ -45,11 +45,11 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_minPhi", "F")
 
         if self.leptonCollection is not None:
-            self.out.branch(self.outputName+"_mT_met_Mu", "F")
-            self.out.branch(self.outputName+"_met_NoMu_pt", "F")
-            self.out.branch(self.outputName+"_met_NoMu_phi", "F")
-            self.out.branch(self.outputName+"_mht_NoMu", "F")
-            self.out.branch(self.outputName+"_mht_NoMu_phi", "F")
+            self.out.branch(self.outputName+"_mT_met_lep", "F")
+            self.out.branch(self.outputName+"_met_NoLep_pt", "F")
+            self.out.branch(self.outputName+"_met_NoLep_phi", "F")
+            self.out.branch(self.outputName+"_mht_NoLep", "F")
+            self.out.branch(self.outputName+"_mht_NoLep_phi", "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -94,13 +94,13 @@ class EventObservables(Module):
             met_l_mT = math.sqrt(2.*lepton.pt *
                                  met.pt*(1. - math.cos(lepton.phi - met.phi)))
 
-            self.out.fillBranch(self.outputName+"_met_NoMu_pt", met_lc)
-            self.out.fillBranch(self.outputName+"_mT_met_Mu", met_l_mT)
-            self.out.fillBranch(self.outputName+"_mht_NoMu",
+            self.out.fillBranch(self.outputName+"_met_NoLep_pt", met_lc)
+            self.out.fillBranch(self.outputName+"_mT_met_lep", met_l_mT)
+            self.out.fillBranch(self.outputName+"_mht_NoLep",
                                 (vectorSum + lepton.p4()).Pt())
-            setattr(event, self.outputName+"_met_NoMu_pt", met_lc)
-            setattr(event, self.outputName+"_mT_met_Mu", met_l_mT)
-            setattr(event, self.outputName+"_mht_NoMu",
+            setattr(event, self.outputName+"_met_NoLep_pt", met_lc)
+            setattr(event, self.outputName+"_mT_met_lep", met_l_mT)
+            setattr(event, self.outputName+"_mht_NoLep",
                     (vectorSum + lepton.p4()).Pt())
 
         return True

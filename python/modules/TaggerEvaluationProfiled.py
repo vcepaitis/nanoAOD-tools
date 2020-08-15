@@ -21,24 +21,34 @@ class TaggerEvaluationProfiled(Module):
         featureDictFile,
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
-        predictionLabels = ["B","C","UDS","G","PU","isLLP_Q","isLLP_MU","isLLP_E","isLLP_TAU"], #this is how the output array from TF is interpreted
         evalValues = range(-1, 4),
-        integrateDisplacementOrder = 2,
+        profiledLabels = ['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'],
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
-        self.predictionLabels = predictionLabels
+        
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
-        self.integrateDisplacementOrder = integrateDisplacementOrder
+        self.profiledLabels = profiledLabels
 
         self.modelPath = os.path.expandvars(modelPath)
-        print featureDictFile
-        self.featureDict = imp.load_source(
+        
+        feature_dict_module = imp.load_source(
             'feature_dict',
             os.path.expandvars(featureDictFile)
-        ).featureDict
+        )
+        
+        self.featureDict = feature_dict_module.featureDict
+        self.predictionLabels = feature_dict_module.predictionLabels
+        for profiledLabel in self.profiledLabels:
+            if profiledLabel not in self.predictionLabels:
+                print "ERROR (TaggerEvaluationProfiled) - label for profiling '%s' not in predicted label list: %s"%(
+                    profiledLabel,
+                    str(self.predictionLabels)
+                )
+                sys.exit(1)
+        
         self.taggerName = taggerName
 
 
@@ -163,45 +173,51 @@ class TaggerEvaluationProfiled(Module):
             evaluationIndices
         )
 
-        predictionsPerIndex = {}
-        parameterPerIndex = {}
+        outputPerIndex = {}
 
         for ijet,jetIndex in enumerate(jetOriginIndices):
-            predictionsPerIndex[jetIndex] = [-1.]*len(self.predictionLabels)
-            parameterPerIndex[jetIndex] = [min(self.evalValues)]*len(self.predictionLabels)
+            
 
-            for ivalue, value in enumerate(self.evalValues):
-                predictionIndex = ijet*len(self.evalValues)+ivalue
-                prediction = result.get("prediction",predictionIndex)
-                for ilabel,label in enumerate(self.predictionLabels):
-                    if prediction[ilabel]>predictionsPerIndex[jetIndex][ilabel]:
-                        predictionsPerIndex[jetIndex][ilabel] = prediction[ilabel]
-                        parameterPerIndex[jetIndex][ilabel] = value
-            '''    
+            maxSinglePrediction = -1
+            ivalueAtMaxPrediction = 0
+            
             for ilabel,label in enumerate(self.predictionLabels):
-                self.out.fillBranch(self.taggerName+"_value_%s"%(label), predictionsPerIndex[jetIndex][ilabel])
-                self.out.fillBranch(self.taggerName+"_dxy_%s"%(label), parameterPerIndex[jetIndex][ilabel])
-            #print ijet,predictionsPerIndex[jetIndex],parameterPerIndex[jetIndex]
-            '''
+                if label not in self.profiledLabels:
+                    continue
+                
+                for ivalue, value in enumerate(self.evalValues):
+                    predictionIndex = ijet*len(self.evalValues)+ivalue
+                    predictions = result.get("prediction",predictionIndex)
+                    singlePrediction = predictions[ilabel]
+                    if singlePrediction>maxSinglePrediction:
+                        maxSinglePrediction = singlePrediction
+                        ivalueAtMaxPrediction = ivalue
+            
+            
+            maxPredictionIndex = ijet*len(self.evalValues)+ivalueAtMaxPrediction
+            maxPredictions = result.get("prediction",maxPredictionIndex)
+
+            outputPerIndex[jetIndex] = {}
+            outputPerIndex[jetIndex]['parameter'] = self.evalValues[ivalueAtMaxPrediction]
+            for ilabel,label in enumerate(self.predictionLabels):
+                if label not in self.profiledLabels:
+                    continue
+                outputPerIndex[jetIndex][label] = maxPredictions[ilabel]
+
+
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
             for ijet, jet in enumerate(jets):
-                taggerOutput = {}
-                for ilabel, label in enumerate(self.predictionLabels):
-                    if hasattr(jet, "globalIdx"):
-                        taggerOutput[label] = {
-                            'output': predictionsPerIndex[jet.globalIdx][ilabel],
-                            'parameter': parameterPerIndex[jet.globalIdx][ilabel]
-                        }
-                    else:
-                        print("Jet output set to -1!")
-                        taggerOutput[label] = {
-                            'output': -1.0,
-                            'parameter': min(self.evalValues)
-                        }
-
-                setattr(jet, self.taggerName, taggerOutput)
+                
+                if hasattr(jet, "globalIdx"):
+                    setattr(jet, self.taggerName, outputPerIndex[jet.globalIdx])
+                else:
+                    print("Jet output set to -1!")
+                    taggerOutput = {k:-1 for k in self.profiledLabels}
+                    taggerOutput['parameter'] = min(self.evalValues)
+                    setattr(jet, self.taggerName, taggerOutput)
+                
                 
         return True
