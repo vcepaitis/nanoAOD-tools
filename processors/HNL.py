@@ -82,6 +82,11 @@ if args.isData:
                2018: 'Autumn18_V19_DATA'
                }
 
+met_variable = {2016: lambda event: Object(event, "MET"),
+                2017: lambda event: Object(event, "METFixEE2017"),
+                2018: lambda event: Object(event, "MET")
+                }
+
 
 leptonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj > 0),
@@ -213,6 +218,7 @@ analyzerChain.append(
 if isMC:
     analyzerChain.append(
         JetMetUncertainties(
+            metInput=met_variable[year],
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
@@ -464,6 +470,7 @@ else:
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='leadingLeptons',
+            metObject=met_variable[year],
             globalOptions=globalOptions,
             outputName="nominal"
         )
@@ -473,6 +480,7 @@ else:
         EventObservables(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.leadingLeptons[0],
+            metInput=met_variable[year],
             globalOptions=globalOptions,
             outputName="EventObservables_nominal"
         )

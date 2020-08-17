@@ -30,10 +30,11 @@ class JetSelection(Module):
          dRP4Subtraction=0.4,
          flagDA=False,
          storeKinematics=['pt', 'eta'],
-         globalOptions={"isData": False},
+         globalOptions={"isData": False, "year": 2016},
          jetId=LOOSE
      ):
         self.globalOptions = globalOptions
+
         self.inputCollection = inputCollection
         self.leptonCollectionDRCleaning = leptonCollectionDRCleaning
         self.leptonCollectionP4Subraction = leptonCollectionP4Subraction
@@ -45,7 +46,10 @@ class JetSelection(Module):
         self.dRP4Subtraction = dRP4Subtraction
         self.flagDA = flagDA
         self.storeKinematics = storeKinematics
-        self.jetId = jetId
+        if jetId==JetSelection.LOOSE and (globalOptions["year"] == 2017 or globalOptions["year"] == 2018):
+            self.jetId = JetSelection.TIGHT
+        else:
+            self.jetId = jetId
 
     def beginJob(self):
         pass
