@@ -12,6 +12,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel \
     import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
+
 
 parser = argparse.ArgumentParser()
 
@@ -175,6 +177,11 @@ analyzerChain.append(
         outputName="dilepton"
     )
 )
+
+jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", jesUncert="All", redojec=True)
+analyzerChain.append(jetmetCorrector())
+#jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")  
+
 
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict.py"
