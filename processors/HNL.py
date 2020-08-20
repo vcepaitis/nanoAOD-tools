@@ -12,7 +12,6 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel \
     import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
 
 parser = argparse.ArgumentParser()
 
@@ -179,6 +178,7 @@ analyzerChain.append(
 
 '''
 # left for debugging
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
 jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", jesUncert="All", redojec=True)
 #jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")  
 analyzerChain.append(jetmetCorrector())
