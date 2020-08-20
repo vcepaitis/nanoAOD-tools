@@ -55,7 +55,6 @@ class EventObservables(Module):
         pass
 
     def analyze(self, event):
-        print((event.MET_pt-event.MET_pt_nom)/event.MET_pt)
         jets = self.jetCollection(event)
 
         met = self.metInput(event)

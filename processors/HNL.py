@@ -14,7 +14,6 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.modules import *
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
 
-
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--testMode', dest='testMode', action='store_true', default=False)
@@ -178,9 +177,12 @@ analyzerChain.append(
     )
 )
 
+'''
+# left for debugging
 jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", jesUncert="All", redojec=True)
-analyzerChain.append(jetmetCorrector())
 #jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")  
+analyzerChain.append(jetmetCorrector())
+'''
 
 
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
@@ -229,6 +231,7 @@ if isMC:
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
+            propagateJER = False,
             jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
         )
     )
