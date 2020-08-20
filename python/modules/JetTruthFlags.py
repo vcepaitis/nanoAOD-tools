@@ -19,24 +19,24 @@ class JetTruthFlags(Module):
         outputName="selectedJets_nominal",
         latentVariables=[],
         flags={
+            'isPrompt_MU': ['isPrompt_MU'],
+            'isPrompt_E': ['isPrompt_E'],
+            'isPrompt_TAU': ['isPrompt_TAU'],
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
             'isUDS': ['isS', 'isUD'],
             'isG': ['isG'],
             'isPU': ['isPU'],
-            'isLLP_QMU': ['isLLP_QMU'],
-            'isLLP_QQMU': ['isLLP_QQMU'],
-            'isLLP_Q': ['isLLP_Q'],
-            'isLLP_QQ': ['isLLP_QQ'],
+            'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ'],
             'isLLP_MU': ['isLLP_MU'],
-            'isLLP_Merged': ['isLLP_QMU', 'isLLP_QQMU'],
-            'isLLP_Resolved': ['isLLP_Q', 'isLLP_QQ'],
-            'isLLP_Q': ['isLLP_Q'],
-            'isLLP_QQ': ['isLLP_QQ'],
-            'isLLP_MU': ['isLLP_MU'],
-            'isLLP_RAD': ['isLLP_RAD']
-
+            'isLLP_QMU': ['isLLP_QMU', 'isLLP_QQMU'],
+            'isLLP_E': ['isLLP_E'],
+            'isLLP_QE': ['isLLP_QE','isLLP_QQE'],
+            'isLLP_TAU': ['isLLP_TAU'],
+            'isLLP_QTAU': ['isLLP_QTAU','isLLP_QQTAU'],  
+            'isUndefined': ['isUndefined'] , 
         },
+
         globalOptions={"isData": False}
     ):
         self.globalOptions = globalOptions

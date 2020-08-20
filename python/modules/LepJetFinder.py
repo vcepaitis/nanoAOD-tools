@@ -60,6 +60,12 @@ class LepJetFinder(Module):
                     deltaR = _deltaR
 		    jet_index = i 
 
+            '''
+            if deltaR > 0.4:
+                continue
+            '''
+
+
             lepJets.append(jet)
 	    
 	    lepjet = lepJets[0]
