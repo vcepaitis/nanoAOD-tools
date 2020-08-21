@@ -228,10 +228,16 @@ if isMC:
     analyzerChain.append(
         JetMetUncertainties(
             metInput=met_variable[year],
+            rhoInput = lambda event: event.fixedGridRhoFastjetAll,
+            jetCollection = lambda event: Collection(event,"Jet"),
+            lowPtJetCollection = lambda event: Collection(event,"CorrT1METJet"),
+            genJetCollection = lambda event: Collection(event,"GenJet"),
+            muonCollection = lambda event: Collection(event,"Muon"),
+            electronCollection = lambda event: Collection(event,"Electron"),
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
-            propagateJER = False,
+            propagateJER = True,
             jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
         )
     )
