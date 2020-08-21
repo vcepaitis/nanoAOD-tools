@@ -19,9 +19,6 @@ class JetTruthFlags(Module):
         outputName="selectedJets_nominal",
         latentVariables=[],
         flags={
-            'isPrompt_MU': ['isPrompt_MU'],
-            'isPrompt_E': ['isPrompt_E'],
-            'isPrompt_TAU': ['isPrompt_TAU'],
             'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
             'isC': ['isC', 'isCC', 'isGCC'],
             'isUDS': ['isS', 'isUD'],
@@ -37,10 +34,16 @@ class JetTruthFlags(Module):
             'isUndefined': ['isUndefined'] , 
         },
 
-        globalOptions={"isData": False}
+        globalOptions={"isData": False, "isSignal": False}
     ):
         self.globalOptions = globalOptions
         self.flags = flags
+        # ugly
+        if globalOptions["isSignal"]:
+            self.flags['isPrompt_MU'] = ['isPrompt_MU']
+            self.flags['isPrompt_E'] = ['isPrompt_E']
+            self.flags['isPrompt_TAU'] = ['isPrompt_TAU']
+
         self.inputCollection = inputCollection
         self.latentVariables = latentVariables
         self.outputName = outputName

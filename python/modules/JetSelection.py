@@ -24,8 +24,9 @@ class JetSelection(Module):
          leptonCollectionP4Subraction=lambda event: [],
          outputName="selectedJets",
          jetMinPt=15.,
-         jetMinEta =-1.,
+         jetMinEta=-1.,
          jetMaxEta=2.4,
+         jetMinNConstituents=-1,
          dRCleaning=0.4,
          dRP4Subtraction=0.4,
          flagDA=False,
@@ -42,6 +43,7 @@ class JetSelection(Module):
         self.jetMinPt = jetMinPt
         self.jetMinEta = jetMinEta
         self.jetMaxEta = jetMaxEta
+        self.jetMinNConstituents = jetMinNConstituents
         self.dRCleaning = dRCleaning
         self.dRP4Subtraction = dRP4Subtraction
         self.flagDA = flagDA
@@ -99,11 +101,10 @@ class JetSelection(Module):
                 continue
                 
             #note: tagger only trained for these jets
-            if jet.nConstituents<4:
+            if self.jetMinNConstituents > 0 and jet.nConstituents < self.jetMinNConstituents:
                 unselectedJets.append(jet)
                 continue
 
-            
             leptonP4 = ROOT.TLorentzVector(0,0,0,0)
             if self.dRP4Subtraction > 0. and len(leptonsForP4Subtraction) > 0:
                 for lepton in leptonsForP4Subtraction:
@@ -128,7 +129,6 @@ class JetSelection(Module):
                 if mindr < self.dRCleaning:
                     unselectedJets.append(jet)
                     continue
-
 
                 selectedJets.append(jet)
 
