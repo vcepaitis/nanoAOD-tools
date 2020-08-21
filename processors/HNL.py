@@ -251,6 +251,7 @@ if isMC:
                 leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
                 jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
+                jetMinNConstituents=3,
                 jetId=JetSelection.LOOSE,
                 storeKinematics=['pt', 'eta'],
                 outputName="selectedJets_"+systName,
@@ -261,12 +262,26 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
+                leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
                 jetMinPt=30.,
                 jetMinEta=2.4,
                 jetMaxEta=5.,
                 jetId=JetSelection.LOOSE,
                 storeKinematics=[],
                 outputName="selectedFwdJets_"+systName,
+                globalOptions=globalOptions
+            )
+        )
+
+        analyzerChain.append(
+            JetSelection(
+                inputCollection=jetCollection,
+                jetMinPt=100.,
+                jetMinEta=2.25,
+                jetMaxEta=3.0,
+                jetId=JetSelection.LOOSE,
+                storeKinematics=[],
+                outputName="selectedL1PreFiringJets_"+systName,
                 globalOptions=globalOptions
             )
         )
@@ -403,6 +418,7 @@ else:
             leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
             jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
+            jetMinNConstituents=3,
             jetId=JetSelection.LOOSE,
             storeKinematics=['pt', 'eta'],
             outputName="selectedJets_nominal",
@@ -413,6 +429,7 @@ else:
     analyzerChain.append(
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
+            leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
             jetMinPt=30.,
             jetMinEta=2.4,
             jetMaxEta=5.,
@@ -423,6 +440,18 @@ else:
         )
     )
 
+    analyzerChain.append(
+        JetSelection(
+            inputCollection=lambda event: Collection(event, "Jet"),
+            jetMinPt=100.,
+            jetMinEta=2.25,
+            jetMaxEta=3.0,
+            jetId=JetSelection.LOOSE,
+            storeKinematics=[],
+            outputName="selectedL1PreFiringJets_nominal",
+            globalOptions=globalOptions
+        )
+    )
 
     analyzerChain.append(
         LepJetFinder(

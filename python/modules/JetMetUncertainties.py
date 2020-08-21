@@ -10,7 +10,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.tools import matchObjectCollection, matchObjectCollectionMultiple
 
-from utils import PhysicsObject
+from utils import PhysicsObject, deltaR
 
 class JERUncertaintyCalculator():
     def __init__(self,jerResolutionFileName,jerSFUncertaintyFileName):
@@ -173,6 +173,8 @@ class JetMetUncertainties(Module):
         jetCollection = lambda event: Collection(event,"Jet"),
         lowPtJetCollection = lambda event: Collection(event,"CorrT1METJet"),
         genJetCollection = lambda event: Collection(event,"GenJet"),
+        muonCollection = lambda event: Collection(event,"Muon"),
+        electronCollection = lambda event: Collection(event,"Electron"),
         propagateJER = True,
         outputJetPrefix = 'jets_',
         outputMetPrefix = 'met_',
@@ -187,6 +189,8 @@ class JetMetUncertainties(Module):
         self.jetCollection = jetCollection
         self.lowPtJetCollection = lowPtJetCollection
         self.genJetCollection = genJetCollection
+        self.muonCollection = muonCollection
+        self.electronCollection = electronCollection
         self.propagateJER = propagateJER
         self.outputJetPrefix = outputJetPrefix
         self.outputMetPrefix = outputMetPrefix
@@ -254,6 +258,8 @@ class JetMetUncertainties(Module):
         jets = self.jetCollection(event)
         lowPtJets = self.lowPtJetCollection(event)
         genJets = self.genJetCollection(event)  
+        muons = self.muonCollection(event)
+        electrons = self.electronCollection(event)
         
         for lowPtJet in lowPtJets:
             lowPtJet.pt = lowPtJet.rawPt
@@ -299,16 +305,25 @@ class JetMetUncertainties(Module):
             jet.uncertainty_p4['nominal'] = jet.p4()*jerFactor['nominal']
             jet.uncertainty_p4['jerUp'] = jet.p4()*jerFactor['up']
             jet.uncertainty_p4['jerDown'] = jet.p4()*jerFactor['down']
-            
-            
+
             if self.propagateJER:
-                if jet.uncertainty_p4['nominal'].Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
+                leptonP4 = ROOT.TLorentzVector(0,0,0,0)
+
+                for muon in muons:
+                    if deltaR(muon, jet) < 0.4:
+                        leptonP4 += muon.p4()
+
+                for electron in electrons:
+                    if deltaR(electron, jet) < 0.4:
+                        leptonP4 += electron.p4()
+
+                if (jet.uncertainty_p4['nominal']-leptonP4).Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
                     met.uncertainty_p4['nominal'] -= jet.p4()*(jerFactor['nominal']-1.)
                     
-                if jet.uncertainty_p4['jerUp'].Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
+                if (jet.uncertainty_p4['jerUp']-leptonP4).Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
                     met.uncertainty_p4['jerUp'] -= jet.p4()*(jerFactor['up']-1.)
                     
-                if jet.uncertainty_p4['jerDown'].Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
+                if (jet.uncertainty_p4['jerDown']-leptonP4).Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
                     met.uncertainty_p4['jerDown'] -= jet.p4()*(jerFactor['down']-1.)
                         
             for jesUncertaintyName in self.jesUncertaintyNames:
@@ -325,8 +340,7 @@ class JetMetUncertainties(Module):
                     
                 for jet in jets:
                     if jet.uncertainty_p4['jes'+jesUncertaintyName+mode].Pt()>self.unclEnThreshold and (jet.neEmEF+jet.chEmEF) < 0.9:
-                        continue
-                    met.uncertainty_p4['jes'+jesUncertaintyName+mode] -= jet.uncertainty_p4['jes'+jesUncertaintyName+mode]-jet.uncertainty_p4['nominal']
+                        met.uncertainty_p4['jes'+jesUncertaintyName+mode] -= jet.uncertainty_p4['jes'+jesUncertaintyName+mode]-jet.uncertainty_p4['nominal']
                   
                   
             
