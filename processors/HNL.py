@@ -237,7 +237,7 @@ if isMC:
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
-            propagateJER = False, # need to fix, poor modelling
+            propagateJER = False,
             jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
         )
     )
@@ -259,7 +259,6 @@ if isMC:
                 jetMaxEta=2.399, #TODO: change to 2.4
                 jetMinNConstituents=3,
                 jetId=JetSelection.LOOSE,
-                storeKinematics=['pt', 'eta'],
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -365,7 +364,7 @@ if isMC:
                 muonsTight=lambda event: event.tightMuon, 
                 electronsTight=lambda event: event.tightElectron, 
                 muonsLoose=lambda event: event.looseMuons, 
-                electronsLoose=lambda event: event.looseElectrons, 	
+                electronsLoose=lambda event: event.looseElectrons,  
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
                 outputName="category_"+systName,
@@ -409,12 +408,14 @@ if isMC:
             )
         )
 
+        '''
         analyzerChain.append(
             XGBEvaluation(
                 systName=systName,
                 jetCollection=jetCollection
             )
         )
+        '''
 
 else:
     analyzerChain.append(
@@ -426,7 +427,6 @@ else:
             jetMaxEta=2.399, #TODO: change to 2.4
             jetMinNConstituents=3,
             jetId=JetSelection.LOOSE,
-            storeKinematics=['pt', 'eta'],
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -531,13 +531,14 @@ else:
         )
     )
 
+    '''
     analyzerChain.append(
         XGBEvaluation(
             systName="nominal",
             jetCollection=lambda event: event.selectedJets_nominal
         )
     )
-
+    '''
 
 if not testMode:
      analyzerChain.append(
