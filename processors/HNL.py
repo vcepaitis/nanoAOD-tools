@@ -350,7 +350,7 @@ if isMC:
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
-    '''
+   
     for systName, jetCollection in [
         ("nominal", lambda event: event.selectedJets_nominal[:4]),
         ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
@@ -367,17 +367,31 @@ if isMC:
                 electronsLoose=lambda event: event.looseElectrons,  
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
+        	taggerName="llpdnnx",
                 outputName="category_"+systName,
                 globalOptions=globalOptions
            )
         )
-    '''
+        analyzerChain.append(
+           EventCategorization(
+                muonsTight=lambda event: event.tightMuon, 
+                electronsTight=lambda event: event.tightElectron, 
+                muonsLoose=lambda event: event.looseMuons, 
+                electronsLoose=lambda event: event.looseElectrons, 	
+                looseLeptons=lambda event: event.subleadingLeptons,
+                jetsCollection=jetCollection,
+                taggerName="llpdnnx_gun",
+                outputName="category_gun_"+systName,
+                globalOptions=globalOptions
+           )
+        )
+    
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
             lambda event: event.met_nominal),
         ("jerUp", lambda event: event.selectedJets_jerUp,
-            lambda event: event.met_jerUp),
+           lambda event: event.met_jerUp),
         ("jerDown", lambda event: event.selectedJets_jerDown,
             lambda event: event.met_jerDown),
         ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
@@ -389,6 +403,7 @@ if isMC:
         ("unclEnDown", lambda event: event.selectedJets_nominal,
             lambda event: event.met_unclEnDown),
     ]:
+        '''
         analyzerChain.extend([
             WbosonReconstruction(
                 leptonCollectionName='leadingLeptons',
@@ -398,6 +413,7 @@ if isMC:
             )
         ])
 
+        '''
         analyzerChain.append(
             EventObservables(
                 jetCollection=jetCollection,
@@ -408,6 +424,7 @@ if isMC:
             )
         )
 
+        
         '''
         analyzerChain.append(
             XGBEvaluation(
@@ -415,6 +432,7 @@ if isMC:
                 jetCollection=jetCollection
             )
         )
+        
         '''
 
 else:
@@ -498,7 +516,7 @@ else:
             evalValues = np.linspace(-3,2,5*5+1)
         )
     )
-    '''
+    
     analyzerChain.append(
        EventCategorization(
             muonsTight=lambda event: event.tightMuon, 
@@ -511,7 +529,7 @@ else:
             globalOptions=globalOptions
        )
     )
-    '''
+    
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='leadingLeptons',
