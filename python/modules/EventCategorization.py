@@ -68,7 +68,7 @@ class EventCategorization(Module):
         self.out.branch(self.outputName+"_taggerBestOutputValue" , "F", lenVar="n"+self.outputName ) 
         self.out.branch(self.outputName+"_taggerBestOutputLabel", "F", lenVar="n"+self.outputName )      
         self.out.branch(self.outputName+"_taggerBestOutputParameter", "F" , lenVar="n"+self.outputName)     
-	self.out.branch(self.outputName+"_outputSum", "F", lenVar="n"+self.outputName) 
+        self.out.branch(self.outputName+"_outputSum", "F", lenVar="n"+self.outputName) 
         self.out.branch(self.outputName+"_muonmuon", "I") 
         self.out.branch(self.outputName+"_electronelectron", "I")
         self.out.branch(self.outputName+"_muonelectron", "I")
