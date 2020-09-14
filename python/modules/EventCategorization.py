@@ -193,7 +193,7 @@ class EventCategorization(Module):
 		    bestDict[0] = taggerOutput 
 
 	# looking for second llp proba  jet. 
-        secondValue = 0.
+	secondValue = 0.
 	secondIndex = -10
 	secondParam = -10.
 	secondJet = 0. 
@@ -208,7 +208,7 @@ class EventCategorization(Module):
                     secondValue = taggerOutput[label] 
                     secondParam = taggerOutput['parameter']
                     secondJet  = jet 
-		    secondDict = taggerOutput 
+                    secondDict = taggerOutput 
            bestValue.append(secondValue)
            bestIndex.append(secondIndex)
            bestParam.append(secondParam)
