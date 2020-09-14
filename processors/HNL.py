@@ -82,6 +82,11 @@ if args.isData:
                2018: 'Autumn18_V19_DATA'
                }
 
+met_variable = {2016: lambda event: Object(event, "MET"),
+                2017: lambda event: Object(event, "METFixEE2017"),
+                2018: lambda event: Object(event, "MET")
+                }
+
 
 leptonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj > 0),
@@ -171,6 +176,15 @@ analyzerChain.append(
     )
 )
 
+'''
+# left for debugging
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
+jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", jesUncert="All", redojec=True)
+#jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")  
+analyzerChain.append(jetmetCorrector())
+'''
+
+
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict.py"
 modelPath = {
@@ -213,9 +227,17 @@ analyzerChain.append(
 if isMC:
     analyzerChain.append(
         JetMetUncertainties(
+            metInput=met_variable[year],
+            rhoInput = lambda event: event.fixedGridRhoFastjetAll,
+            jetCollection = lambda event: Collection(event,"Jet"),
+            lowPtJetCollection = lambda event: Collection(event,"CorrT1METJet"),
+            genJetCollection = lambda event: Collection(event,"GenJet"),
+            muonCollection = lambda event: Collection(event,"Muon"),
+            electronCollection = lambda event: Collection(event,"Electron"),
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
+            propagateJER = False,
             jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
         )
     )
@@ -235,8 +257,8 @@ if isMC:
                 leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
                 jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
+                jetMinNConstituents=3,
                 jetId=JetSelection.LOOSE,
-                storeKinematics=['pt', 'eta'],
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -245,12 +267,26 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
+                leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
                 jetMinPt=30.,
                 jetMinEta=2.4,
                 jetMaxEta=5.,
                 jetId=JetSelection.LOOSE,
                 storeKinematics=[],
                 outputName="selectedFwdJets_"+systName,
+                globalOptions=globalOptions
+            )
+        )
+
+        analyzerChain.append(
+            JetSelection(
+                inputCollection=jetCollection,
+                jetMinPt=100.,
+                jetMinEta=2.25,
+                jetMaxEta=3.0,
+                jetId=JetSelection.LOOSE,
+                storeKinematics=[],
+                outputName="selectedL1PreFiringJets_"+systName,
                 globalOptions=globalOptions
             )
         )
@@ -328,7 +364,7 @@ if isMC:
                 muonsTight=lambda event: event.tightMuon, 
                 electronsTight=lambda event: event.tightElectron, 
                 muonsLoose=lambda event: event.looseMuons, 
-                electronsLoose=lambda event: event.looseElectrons, 	
+                electronsLoose=lambda event: event.looseElectrons,  
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
         	taggerName="llpdnnx",
@@ -389,6 +425,7 @@ if isMC:
         )
 
         
+        '''
         analyzerChain.append(
             XGBEvaluation(
                 systName=systName,
@@ -396,6 +433,8 @@ if isMC:
             )
         )
         
+        '''
+
 else:
     analyzerChain.append(
         JetSelection(
@@ -404,8 +443,8 @@ else:
             leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
             jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
+            jetMinNConstituents=3,
             jetId=JetSelection.LOOSE,
-            storeKinematics=['pt', 'eta'],
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -414,6 +453,7 @@ else:
     analyzerChain.append(
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
+            leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
             jetMinPt=30.,
             jetMinEta=2.4,
             jetMaxEta=5.,
@@ -424,6 +464,18 @@ else:
         )
     )
 
+    analyzerChain.append(
+        JetSelection(
+            inputCollection=lambda event: Collection(event, "Jet"),
+            jetMinPt=100.,
+            jetMinEta=2.25,
+            jetMaxEta=3.0,
+            jetId=JetSelection.LOOSE,
+            storeKinematics=[],
+            outputName="selectedL1PreFiringJets_nominal",
+            globalOptions=globalOptions
+        )
+    )
 
     analyzerChain.append(
         LepJetFinder(
@@ -481,6 +533,7 @@ else:
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='leadingLeptons',
+            metObject=met_variable[year],
             globalOptions=globalOptions,
             outputName="nominal"
         )
@@ -490,18 +543,20 @@ else:
         EventObservables(
             jetCollection=lambda event: event.selectedJets_nominal,
             leptonCollection=lambda event: event.leadingLeptons[0],
+            metInput=met_variable[year],
             globalOptions=globalOptions,
             outputName="EventObservables_nominal"
         )
     )
 
+    '''
     analyzerChain.append(
         XGBEvaluation(
             systName="nominal",
             jetCollection=lambda event: event.selectedJets_nominal
         )
     )
-
+    '''
 
 if not testMode:
      analyzerChain.append(
