@@ -380,7 +380,7 @@ if isMC:
                 electronsLoose=lambda event: event.looseElectrons, 	
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
-        	taggerName="llpdnnx_gun",
+                taggerName="llpdnnx_gun",
                 outputName="category_gun_"+systName,
                 globalOptions=globalOptions
            )
