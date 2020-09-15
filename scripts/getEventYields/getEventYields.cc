@@ -44,6 +44,10 @@ int main(int argc, char **argv){
                     std::cout << "Reading in file: " << line << std::endl;
                     // Open with root
                     TFile *rootFile = TFile::Open(line.c_str());
+                    if (rootFile->IsZombie()) {
+                        std::cout << "Error opening file" << std::endl;
+                        continue;
+                    }
                     TTree* tree = (TTree*)rootFile->Get("Events");
                     TH1F* h = new TH1F("pu","",101,0,100);
                     tree->Project(h->GetName(),"Pileup_nTrueInt","genWeight");
@@ -57,7 +61,7 @@ int main(int argc, char **argv){
         closedir(dir);
     }
     for (std::pair<std::string, double> x: processDict) {
-                std::cout << x.first << " => " << x.second << '\n';
+        std::cout << x.first << " => " << x.second << '\n';
     }  
 
     std::string output_string = (output_path+"/pileup.root");
@@ -68,15 +72,13 @@ int main(int argc, char **argv){
         x.second.SetName(x.first.c_str());
         x.second.Write();
     }  
+
     rootFile->Close();
     json j_map(processDict);
 
-
     output_string = output_path+"/eventyields.json";
     std::ofstream o(output_string.c_str());
-    o << j_map << std::endl;
+    o << j_map.dump(0) << std::endl;
 
     return 0;
 }
-
-

@@ -12,11 +12,19 @@ class XGBEvaluation(Module):
         self,
         modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt.model",
         featurePath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt",
+        systName="nominal",
+        jetCollection= lambda event: event.selectedJets_nominal,
+        leadingLeptonCollection= lambda event: event.leadingLeptons,
+        subleadingLeptonCollection= lambda event: event.subleadingLeptons,
         outputName ="bdt_score"
     ):
         self.modelPath = modelPath
         self.featurePath = featurePath
-        self.outputName = outputName
+        self.systName = systName
+        self.jetCollection = jetCollection
+        self.leadingLeptonCollection = leadingLeptonCollection
+        self.subleadingLeptonCollection = subleadingLeptonCollection
+        self.outputName = outputName+"_"+systName
 
     def beginJob(self):
         pass
@@ -30,36 +38,55 @@ class XGBEvaluation(Module):
         pass
 
     def analyze(self, event):
+        
+        jets = self.jetCollection(event)
+        leadingLeptons = self.leadingLeptonCollection(event)
+        subleadingLeptons = self.subleadingLeptonCollection(event)
 
-        with open(os.path.expandvars(self.featurePath)) as f:
-            array_list = [line.rstrip() for line in f]
-
-        if event.nselectedJets_nominal == 0 or event.ntightMuon == 0 or event.nlooseMuons == 0:
+        if len(jets) == 0 or len(leadingLeptons) == 0 or len(subleadingLeptons) == 0:
             setattr(event, "bdt_score", "-999.")
             self.out.fillBranch(self.outputName,-999.)
             return True
 
+        '''
+        with open(os.path.expandvars(self.featurePath)) as f:
+            array_list = [line.rstrip() for line in f]
+        '''
+
         dict_list = {}
+        dict_list["EventObservables_nominal_met"] = getattr(event, "EventObservables_"+self.systName+"_met")
+        dict_list["EventObservables_nominal_ht"] = getattr(event, "EventObservables_"+self.systName+"_ht")
+        dict_list["dilepton_mass"] = event.dilepton_mass
+        dict_list["dilepton_deltaPhi"] = event.dilepton_deltaPhi
+        dict_list["dilepton_deltaR"] = event.dilepton_deltaR
+        dict_list["leadingLeptons_pt"] = leadingLeptons[0].pt
+        dict_list["leadingLeptons_eta"] = leadingLeptons[0].eta
+        dict_list["leadingLeptons_nominal_mtw"] = getattr(event, "leadingLeptons_"+self.systName+"_mtw")
+        dict_list["leadingLeptons_nominal_deltaPhi"] = getattr(event, "leadingLeptons_"+self.systName+"_deltaPhi")
+        dict_list["subleadingLeptons_pt"] = subleadingLeptons[0].pt
+        dict_list["subleadingLeptons_eta"] = subleadingLeptons[0].eta
+        dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].ptLeptonSubtracted
+        dict_list["selectedJets_nominal_eta"] = jets[0].eta
+
+
+        '''
         for feature in array_list:
+            feature = feature.replace("nominal", self.systName)
             value = getattr(event, feature)
             if isinstance(value, list):
                 if len(value) > 0:
                     dict_list[feature] = value[0]
             else:
                 dict_list[feature] = value
+        '''
+
         data = pd.DataFrame(data=dict_list, index=[0])
-
-        #print dict_list
-
+        data = data.reindex(sorted(data.columns), axis=1)
         model = XGBClassifier()
-        booster = Booster()
-        #model._le = LabelEncoder().fit([1])
-        booster.load_model(os.path.expandvars(self.modelPath))
-        booster.feature_names = sorted(array_list)
+        booster = Booster(model_file=os.path.expandvars(self.modelPath))
         model._Booster = booster
         bdt_score = model.predict_proba(data)
         setattr(event, "bdt_score", bdt_score[:, 1])
-
         self.out.fillBranch(self.outputName,bdt_score[:, 1])
 
         return True

@@ -5,6 +5,7 @@ import json
 import ROOT
 import random
 
+import utils 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
@@ -15,7 +16,7 @@ class LepJetFinder(Module):
         jetCollection,
         leptonCollection,
         outputName="lepJet",
-        storeKinematics=['pt', 'eta', 'phi', 'jetId', 'deltaR', 'nConstituents', 'jetIdx'],
+        storeKinematics=['pt', 'ptLeptonSubtracted', 'eta', 'phi', 'jetId', 'deltaR', 'nConstituents'],
     ):
         self.jetCollection = jetCollection
         self.leptonCollection = leptonCollection
@@ -40,6 +41,7 @@ class LepJetFinder(Module):
     def analyze(self, event):
         jetCollection = self.jetCollection(event)
         leptonCollection = self.leptonCollection(event)
+
         lepJets = []
 
         if len(jetCollection) == 0:
@@ -55,9 +57,9 @@ class LepJetFinder(Module):
                     jet = _jet
                     deltaR = _deltaR
 
-            lepJets.append(jet)
             setattr(jet, "deltaR", deltaR)
-            setattr(jet, "jetIdx", jet._index)
+
+            lepJets.append(jet)
 
         for variable in self.storeKinematics:
             self.out.fillBranch(self.outputName+"_"+variable,

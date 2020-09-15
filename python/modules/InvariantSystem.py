@@ -35,6 +35,8 @@ class InvariantSystem(Module):
         self.out.branch(self.outputName+"_eta", "F")
         self.out.branch(self.outputName+"_deltaR", "F")
         self.out.branch(self.outputName+"_deltaPhi", "F")
+        self.out.branch(self.outputName+"_maxDeltaR", "F")
+        self.out.branch(self.outputName+"_maxDeltaPhi", "F")
         self.out.branch(self.outputName+"_charge", "I")
 
 
@@ -45,15 +47,31 @@ class InvariantSystem(Module):
         collection = self.inputCollection(event)
         vec = ROOT.TLorentzVector()
         charge = 1
-        for obj in collection:
+        
+        minDeltaR = 100.
+        maxDeltaR = 0.
+        minDeltaPhi = 100.
+        maxDeltaPhi = 0.
+        
+        for i,obj in enumerate(collection):
             vec += obj.p4()
             charge *= obj.charge
-
+            
+            for j,obj2 in enumerate(collection):
+                if j>=i:
+                    continue
+                minDeltaR = min(minDeltaR,deltaR(obj,obj2))
+                maxDeltaR = max(maxDeltaR,deltaR(obj,obj2))
+                minDeltaPhi = min(minDeltaPhi,deltaPhi(obj,obj2))
+                maxDeltaPhi = max(maxDeltaPhi,deltaPhi(obj,obj2))
+    
         self.out.fillBranch(self.outputName+"_mass", vec.M())
         self.out.fillBranch(self.outputName+"_pt", vec.Pt())
         self.out.fillBranch(self.outputName+"_eta", vec.Eta())
-        self.out.fillBranch(self.outputName+"_deltaR",  deltaR(collection[0], collection[1]))
-        self.out.fillBranch(self.outputName+"_deltaPhi",  deltaPhi(collection[0].phi, collection[1].phi))
+        self.out.fillBranch(self.outputName+"_deltaR",  minDeltaR)
+        self.out.fillBranch(self.outputName+"_deltaPhi",  minDeltaPhi)
+        self.out.fillBranch(self.outputName+"_maxDeltaR",  maxDeltaR)
+        self.out.fillBranch(self.outputName+"_maxDeltaPhi",  maxDeltaPhi)
         self.out.fillBranch(self.outputName+"_charge", charge)
 
         return True

@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from utils import getCtauLabel, getAbscissasAndWeights
 
-class TaggerEvaluation(Module):
+class TaggerEvaluationProfiled(Module):
 
     def __init__(
         self,
@@ -22,16 +22,18 @@ class TaggerEvaluation(Module):
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
         evalValues = range(-1, 4),
-        integrateDisplacementOrder = 2,
+        profiledLabels = ['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'],
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
-        self.predictionLabels = predictionLabels
-        self.evalValues = evalValues
-        self.logctau = np.array(evalValues,dtype=np.float32)
+        
+        self.evalValues = list(evalValues)
+        self.nEvalValues = len(evalValues)
+        self.profiledLabels = profiledLabels
 
         self.modelPath = os.path.expandvars(modelPath)
+        
         feature_dict_module = imp.load_source(
             'feature_dict',
             os.path.expandvars(featureDictFile)
@@ -39,11 +41,20 @@ class TaggerEvaluation(Module):
         
         self.featureDict = feature_dict_module.featureDict
         self.predictionLabels = feature_dict_module.predictionLabels
+        for profiledLabel in self.profiledLabels:
+            if profiledLabel not in self.predictionLabels:
+                print "ERROR (TaggerEvaluationProfiled) - label for profiling '%s' not in predicted label list: %s"%(
+                    profiledLabel,
+                    str(self.predictionLabels)
+                )
+                sys.exit(1)
         
         self.taggerName = taggerName
 
+
     def beginJob(self):
         pass
+
 
     def endJob(self):
         pass
@@ -73,7 +84,7 @@ class TaggerEvaluation(Module):
                     lengthBranch
                 )
                 for branchName in featureCfg["branches"]:
-                    print branchName
+                    #print branchName
                     featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
             else:
@@ -83,7 +94,7 @@ class TaggerEvaluation(Module):
                     len(featureCfg["branches"])
                 )
                 for branchName in featureCfg["branches"]:
-                    print branchName
+                    #print branchName
                     featureGroup.addFeature(ROOT.TFEval.createAccessor(tree.arrayReader(branchName)))
                 tfEval.addFeatureGroup(featureGroup)
 
@@ -95,7 +106,7 @@ class TaggerEvaluation(Module):
 
         genFeatureGroup = ROOT.TFEval.ValueFeatureGroup("gen",1)
         self.nJets = 0
-            
+
         genFeatureGroup.addFeature(ROOT.TFEval.PyAccessor(lambda: self.nJets, lambda jetIndex, batchIndex: self.evalValues[batchIndex%len(self.evalValues)]))
         self.tfEvalParametric.addFeatureGroup(genFeatureGroup)
 
@@ -135,43 +146,78 @@ class TaggerEvaluation(Module):
         for index in jetOriginIndices:
             evaluationIndices.extend([index]*len(self.evalValues))
 
+
         if event._tree._ttreereaderversion > self._ttreereaderversion:
             self.setup(event._tree)
 
         self.nJets = len(jetglobal)
 
         if len(jetOriginIndices)==0:
+            for jetCollection in self.inputCollections:
+                jets = jetCollection(event)
+                for ijet, jet in enumerate(jets):
+                    taggerOutput = {}
+                    for ilabel, label in enumerate(self.predictionLabels):
+                        print("Jet output set to -1!")
+                        taggerOutput[label] = {
+                            'output': -1.0,
+                            'parameter': min(self.evalValues)
+                        }
+                    setattr(jet, self.taggerName, taggerOutput)
             return True
 
         evaluationIndices = np.array(evaluationIndices,np.int64)
+
         result = self.tfEvalParametric.evaluate(
             evaluationIndices.shape[0],
             evaluationIndices
         )
 
-        predictionsPerIndexAndValue = {}
+        outputPerIndex = {}
 
         for ijet,jetIndex in enumerate(jetOriginIndices):
-            predictionsPerIndexAndValue[jetIndex] = {}
+            
 
-            for ictau,ctau in enumerate(self.evalValues):
-                predictionIndex = ijet*len(self.evalValues)+ictau
-                predictionsPerIndexAndCtau[jetIndex][ctau] = result.get("prediction",predictionIndex)
+            maxSinglePrediction = -1
+            ivalueAtMaxPrediction = 0
+            
+            for ilabel,label in enumerate(self.predictionLabels):
+                if label not in self.profiledLabels:
+                    continue
+                
+                for ivalue, value in enumerate(self.evalValues):
+                    predictionIndex = ijet*len(self.evalValues)+ivalue
+                    predictions = result.get("prediction",predictionIndex)
+                    singlePrediction = predictions[ilabel]
+                    if singlePrediction>maxSinglePrediction:
+                        maxSinglePrediction = singlePrediction
+                        ivalueAtMaxPrediction = ivalue
+            
+            
+            maxPredictionIndex = ijet*len(self.evalValues)+ivalueAtMaxPrediction
+            maxPredictions = result.get("prediction",maxPredictionIndex)
+
+            outputPerIndex[jetIndex] = {}
+            outputPerIndex[jetIndex]['parameter'] = self.evalValues[ivalueAtMaxPrediction]
+            for ilabel,label in enumerate(self.predictionLabels):
+                if label not in self.profiledLabels:
+                    continue
+                outputPerIndex[jetIndex][label] = maxPredictions[ilabel]
+
+
+
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
             for ijet, jet in enumerate(jets):
-                taggerOutput = {}
-
-                for ivalue, value in enumerate(self.evalValues):
-                    taggerOutput[self.evalValues[ivalue]] = {}
-
-                    for iclass, classLabel in enumerate(self.predictionLabels):
-                        if hasattr(jet, "globalIdx"):
-                            taggerOutput[self.evalValues[ictau]][classLabel] = \
-                                    predictionsPerIndexAndCtau[jet.globalIdx][ctau][iclass]
-                        else:
-                            taggerOutput[self.evalValues[ictau]][classLabel] = -1.0
-
-                setattr(jet, self.taggerName, taggerOutput)
+                
+                if hasattr(jet, "globalIdx"):
+                    setattr(jet, self.taggerName, outputPerIndex[jet.globalIdx])
+                else:
+                    print("Jet output set to -1!")
+                    taggerOutput = {k:-1 for k in self.profiledLabels}
+                    taggerOutput['parameter'] = min(self.evalValues)
+                    setattr(jet, self.taggerName, taggerOutput)
+                
+                
         return True
