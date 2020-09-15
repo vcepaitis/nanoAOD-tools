@@ -9,5 +9,5 @@ leadingLeptons_pt
 leadingLeptons_eta
 subleadingLeptons_pt
 subleadingLeptons_eta
-selectedJets_nominal_pt
+selectedJets_nominal_ptLeptonSubtracted
 selectedJets_nominal_eta
