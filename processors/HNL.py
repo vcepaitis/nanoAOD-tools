@@ -521,7 +521,6 @@ else:
         )
     )
     
-    '''
     analyzerChain.append(
        EventCategorization(
             muonsTight=lambda event: event.tightMuon, 
@@ -530,11 +529,10 @@ else:
             electronsLoose=lambda event: event.looseElectrons,    
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
-            outputName="category_nominal",
+            outputName="category_gun_nominal",
             globalOptions=globalOptions
        )
     )
-    '''
     
     analyzerChain.extend([
         WbosonReconstruction(
