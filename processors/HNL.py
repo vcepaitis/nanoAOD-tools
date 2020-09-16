@@ -317,6 +317,8 @@ if isMC:
         )
     )
 
+    '''
+
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
@@ -333,6 +335,8 @@ if isMC:
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
+
+    '''
     
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -359,6 +363,7 @@ if isMC:
         ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown[:4]),
     ]:
 
+        '''
         analyzerChain.append(
            EventCategorization(
                 muonsTight=lambda event: event.tightMuon, 
@@ -372,6 +377,7 @@ if isMC:
                 globalOptions=globalOptions
            )
         )
+        '''
         analyzerChain.append(
            EventCategorization(
                 muonsTight=lambda event: event.tightMuon, 
@@ -487,6 +493,7 @@ else:
         )
     )
 
+    '''
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
@@ -499,6 +506,7 @@ else:
             evalValues = np.linspace(-3,2,5*5+1)
         )
     )
+    '''
     
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -513,6 +521,7 @@ else:
         )
     )
     
+    '''
     analyzerChain.append(
        EventCategorization(
             muonsTight=lambda event: event.tightMuon, 
@@ -525,6 +534,7 @@ else:
             globalOptions=globalOptions
        )
     )
+    '''
     
     analyzerChain.extend([
         WbosonReconstruction(
