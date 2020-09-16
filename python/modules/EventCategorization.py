@@ -264,8 +264,10 @@ class EventCategorization(Module):
         # resolved =
         # 1  // 1 llp_Q 
         # 2  // 2 LLP_Q 
-        # 3  // 1 LLP_Q + 1 LLP_MU 
-        # 4  // 1 LLP_Q + 1 LLP_QMU. 
+        # 3  // 1 LLP_Q + 1 LLP_MU
+        # 4  // 1 LLP_Q + 1 LLP_QMU
+        # 5 //  1 LLP_Q + 1 LLP_E  
+        # 6 //  1 LLP_Q + 1 LLP_QE
 
         resolved = 0
         merged = 0
@@ -282,7 +284,7 @@ class EventCategorization(Module):
         elif  nLLP == 2 : 
            sum = 2 
            for i in bestIndex : 
-               sum += 1 
+               sum += i 
            resolved = sum 
 
         # binning the categories. 
@@ -300,12 +302,12 @@ class EventCategorization(Module):
 
           xbin  = 3 
 
-        elif nleptons == 2 and nLLP == 2 and  resolved  == 3 : 
+        elif nleptons == 2 and nLLP == 2 and  (resolved  == 3 or resolved == 5) : 
 
           xbin  = 4 
 
 
-        elif nleptons == 2 and nLLP == 2  and  resolved  == 4  : 
+        elif nleptons == 2 and nLLP == 2  and  (resolved  == 4 or resolved == 6) : 
 
           xbin  = 5 
 

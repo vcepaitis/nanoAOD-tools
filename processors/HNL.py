@@ -317,26 +317,6 @@ if isMC:
         )
     )
 
-    '''
-
-    analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
-                lambda event: event.selectedJets_jesTotalUp[:4],
-                lambda event: event.selectedJets_jesTotalDown[:4],
-                lambda event: event.selectedJets_jerUp[:4],
-                lambda event: event.selectedJets_jerDown[:4]
-            ],
-            taggerName="llpdnnx",
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1),
-        )
-    )
-
-    '''
     
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -363,21 +343,6 @@ if isMC:
         ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown[:4]),
     ]:
 
-        '''
-        analyzerChain.append(
-           EventCategorization(
-                muonsTight=lambda event: event.tightMuon, 
-                electronsTight=lambda event: event.tightElectron, 
-                muonsLoose=lambda event: event.looseMuons, 
-                electronsLoose=lambda event: event.looseElectrons,  
-                looseLeptons=lambda event: event.subleadingLeptons,
-                jetsCollection=jetCollection,
-        	taggerName="llpdnnx",
-                outputName="category_"+systName,
-                globalOptions=globalOptions
-           )
-        )
-        '''
         analyzerChain.append(
            EventCategorization(
                 muonsTight=lambda event: event.tightMuon, 
@@ -493,20 +458,6 @@ else:
         )
     )
 
-    '''
-    analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4]
-            ],
-            taggerName="llpdnnx",
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1)
-        )
-    )
-    '''
     
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -521,8 +472,9 @@ else:
         )
     )
     
+    
     analyzerChain.append(
-       EventCategorization(
+	EventCategorization(
             muonsTight=lambda event: event.tightMuon, 
             electronsTight=lambda event: event.tightElectron, 
             muonsLoose=lambda event: event.looseMuons, 
@@ -532,9 +484,9 @@ else:
             taggerName="llpdnnx_gun",
             outputName="category_gun_nominal",
             globalOptions=globalOptions
+       
        )
     )
-    
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='leadingLeptons',
