@@ -316,6 +316,8 @@ if isMC:
             getattr(event, "nselectedJets_jerDown") > 0
         )
     )
+
+    
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelGunPath[year],
@@ -372,7 +374,6 @@ if isMC:
         ("unclEnDown", lambda event: event.selectedJets_nominal,
             lambda event: event.met_unclEnDown),
     ]:
-        '''
         analyzerChain.extend([
             WbosonReconstruction(
                 leptonCollectionName='leadingLeptons',
@@ -382,7 +383,6 @@ if isMC:
             )
         ])
 
-        '''
         analyzerChain.append(
             EventObservables(
                 jetCollection=jetCollection,
@@ -394,7 +394,6 @@ if isMC:
         )
 
         
-        '''
         analyzerChain.append(
             XGBEvaluation(
                 systName=systName,
@@ -402,7 +401,6 @@ if isMC:
             )
         )
         
-        '''
 
 else:
     analyzerChain.append(
@@ -507,14 +505,12 @@ else:
         )
     )
 
-    '''
     analyzerChain.append(
         XGBEvaluation(
             systName="nominal",
             jetCollection=lambda event: event.selectedJets_nominal
         )
     )
-    '''
 
 if not testMode:
      analyzerChain.append(

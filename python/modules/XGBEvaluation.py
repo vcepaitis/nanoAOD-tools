@@ -55,20 +55,18 @@ class XGBEvaluation(Module):
 
         dict_list = {}
         dict_list["EventObservables_nominal_met"] = getattr(event, "EventObservables_"+self.systName+"_met")
-        dict_list["EventObservables_nominal_met_phi"] = getattr(event, "EventObservables_"+self.systName+"_met_phi")
         dict_list["EventObservables_nominal_ht"] = getattr(event, "EventObservables_"+self.systName+"_ht")
-        dict_list["EventObservables_nominal_mT_met_lep"] = getattr(event, "EventObservables_"+self.systName+"_mT_met_lep")
-        dict_list["selectedJets_nominal_pt"] = jets[0].pt
-        dict_list["selectedJets_nominal_eta"] = jets[0].eta
-        dict_list["nselectedJets_nominal"] = len(jets)
         dict_list["dilepton_mass"] = event.dilepton_mass
         dict_list["dilepton_deltaPhi"] = event.dilepton_deltaPhi
         dict_list["dilepton_deltaR"] = event.dilepton_deltaR
         dict_list["leadingLeptons_pt"] = leadingLeptons[0].pt
         dict_list["leadingLeptons_eta"] = leadingLeptons[0].eta
-        dict_list["leadingLeptons_phi"] = leadingLeptons[0].phi
+        dict_list["leadingLeptons_nominal_mtw"] = getattr(event, "leadingLeptons_"+self.systName+"_mtw")
+        dict_list["leadingLeptons_nominal_deltaPhi"] = getattr(event, "leadingLeptons_"+self.systName+"_deltaPhi")
         dict_list["subleadingLeptons_pt"] = subleadingLeptons[0].pt
         dict_list["subleadingLeptons_eta"] = subleadingLeptons[0].eta
+        dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].ptLeptonSubtracted
+        dict_list["selectedJets_nominal_eta"] = jets[0].eta
 
 
         '''
