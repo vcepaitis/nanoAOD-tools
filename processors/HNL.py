@@ -474,17 +474,18 @@ else:
     
     
     analyzerChain.append(
-	 EventCategorization(
-                muonsTight=lambda event: event.tightMuon, 
-                electronsTight=lambda event: event.tightElectron, 
-                muonsLoose=lambda event: event.looseMuons, 
-                electronsLoose=lambda event: event.looseElectrons, 	
-                looseLeptons=lambda event: event.subleadingLeptons,
-                jetsCollection=jetCollection,
-                taggerName="llpdnnx_gun",
-                outputName="category_gun_"+systName,
-                globalOptions=globalOptions
-           )
+	EventCategorization(
+            muonsTight=lambda event: event.tightMuon, 
+            electronsTight=lambda event: event.tightElectron, 
+            muonsLoose=lambda event: event.looseMuons, 
+            electronsLoose=lambda event: event.looseElectrons,    
+            looseLeptons=lambda event: event.subleadingLeptons,
+            jetsCollection=lambda event: event.selectedJets_nominal[:4],
+            taggerName="llpdnnx_gun",
+            outputName="category_gun_nominal",
+            globalOptions=globalOptions
+       
+       )
     )
     analyzerChain.extend([
         WbosonReconstruction(
