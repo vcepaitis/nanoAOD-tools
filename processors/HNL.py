@@ -529,6 +529,7 @@ else:
             electronsLoose=lambda event: event.looseElectrons,    
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
+            taggerName="llpdnnx_gun",
             outputName="category_gun_nominal",
             globalOptions=globalOptions
        )
