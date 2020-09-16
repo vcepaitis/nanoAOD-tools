@@ -474,7 +474,7 @@ else:
     
     
     analyzerChain.append(
-           EventCategorization(
+	 EventCategorization(
                 muonsTight=lambda event: event.tightMuon, 
                 electronsTight=lambda event: event.tightElectron, 
                 muonsLoose=lambda event: event.looseMuons, 
