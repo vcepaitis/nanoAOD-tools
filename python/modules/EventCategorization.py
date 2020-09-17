@@ -339,15 +339,15 @@ class EventCategorization(Module):
 
           xbin  = 3 
 
-       elif nleptons == 2 and nLLP == 2 and   (resolved  == 3 or resolved == 4) :
+        elif nleptons == 2 and nLLP == 2 and   (resolved  == 3 or resolved == 4) :
 
           xbin = 4
  
-       elif nleptons == 1 and nLLP == 1 and  resolved  == 1 : 
+        elif nleptons == 1 and nLLP == 1 and  resolved  == 1 : 
 
           xbin  = 5
 
-       elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
+        elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
 
           xbin  = 6
  
