@@ -237,14 +237,15 @@ class EventCategorization(Module):
 	   
                                
 	# sum of all llp proba for the best LLP jets.
+        '''
         outputSum = []
-
+        
         for i , jet in enumerate(bestJet) : 
            output = 0.
            for label in self.jetLabels : 
 		output += getattr(jet, self.taggerName)[label]
 	   outputSum.append(output)
-                  
+        '''       
 
         # higher level categorisation 
         # number of leptons per event. 
@@ -255,9 +256,15 @@ class EventCategorization(Module):
            nleptons = 2 
 
         nLLP = 0 
+        '''
         for o in outputSum : 
             if o > 0.5 :
              nLLP +=1 
+        '''
+        if len (bestJet )== 1 : nLLP = 1 
+        else : nLLP = 2 
+
+         
 
         # resolved value will depend on the  nb of LLP and their labels 
 
@@ -325,7 +332,7 @@ class EventCategorization(Module):
            deltaRllpJet = -1. 
         else :  
            deltaRllpJet = deltaR(looseLeptons[0], bestJet[0])  
-        
+        self.out.fillBranch(self.outputName+"_taggerBestJet_deltaR", deltaRllpJet)   
         self.out.fillBranch(self.outputName+"_muonmuon", muonmuon) 
         self.out.fillBranch(self.outputName+"_electronelectron", electronelectron)
         self.out.fillBranch(self.outputName+"_muonelectron", muonelectron)
@@ -341,11 +348,11 @@ class EventCategorization(Module):
         elif math.fabs(looseLeptons[0].dxyErr) > 1e-6 and len(looseLeptons) > 0 :
              self.out.fillBranch(self.outputName+"_lepton_dxy_sig", math.fabs(looseLeptons[0].dxy)/math.fabs(looseLeptons[0].dxyErr))
 
-        self.out.fillBranch("n"+self.outputName, len(bestJet))  
+        self.out.fillBranch("n"+self.outputName, nLLP)  
         self.out.fillBranch(self.outputName+"_taggerBestOutputValue", bestValue)
         self.out.fillBranch(self.outputName+"_taggerBestOutputParameter",bestParam)
         self.out.fillBranch(self.outputName+"_taggerBestOutputLabel",bestIndex)
-        self.out.fillBranch(self.outputName+"_outputSum",outputSum)
+        #self.out.fillBranch(self.outputName+"_outputSum",outputSum)
         if self.globalOptions["isSignal"]:
         	self.out.fillBranch(self.outputName+"_taggerBestOutputTruth",indexFlag)
         return True 
