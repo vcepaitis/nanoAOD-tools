@@ -553,7 +553,7 @@ p = PostProcessor(
     [args.inputFiles],
     cut="(nJet>0)&&((nElectron+nMuon)>0)",
     modules=analyzerChain,
-    maxEvents=30000,
+    maxEvents=-1,
     friend=True
 )
 
