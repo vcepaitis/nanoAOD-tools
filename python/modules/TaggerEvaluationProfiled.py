@@ -14,7 +14,6 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from utils import getCtauLabel, getAbscissasAndWeights
 
 class TaggerEvaluationProfiled(Module):
-
     def __init__(
         self,
         modelPath,
@@ -22,7 +21,11 @@ class TaggerEvaluationProfiled(Module):
         inputCollections = [lambda event: Collection(event, "Jet")],
         taggerName = "llpdnnx",
         evalValues = range(-1, 4),
-        profiledLabels = ['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'],
+        profiledLabelDict = {
+                            'LLP_Q': ['LLP_Q', 'LLP_TAU', 'LLP_QTAU'],
+                            'LLP_QE': ['LLP_E', 'LLP_QE'],
+                            'LLP_QMU': ['LLP_MU', 'LLP_QMU']
+                            },
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
@@ -30,7 +33,8 @@ class TaggerEvaluationProfiled(Module):
         
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
-        self.profiledLabels = profiledLabels
+        self.profiledLabelDict = profiledLabelDict
+        self.profiledLabels = []
 
         self.modelPath = os.path.expandvars(modelPath)
         
@@ -41,13 +45,15 @@ class TaggerEvaluationProfiled(Module):
         
         self.featureDict = feature_dict_module.featureDict
         self.predictionLabels = feature_dict_module.predictionLabels
-        for profiledLabel in self.profiledLabels:
-            if profiledLabel not in self.predictionLabels:
-                print "ERROR (TaggerEvaluationProfiled) - label for profiling '%s' not in predicted label list: %s"%(
-                    profiledLabel,
-                    str(self.predictionLabels)
-                )
-                sys.exit(1)
+        for _, profiledLabels in self.profiledLabelDict.iteritems():
+            for profiledSubLabel in profiledLabels:
+                self.profiledLabels.append(profiledSubLabel)
+                if profiledSubLabel not in self.predictionLabels:
+                    print "ERROR (TaggerEvaluationProfiled) - label for profiling '%s' not in predicted label list: %s"%(
+                        profiledSubLabel,
+                        str(self.predictionLabels)
+                    )
+                    sys.exit(1)
         
         self.taggerName = taggerName
 
@@ -205,12 +211,23 @@ class TaggerEvaluationProfiled(Module):
                 outputPerIndex[jetIndex][label] = maxPredictions[ilabel]
 
 
+        # group some class outputs together
+        # to be removed after retraining
+        outputPerIndexGrouped = {}
+
+        for index, output in outputPerIndex.iteritems():
+            outputGrouped = {}
+            for label, sublabels in self.profiledLabelDict.iteritems():
+                outputGrouped[label] = 0.
+                for sublabel in sublabels:
+                    outputGrouped[label] += output[sublabel]
+            outputGrouped['parameter'] = output['parameter']
+            outputPerIndexGrouped[index] = outputGrouped
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
 
             for ijet, jet in enumerate(jets):
-                
                 if hasattr(jet, "globalIdx"):
                     setattr(jet, self.taggerName, outputPerIndex[jet.globalIdx])
                 else:
@@ -218,6 +235,5 @@ class TaggerEvaluationProfiled(Module):
                     taggerOutput = {k:-1 for k in self.profiledLabels}
                     taggerOutput['parameter'] = min(self.evalValues)
                     setattr(jet, self.taggerName, taggerOutput)
-                
                 
         return True
