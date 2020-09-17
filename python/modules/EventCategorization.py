@@ -273,7 +273,12 @@ class EventCategorization(Module):
         if len (bestJet )== 1 : nLLP = 1 
         else : nLLP = 2 
 
-         
+        if len(bestJet) == 1 : 
+           bestValue.append(-10.)
+           bestIndex.append(-10)
+           bestParam.append(-10)
+           if self.globalOptions["isSignal"]:
+                 indexFlag.append(-10)                 
 
         # resolved value will depend on the  nb of LLP and their labels 
 
@@ -393,7 +398,7 @@ class EventCategorization(Module):
         elif math.fabs(looseLeptons[0].dxyErr) > 1e-6 and len(looseLeptons) > 0 :
              self.out.fillBranch(self.outputName+"_lepton_dxy_sig", math.fabs(looseLeptons[0].dxy)/math.fabs(looseLeptons[0].dxyErr))
 
-        self.out.fillBranch("n"+self.outputName, nLLP)  
+        self.out.fillBranch("n"+self.outputName, 2)  
         self.out.fillBranch(self.outputName+"_taggerBestOutputValue", bestValue)
         self.out.fillBranch(self.outputName+"_taggerBestOutputParameter",bestParam)
         self.out.fillBranch(self.outputName+"_taggerBestOutputLabel",bestIndex)
