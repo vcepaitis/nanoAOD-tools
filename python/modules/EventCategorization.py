@@ -21,7 +21,8 @@ class EventCategorization(Module):
         looseLeptons = None , 
         jetsCollection = None ,
         taggerName="llpdnnx",
-        jetLabels=['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'], 
+        #jetLabels=['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'], 
+        jetLabels=['LLP_Q','LLP_QE','LLP_QMU'], 
         flags={
             'isPrompt_MU': ['isPrompt_MU'],
             'isPrompt_E': ['isPrompt_E'],
@@ -97,7 +98,7 @@ class EventCategorization(Module):
         muonjets = 0 
         electronjets = 0
         deltaRllpJet = -1.
-
+        '''
         dict = {'LLP_Q': 0,
                 'LLP_MU': 1,
                 'LLP_QMU': 2,
@@ -106,6 +107,14 @@ class EventCategorization(Module):
                 'LLP_TAU': 5,
                 'LLP_QTAU': 6,
                }
+        '''
+
+        dict = {
+                'LLP_Q'  : 0 , 
+                'LLP_QMU': 1 , 
+                'LLP_QE' : 2 ,
+               }
+             
         dictTruth = {
                       'isLLP_Q': 0,
                       'isLLP_MU': 1,
@@ -276,10 +285,20 @@ class EventCategorization(Module):
         # 5 //  1 LLP_Q + 1 LLP_E  
         # 6 //  1 LLP_Q + 1 LLP_QE
 
+        ##### new resolved cases : 
+        # resolved = 
+        # 1 // 1 llp_Q 
+        # 2 // 2 llp_Q
+        # 3 // 1 llp_Q + LLP_QMU 
+        # 4 // 1 llp_Q + LLP_QE
+
+
         resolved = 0
         merged = 0
-        bkgd = 0 
+        #bkgd = 0
 
+         
+        '''
         if nLLP == 1 : 
           if bestIndex[0] == 0 : 
               resolved = 1 
@@ -293,6 +312,17 @@ class EventCategorization(Module):
            for i in bestIndex : 
                sum += i 
            resolved = sum 
+        '''
+
+        if nLLP == 1 : 
+          if bestIndex[0] == 0 : resolved = 1 
+          elif bestIndex[0] == 1 or bestIndex[0] == 2 : merged = 1
+
+        elif  nLLP == 2 :
+          sum_ = 2 
+          for i in bestIndex : 
+            sum_ += i 
+          resolved = sum_
 
         # binning the categories. 
         xbin = -1 
@@ -309,6 +339,19 @@ class EventCategorization(Module):
 
           xbin  = 3 
 
+        elif nleptons == 2 and nLLP == 2 and   (resolved  == 3 or resolved == 4) :
+
+          xbin = 4
+ 
+        elif nleptons == 1 and nLLP == 1 and  resolved  == 1 : 
+
+          xbin  = 5
+
+        elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
+
+          xbin  = 6
+ 
+        '''
         elif nleptons == 2 and nLLP == 2 and  (resolved  == 3 or resolved == 5) : 
 
           xbin  = 4 
@@ -325,6 +368,8 @@ class EventCategorization(Module):
         elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
 
           xbin  = 7 
+        '''
+
     
      
 	# you need now the deltaR of the second muon with the llp jet.  0 and >1 loose lepton categories
