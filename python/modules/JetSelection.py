@@ -76,6 +76,7 @@ class JetSelection(Module):
 
         jets = self.inputCollection(event)
 
+
         selectedJets = []
         unselectedJets = []
 
@@ -101,7 +102,7 @@ class JetSelection(Module):
                 
             #note: tagger only trained for these jets
             if self.jetMinNConstituents > 0 and jet.nConstituents < self.jetMinNConstituents:
-                unselectedJets.append(jet)
+                unselectedJets.append(jet.nConstituents)
                 continue
 
             minDeltaRSubtraction = 999.
@@ -130,7 +131,7 @@ class JetSelection(Module):
                     unselectedJets.append(jet)
                     continue
 
-                selectedJets.append(jet)
+            selectedJets.append(jet)
 
             if self.flagDA:
                 flagsDA[jet._index] = 1.

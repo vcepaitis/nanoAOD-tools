@@ -320,7 +320,7 @@ if isMC:
     
     analyzerChain.append(
         TaggerEvaluationProfiled(
-            modelPath=modelGunPath[year],
+            modelPath=modelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=[
                 lambda event: event.selectedJets_nominal[:4],
@@ -329,7 +329,7 @@ if isMC:
                 lambda event: event.selectedJets_jerUp[:4],
                 lambda event: event.selectedJets_jerDown[:4]
             ],
-            taggerName="llpdnnx_gun",
+            taggerName="llpdnnx",
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1),
         )
@@ -351,8 +351,8 @@ if isMC:
                 electronsLoose=lambda event: event.looseElectrons, 	
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
-                taggerName="llpdnnx_gun",
-                outputName="category_gun_"+systName,
+                taggerName="llpdnnx",
+                outputName="category_"+systName,
                 globalOptions=globalOptions
            )
         )
@@ -461,12 +461,12 @@ else:
     
     analyzerChain.append(
         TaggerEvaluationProfiled(
-            modelPath=modelGunPath[year],
+            modelPath=modelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=[
                 lambda event: event.selectedJets_nominal[:4]
             ],
-            taggerName="llpdnnx_gun",
+            taggerName="llpdnnx",
             globalOptions=globalOptions,
             evalValues = np.linspace(-3,2,5*5+1)
         )
@@ -481,8 +481,8 @@ else:
             electronsLoose=lambda event: event.looseElectrons,    
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
-            taggerName="llpdnnx_gun",
-            outputName="category_gun_nominal",
+            taggerName="llpdnnx",
+            outputName="category_nominal",
             globalOptions=globalOptions
        
        )
@@ -553,7 +553,7 @@ p = PostProcessor(
     [args.inputFiles],
     cut="(nJet>0)&&((nElectron+nMuon)>0)",
     modules=analyzerChain,
-    maxEvents=-1,
+    maxEvents=30000,
     friend=True
 )
 
