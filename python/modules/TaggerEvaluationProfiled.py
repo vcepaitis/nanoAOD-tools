@@ -229,7 +229,7 @@ class TaggerEvaluationProfiled(Module):
 
             for ijet, jet in enumerate(jets):
                 if hasattr(jet, "globalIdx"):
-                    setattr(jet, self.taggerName, outputPerIndex[jet.globalIdx])
+                    setattr(jet, self.taggerName, outputPerIndexGrouped[jet.globalIdx])
                 else:
                     print("Jet output set to -1!")
                     taggerOutput = {k:-1 for k in self.profiledLabels}
