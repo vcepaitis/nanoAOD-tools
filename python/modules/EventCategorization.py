@@ -12,11 +12,7 @@ from utils import deltaR, getCtauLabel
 class EventCategorization(Module):
     def __init__(
         self,
-        globalOptions={"isData":False, "isSignal":False}, 
-        muonsTight = None , 
-        electronsTight = None , 
-        muonsLoose = None , 
-        electronsLoose = None , 
+        globalOptions={"isData":False, "isSignal":False},  
         outputName=None ,  
         looseLeptons = None , 
         jetsCollection = None ,
@@ -45,10 +41,6 @@ class EventCategorization(Module):
     ):
         self.globalOptions=globalOptions
         self.outputName=outputName
-        self.muonsTight = muonsTight  
-        self.electronsTight = electronsTight
-        self.muonsLoose =  muonsLoose
-        self.electronsLoose =  electronsLoose
         self.looseLeptons = looseLeptons
         self.jetsCollection = jetsCollection
         self.taggerName = taggerName 
@@ -70,12 +62,6 @@ class EventCategorization(Module):
         self.out.branch(self.outputName+"_taggerBestOutputLabel", "F", lenVar="n"+self.outputName )      
         self.out.branch(self.outputName+"_taggerBestOutputParameter", "F" , lenVar="n"+self.outputName)     
         self.out.branch(self.outputName+"_outputSum", "F", lenVar="n"+self.outputName) 
-        self.out.branch(self.outputName+"_muonmuon", "I") 
-        self.out.branch(self.outputName+"_electronelectron", "I")
-        self.out.branch(self.outputName+"_muonelectron", "I")
-        self.out.branch(self.outputName+"_electronmuon", "I")
-        self.out.branch(self.outputName+"_muonjets", "I")
-        self.out.branch(self.outputName+"_electronjets", "I")
         self.out.branch(self.outputName+"_allCategories", "I")
         if self.globalOptions["isSignal"]:
             self.out.branch(self.outputName+"_taggerBestOutputTruth","F",lenVar="n"+self.outputName)    
@@ -86,17 +72,7 @@ class EventCategorization(Module):
     def analyze(self, event):
         ## you need to add the variables you want to store and to fill the branches afterword.
         jets = self.jetsCollection(event) 
-        tightMuon = self.muonsTight(event) 
-        tightElectron = self.electronsTight(event)
-        looseMuons = self.muonsLoose(event)
-        looseElectrons = self.electronsLoose(event)
         looseLeptons = self.looseLeptons(event)
-        muonmuon = 0 
-        electronelectron = 0
-        muonelectron = 0 
-        electronmuon = 0
-        muonjets = 0 
-        electronjets = 0
         deltaRllpJet = -1.
         '''
         dict = {'LLP_Q': 0,
@@ -134,40 +110,6 @@ class EventCategorization(Module):
                       'isUndefined': 15,
                       'isLLP_B' : 16 ,  
                     }
-        
-        ## flavour categorisation :
-        if len(tightMuon) == 1 and len(looseMuons) == 1:
-            muonmuon = 1
-             
-        elif len(tightElectron) == 1 and len(looseElectrons) == 1:
-            electronelectron = 1 
-
-        elif len(tightMuon) == 1 and len(looseElectrons) == 1:
-            muonelectron = 1 
-
-        elif len(tightElectron) and len(looseMuons) == 1:
-            electronmuon = 1
-
-        elif len(tightMuon) == 1 and len(tightElectron) == 1:
-            if tightMuon[0].pt > tightElectron[0].pt:
-                muonelectron = 1
-            else:
-                electronmuon = 1
-
-        elif len(tightMuon) == 1 and len(tightElectron) == 0 and len(looseMuons) == 0 and len(looseElectrons) == 0:
-            muonjets = 1 
-        elif len(tightMuon) == 0 and len(tightElectron) == 1 and len(looseMuons) == 0 and len(looseElectrons) == 0:
-            electronjets = 1
-
-
-        if muonmuon or muonelectron or muonjets:
-            if not event.IsoMuTrigger_flag:
-                return False
-        elif electronelectron or electronmuon or electronjets:
-            if not event.IsoElectronTrigger_flag:
-                return False
-
-
 
         # only for MC: truth labels
         if self.globalOptions["isSignal"]:
@@ -180,16 +122,16 @@ class EventCategorization(Module):
 
         # Take leading jet by default and first ordered label
          
-	bestJet = []
+        bestJet = []
         bestIndex = []
-	bestValue = []
-	bestParam = [] 
-	bestDict = []
-	bestJet.append(jets[0])
+      	bestValue = []
+      	bestParam = [] 
+      	bestDict = []
+      	bestJet.append(jets[0])
         bestIndex.append( dict[self.jetLabels[0]])
-	bestValue.append(getattr(bestJet[0], self.taggerName)[self.jetLabels[0]] )
-	bestParam.append(getattr(bestJet[0], self.taggerName)['parameter'])
-	bestDict.append(getattr(bestJet[0], self.taggerName))
+      	bestValue.append(getattr(bestJet[0], self.taggerName)[self.jetLabels[0]] )
+      	bestParam.append(getattr(bestJet[0], self.taggerName)['parameter'])
+      	bestDict.append(getattr(bestJet[0], self.taggerName))
     	
         for ijet, jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
@@ -382,14 +324,7 @@ class EventCategorization(Module):
            deltaRllpJet = -1. 
         else :  
            deltaRllpJet = deltaR(looseLeptons[0], bestJet[0])  
-        self.out.fillBranch(self.outputName+"_taggerBestJet_deltaR", deltaRllpJet)   
-        self.out.fillBranch(self.outputName+"_muonmuon", muonmuon) 
-        self.out.fillBranch(self.outputName+"_electronelectron", electronelectron)
-        self.out.fillBranch(self.outputName+"_muonelectron", muonelectron)
-        self.out.fillBranch(self.outputName+"_electronmuon", electronmuon)
-        self.out.fillBranch(self.outputName+"_muonjets", muonjets)
-        self.out.fillBranch(self.outputName+"_electronjets", electronjets)
-        self.out.fillBranch(self.outputName+"_electronjets", electronjets)
+        self.out.fillBranch(self.outputName+"_taggerBestJet_deltaR", deltaRllpJet)
         self.out.fillBranch(self.outputName+"_allCategories" , xbin)
  
         if len(looseLeptons) == 0 or math.fabs(looseLeptons[0].dxyErr) < 1e-6 :
