@@ -23,6 +23,7 @@ parser.add_argument('--isSignal', dest='isSignal',
 parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
+parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
@@ -31,6 +32,7 @@ testMode = args.testMode
 print "isData:",args.isData
 print "isSignal:",args.isSignal
 print "inputs:",len(args.inputFiles)
+print "Running tagger", not args.noTagger
 
 for inputFile in args.inputFiles:
     if "-2016" in inputFile or "Run2016" in inputFile:
@@ -344,11 +346,7 @@ if isMC:
     ]:
 
         analyzerChain.append(
-           EventCategorization(
-                muonsTight=lambda event: event.tightMuon, 
-                electronsTight=lambda event: event.tightElectron, 
-                muonsLoose=lambda event: event.looseMuons, 
-                electronsLoose=lambda event: event.looseElectrons, 	
+           EventCategorization(	
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
                 taggerName="llpdnnx",
@@ -475,10 +473,6 @@ else:
     
     analyzerChain.append(
 	EventCategorization(
-            muonsTight=lambda event: event.tightMuon, 
-            electronsTight=lambda event: event.tightElectron, 
-            muonsLoose=lambda event: event.looseMuons, 
-            electronsLoose=lambda event: event.looseElectrons,    
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
             taggerName="llpdnnx",
@@ -513,13 +507,12 @@ else:
         )
     )
 
-if not testMode:
-     analyzerChain.append(
-         PileupWeight(
-             outputName="puweight",
-             globalOptions=globalOptions
-         )
-     )
+    analyzerChain.append(
+        PileupWeight(
+            outputName="puweight",
+            globalOptions=globalOptions
+        )
+    )
 
 storeVariables = [
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,
@@ -546,7 +539,19 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
+taggerTypes = ['EventCategorization', 'TaggerEvaluationProfiled']
 
+if testMode:
+    for ianalyzer, analyzer in enumerate(analyzerChain):
+        if type(analyzer).__name__ == "PileupWeight":
+            analyzerChain.pop(ianalyzer)   
+
+if args.noTagger:
+    analyzerChainNew = analyzerChain
+    for ianalyzer, analyzer in enumerate(analyzerChain):
+        if type(analyzer).__name__ not in taggerTypes:
+            analyzerChainNew.append(analyzer)
+    analyzerChain = analyzerChainNew
 
 p = PostProcessor(
     args.output[0],
