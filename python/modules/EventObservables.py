@@ -18,13 +18,11 @@ class EventObservables(Module):
         self,
         jetCollection=lambda event: Collection(event, "Jet"),
         metInput=lambda event: Object(event, "MET"),
-        leptonCollection=lambda event: Collection(event, "Muon"),
         outputName="EventObservables",
         globalOptions={"isData": False}
     ):
         self.jetCollection = jetCollection
         self.metInput = metInput
-        self.leptonCollection = leptonCollection
         self.outputName = outputName
         self.globalOptions = globalOptions
 
@@ -40,16 +38,12 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_met", "F")
         self.out.branch(self.outputName+"_met_phi", "F")
         self.out.branch(self.outputName+"_ht", "F")
+        self.out.branch(self.outputName+"_hmass", "F")
         self.out.branch(self.outputName+"_mht", "F")
         self.out.branch(self.outputName+"_mht_phi", "F")
-        self.out.branch(self.outputName+"_minPhi", "F")
+        self.out.branch(self.outputName+"_mht_met_dphi", "F")
+        self.out.branch(self.outputName+"_minPhiStar", "F")
 
-        if self.leptonCollection is not None:
-            self.out.branch(self.outputName+"_mT_met_lep", "F")
-            self.out.branch(self.outputName+"_met_NoLep_pt", "F")
-            self.out.branch(self.outputName+"_met_NoLep_phi", "F")
-            self.out.branch(self.outputName+"_mht_NoLep", "F")
-            self.out.branch(self.outputName+"_mht_NoLep_phi", "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -68,39 +62,28 @@ class EventObservables(Module):
         for jet in jets:
             vectorSum += jet.p4()
             scalarPtSum += jet.pt
+            
+        mht_met_dphi = math.fabs(deltaPhi(vectorSum.Phi(),met.phi))
 
-        # minPhi
-        minPhi = math.pi
+        # minPhiStar
+        minPhiStar = math.pi
         for jet in jets:
             negSum = -(vectorSum-jet.p4())
-            minPhi = min(minPhi, math.fabs(deltaPhi(negSum.Phi(), jet.phi)))
+            minPhiStar = min(minPhiStar, math.fabs(deltaPhi(negSum.Phi(), jet.phi)))
 
-        self.out.fillBranch(self.outputName+"_minPhi", minPhi)
+        self.out.fillBranch(self.outputName+"_minPhiStar", minPhiStar)
         self.out.fillBranch(self.outputName+"_ht", scalarPtSum)
+        self.out.fillBranch(self.outputName+"_hmass", vectorSum.M())
         self.out.fillBranch(self.outputName+"_mht", vectorSum.Pt())
         self.out.fillBranch(self.outputName+"_mht_phi", vectorSum.Phi())
-        setattr(event, self.outputName+"_minPhi", minPhi)
+        self.out.fillBranch(self.outputName+"_mht_met_dphi", mht_met_dphi)
+        
+        setattr(event, self.outputName+"_minPhiStar", minPhiStar)
         setattr(event, self.outputName+"_ht", scalarPtSum)
+        setattr(event, self.outputName+"_hmass", vectorSum.M())
         setattr(event, self.outputName+"_mht", vectorSum.Pt())
         setattr(event, self.outputName+"_mht_phi", vectorSum.Phi())
+        setattr(event, self.outputName+"_mht_met_dphi", mht_met_dphi)
 
-        if self.leptonCollection is not None:
-            met_px = met.pt*math.sin(met.phi)
-            met_py = met.pt*math.cos(met.phi)
-            lepton = self.leptonCollection(event)
-            met_px_lc = met_px + lepton.p4().Px()
-            met_py_lc = met_py + lepton.p4().Py()
-            met_lc = math.sqrt(met_px_lc**2 +  met_py_lc**2)
-            met_l_mT = math.sqrt(2.*lepton.pt *
-                                 met.pt*(1. - math.cos(lepton.phi - met.phi)))
-
-            self.out.fillBranch(self.outputName+"_met_NoLep_pt", met_lc)
-            self.out.fillBranch(self.outputName+"_mT_met_lep", met_l_mT)
-            self.out.fillBranch(self.outputName+"_mht_NoLep",
-                                (vectorSum + lepton.p4()).Pt())
-            setattr(event, self.outputName+"_met_NoLep_pt", met_lc)
-            setattr(event, self.outputName+"_mT_met_lep", met_l_mT)
-            setattr(event, self.outputName+"_mht_NoLep",
-                    (vectorSum + lepton.p4()).Pt())
 
         return True

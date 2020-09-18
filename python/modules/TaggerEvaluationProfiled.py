@@ -27,18 +27,18 @@ class TaggerEvaluationProfiled(Module):
     ):
         self.globalOptions = globalOptions
         self.inputCollections = inputCollections
-        
+
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
         self.profiledLabels = profiledLabels
 
         self.modelPath = os.path.expandvars(modelPath)
-        
+
         feature_dict_module = imp.load_source(
             'feature_dict',
             os.path.expandvars(featureDictFile)
         )
-        
+
         self.featureDict = feature_dict_module.featureDict
         self.predictionLabels = feature_dict_module.predictionLabels
         for profiledLabel in self.profiledLabels:
@@ -48,7 +48,7 @@ class TaggerEvaluationProfiled(Module):
                     str(self.predictionLabels)
                 )
                 sys.exit(1)
-        
+
         self.taggerName = taggerName
 
 
@@ -176,15 +176,15 @@ class TaggerEvaluationProfiled(Module):
         outputPerIndex = {}
 
         for ijet,jetIndex in enumerate(jetOriginIndices):
-            
+
 
             maxSinglePrediction = -1
             ivalueAtMaxPrediction = 0
-            
+
             for ilabel,label in enumerate(self.predictionLabels):
                 if label not in self.profiledLabels:
                     continue
-                
+
                 for ivalue, value in enumerate(self.evalValues):
                     predictionIndex = ijet*len(self.evalValues)+ivalue
                     predictions = result.get("prediction",predictionIndex)
@@ -192,8 +192,8 @@ class TaggerEvaluationProfiled(Module):
                     if singlePrediction>maxSinglePrediction:
                         maxSinglePrediction = singlePrediction
                         ivalueAtMaxPrediction = ivalue
-            
-            
+
+
             maxPredictionIndex = ijet*len(self.evalValues)+ivalueAtMaxPrediction
             maxPredictions = result.get("prediction",maxPredictionIndex)
 
@@ -210,14 +210,14 @@ class TaggerEvaluationProfiled(Module):
             jets = jetCollection(event)
 
             for ijet, jet in enumerate(jets):
-                
+
                 if hasattr(jet, "globalIdx"):
                     setattr(jet, self.taggerName, outputPerIndex[jet.globalIdx])
                 else:
                     print("Jet output set to -1!")
                     taggerOutput = {k:-1 for k in self.profiledLabels}
-                    taggerOutput['parameter'] = min(self.evalValues)
+                    taggerOutput['parameter'] = -10
                     setattr(jet, self.taggerName, taggerOutput)
-                
-                
+
+
         return True

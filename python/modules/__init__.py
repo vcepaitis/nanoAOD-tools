@@ -18,6 +18,7 @@ from EventSkim import EventSkim
 from EventObservables import EventObservables
 from WbosonReconstruction import WbosonReconstruction
 from MetFilter import MetFilter
+from JetDYMixing import JetDYMixing
 from PileupWeight import PileupWeight
 from TaggerWorkingpoints import TaggerWorkingpoints
 from EventInfo import EventInfo
@@ -27,6 +28,7 @@ from EventDump import EventDump
 from InvariantSystem import InvariantSystem
 from JetTruthFlags import JetTruthFlags
 from JetTaggerResult import JetTaggerResult
+from JetTaggerProfiledResult import JetTaggerProfiledResult
 from PDFWeights import PDFWeights
 from WNLOWeights import WNLOWeights
 from JetFeatures import JetFeatures

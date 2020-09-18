@@ -20,7 +20,7 @@ class LeptonCollecting(Module):
         globalOptions={"isData": False, "year": 2016},
         storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron","relIso"]
     ):
-        
+
         self.globalOptions = globalOptions
         self.tightMuonCollection = tightMuonCollection
         self.tightElectronCollection = tightElectronCollection
@@ -28,29 +28,29 @@ class LeptonCollecting(Module):
         self.looseElectronCollection = looseElectronCollection
         self.outputName = outputName
         self.storeKinematics = storeKinematics
- 
+
     def beginJob(self):
         pass
-        
+
     def endJob(self):
         pass
-        
+
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         self.out.branch("nleading"+self.outputName, "I")
         self.out.branch("nsubleading"+self.outputName, "I")
 
         for variable in self.storeKinematics:
-            self.out.branch("leading"+self.outputName+"_"+variable, "F", lenVar="nleadingLepton")
-            self.out.branch("subleading"+self.outputName+"_"+variable, "F", lenVar="nsubleadingLepton")
+            self.out.branch("leading"+self.outputName+"_"+variable, "F", lenVar="nleading"+self.outputName)
+            self.out.branch("subleading"+self.outputName+"_"+variable, "F", lenVar="nsubleading"+self.outputName)
 
 
         #for variable in self.storeKinematics:
             #self.out.branch(self.outputName+"_"+variable,"F",lenVar="n"+self.outputName)
-        
+
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
+
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
 
@@ -94,4 +94,3 @@ class LeptonCollecting(Module):
         setattr(event, "subleading"+self.outputName, looseLeptons)
 
         return True
-        

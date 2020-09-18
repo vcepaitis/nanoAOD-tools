@@ -57,6 +57,15 @@ class HNLJetSelection(Module):
         promptLepton = self.promptLeptonCollection(event)
         looseLeptons = self.looseLeptonsCollection(event)
         
+        if len(jets)==0:
+            for label in self.jetLabels:
+                self.out.fillBranch(self.outputName+"_"+label+"_lepton_deltaR",-1)
+                self.out.fillBranch(self.outputName+"_"+label+"_lepton_dxy_sig",-1)
+                self.out.fillBranch(self.outputName+"_"+label+"_jet_pt",-1)
+                self.out.fillBranch(self.outputName+"_"+label+"_jet_output",-1)
+                self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",-3)
+            return True
+        
 
         bestJetsPerLabel = {}
         for label in self.jetLabels:
@@ -66,12 +75,12 @@ class HNLJetSelection(Module):
         for jet in jets:
             taggerOutput = getattr(jet, self.taggerName)
             for label in self.jetLabels:
-                if getattr(bestJetsPerLabel[label],self.taggerName)[label]['output']<taggerOutput[label]['output']:
+                if getattr(bestJetsPerLabel[label],self.taggerName)[label]<taggerOutput[label]:
                     bestJetsPerLabel[label] = jet
 
         for label in self.jetLabels:
             jet = bestJetsPerLabel[label]
-            taggerResult = getattr(jet, self.taggerName)[label]
+            taggerResult = getattr(jet, self.taggerName)
 
 
             closestLepton = None
@@ -95,7 +104,7 @@ class HNLJetSelection(Module):
                 
                 
             self.out.fillBranch(self.outputName+"_"+label+"_jet_pt",jet.pt)
-            self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult['output'])
+            self.out.fillBranch(self.outputName+"_"+label+"_jet_output",taggerResult[label])
             self.out.fillBranch(self.outputName+"_"+label+"_jet_parameter",taggerResult['parameter'])
 
             
