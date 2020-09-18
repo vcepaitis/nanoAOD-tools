@@ -76,16 +76,16 @@ class LeptonCollecting(Module):
             lepton.isElectron = 1
             lepton.relIso = lepton.pfRelIso03_all
 
-        tightLepton = []
+        tightLeptons = []
         looseLeptons = []
 
-        tightLepton = tightMuon+tightElectron
+        tightLeptons = tightMuon+tightElectron
         looseLeptons = looseMuons+looseElectrons
 
-        tightLepton = sorted(tightLepton, key=lambda x: x.pt, reverse=True)
+        tightLeptons = sorted(tightLeptons, key=lambda x: x.pt, reverse=True)
         # select leading only, move subleading to "loose"
         looseLeptons.extend(tightLepton[1:])
-        tightLeptons = [tightLepton[0]]
+        tightLeptons = [tightLeptons[0]]
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
 
         muonmuon = 0
@@ -98,21 +98,21 @@ class LeptonCollecting(Module):
         ## flavour categorisation :
 
         if len(looseLeptons) > 0:
-            if tightLepton[0].isMuon and looseLepton[0].isMuon == 1:
+            if tightLeptons[0].isMuon and looseLeptons[0].isMuon == 1:
                 muonmuon = 1
             
-            elif tightLepton[0].isElectron and looseLepton[0].isElectron == 1:
+            elif tightLeptons[0].isElectron and looseLeptons[0].isElectron == 1:
                 electronelectron= 1
 
-            elif tightLepton[0].isMuon and looseLepton[0].isElectron == 1:
+            elif tightLeptons[0].isMuon and looseLeptons[0].isElectron == 1:
                 muonelectron = 1
 
-            elif tightLepton[0].isElectron and looseLepton[0].isMuon == 1:
+            elif tightLeptons[0].isElectron and looseLeptons[0].isMuon == 1:
                 electronmuon = 1
 
-        elif tightLepton[0].isMuon:
+        elif tightLeptons[0].isMuon:
             muonjets = 1 
-        elif tightLepton[0].isElectron:
+        elif tightLeptons[0].isElectron:
             electronjets = 1 
 
         if muonmuon or muonelectron or muonjets:
