@@ -507,12 +507,12 @@ else:
         )
     )
 
-    analyzerChain.append(
-        PileupWeight(
-            outputName="puweight",
-            globalOptions=globalOptions
-        )
+analyzerChain.append(
+    PileupWeight(
+        outputName="puweight",
+        globalOptions=globalOptions
     )
+)
 
 storeVariables = [
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,
