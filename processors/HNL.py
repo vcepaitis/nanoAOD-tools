@@ -547,11 +547,7 @@ if testMode:
             analyzerChain.pop(ianalyzer)   
 
 if args.noTagger:
-    analyzerChainNew = analyzerChain
-    for ianalyzer, analyzer in enumerate(analyzerChain):
-        if type(analyzer).__name__ not in taggerTypes:
-            analyzerChainNew.append(analyzer)
-    analyzerChain = analyzerChainNew
+    analyzerChain = ([module for module in analyzerChain if type(module).__name__ not in taggerTypes])
 
 p = PostProcessor(
     args.output[0],
