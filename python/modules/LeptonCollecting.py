@@ -84,7 +84,7 @@ class LeptonCollecting(Module):
 
         tightLeptons = sorted(tightLeptons, key=lambda x: x.pt, reverse=True)
         # select leading only, move subleading to "loose"
-        looseLeptons.extend(tightLepton[1:])
+        looseLeptons.extend(tightLeptons[1:])
         tightLeptons = [tightLeptons[0]]
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
 
@@ -98,16 +98,16 @@ class LeptonCollecting(Module):
         ## flavour categorisation :
 
         if len(looseLeptons) > 0:
-            if tightLeptons[0].isMuon and looseLeptons[0].isMuon == 1:
+            if tightLeptons[0].isMuon and looseLeptons[0].isMuon:
                 muonmuon = 1
             
-            elif tightLeptons[0].isElectron and looseLeptons[0].isElectron == 1:
+            elif tightLeptons[0].isElectron and looseLeptons[0].isElectron:
                 electronelectron= 1
 
-            elif tightLeptons[0].isMuon and looseLeptons[0].isElectron == 1:
+            elif tightLeptons[0].isMuon and looseLeptons[0].isElectron:
                 muonelectron = 1
 
-            elif tightLeptons[0].isElectron and looseLeptons[0].isMuon == 1:
+            elif tightLeptons[0].isElectron and looseLeptons[0].isMuon:
                 electronmuon = 1
 
         elif tightLeptons[0].isMuon:
