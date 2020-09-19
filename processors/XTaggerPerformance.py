@@ -17,12 +17,15 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
+parser.add_argument('--isSignal', dest='isSignal',
+                    action='store_true', default=False)
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
 print "inputs:",len(args.inputFiles)
+print "isSignal:",args.isSignal
 
 for inputFile in args.inputFiles:
     if "-2016" in inputFile:
@@ -48,33 +51,36 @@ print "output directory:", args.output[0]
 
 globalOptions = {
     "isData": False,
+    "isSignal": args.isSignal,
     "year": year
 }
+
+modelPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2018.pb"
+}
+
+modelGunPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2018.pb"
+}
+
+
 
 isMC = True
 
 # analyzerChain = [jetRecalibration]
 analyzerChain = []
 
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
-modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2016_attention.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2017_attention.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/weight2018_attention.pb"
-}
-
-analyzerChain.append(
-     MetFilter(
-        globalOptions=globalOptions,
-        outputName="MET_filter"
-     )
-)
-
 analyzerChain.append(
     JetSelection(
-        leptonCollection=lambda event:None,
+        jetMinPt=15.,
+        jetMaxEta=2.399, #TODO: change to 2.4
+        jetMinNConstituents=3,
+        jetId=JetSelection.LOOSE,
         outputName="selectedJets_nominal",
-        storeKinematics=['pt', 'eta'],
         globalOptions=globalOptions
     )
 )
@@ -87,35 +93,43 @@ analyzerChain.append(
     )
 )
 
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict.py"
+
 analyzerChain.append(
-    TaggerEvaluation(
+    TaggerEvaluationProfiled(
         modelPath=modelPath[year],
-        evalValues = np.linspace(-1, 3, num=9),
-        featureDictFile = featureDictFile,
+        featureDictFile=featureDictFile,
         inputCollections=[
             lambda event: event.selectedJets_nominal,
         ],
         taggerName="llpdnnx",
-        integrateDisplacementOrder=-1
+        globalOptions=globalOptions,
+        evalValues = np.linspace(-3,2,5*5+1),
     )
 )
 
-'''
 analyzerChain.append(
-    JetTaggerIntegral(
-        taggerName="llpdnnx",
-        integrateDisplacementOrder=-1,
-        inputCollection=lambda event: event.selectedJets_nominal,
-        outputName="selectedJets_nominal",
+    TaggerEvaluationProfiled(
+        modelPath=modelGunPath[year],
+        featureDictFile=featureDictFile,
+        inputCollections=[
+            lambda event: event.selectedJets_nominal,
+        ],
+        taggerName="llpdnnx_gun",
+        globalOptions=globalOptions,
+        evalValues = np.linspace(-3,2,5*5+1),
     )
 )
-'''
 
 analyzerChain.append(
     JetTaggerResult(
-        inputCollection=lambda event:event.selectedJets_nominal,
         taggerName="llpdnnx",
-        outputName="selectedJets_nominal",
+    )
+)
+
+analyzerChain.append(
+    JetTaggerResult(
+        taggerName="llpdnnx_gun",
     )
 )
 
@@ -125,21 +139,12 @@ analyzerChain.append(
     )
 )
 
-storeVariables = [[lambda tree: tree.branch("genweight", "F"),
-                       lambda tree,
-                       event: tree.fillBranch("genweight",
-                       event.Generator_weight)]
-                ]
-
-analyzerChain.append(EventInfo(storeVariables=storeVariables))
-
-
-
 p = PostProcessor(
     args.output[0],
     [args.inputFiles],
     modules=analyzerChain,
-    maxEvents=-1,
+    maxEvents=30000,
+    cut="(nJet>0)",
     friend=True
 )
 

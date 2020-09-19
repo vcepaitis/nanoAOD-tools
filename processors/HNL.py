@@ -23,6 +23,7 @@ parser.add_argument('--isSignal', dest='isSignal',
 parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
+parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
@@ -31,6 +32,7 @@ testMode = args.testMode
 print "isData:",args.isData
 print "isSignal:",args.isSignal
 print "inputs:",len(args.inputFiles)
+print "Running tagger", not args.noTagger
 
 for inputFile in args.inputFiles:
     if "-2016" in inputFile or "Run2016" in inputFile:
@@ -237,7 +239,7 @@ if isMC:
             jesUncertaintyFile=jesUncertaintyFile[year],
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
-            propagateJER = False, # need to fix, poor modelling
+            propagateJER = False,
             jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
         )
     )
@@ -259,7 +261,6 @@ if isMC:
                 jetMaxEta=2.399, #TODO: change to 2.4
                 jetMinNConstituents=3,
                 jetId=JetSelection.LOOSE,
-                storeKinematics=['pt', 'eta'],
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -318,6 +319,7 @@ if isMC:
         )
     )
 
+    
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
@@ -334,24 +336,7 @@ if isMC:
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
-    
-    analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelGunPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
-                lambda event: event.selectedJets_jesTotalUp[:4],
-                lambda event: event.selectedJets_jesTotalDown[:4],
-                lambda event: event.selectedJets_jerUp[:4],
-                lambda event: event.selectedJets_jerDown[:4]
-            ],
-            taggerName="llpdnnx_gun",
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1),
-        )
-    )
-    '''
+   
     for systName, jetCollection in [
         ("nominal", lambda event: event.selectedJets_nominal[:4]),
         ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
@@ -361,24 +346,21 @@ if isMC:
     ]:
 
         analyzerChain.append(
-           EventCategorization(
-                muonsTight=lambda event: event.tightMuon, 
-                electronsTight=lambda event: event.tightElectron, 
-                muonsLoose=lambda event: event.looseMuons, 
-                electronsLoose=lambda event: event.looseElectrons, 	
+           EventCategorization(	
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
+                taggerName="llpdnnx",
                 outputName="category_"+systName,
                 globalOptions=globalOptions
            )
         )
-    '''
+    
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
             lambda event: event.met_nominal),
         ("jerUp", lambda event: event.selectedJets_jerUp,
-            lambda event: event.met_jerUp),
+           lambda event: event.met_jerUp),
         ("jerDown", lambda event: event.selectedJets_jerDown,
             lambda event: event.met_jerDown),
         ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
@@ -409,12 +391,14 @@ if isMC:
             )
         )
 
+        
         analyzerChain.append(
             XGBEvaluation(
                 systName=systName,
                 jetCollection=jetCollection
             )
         )
+        
 
 else:
     analyzerChain.append(
@@ -426,7 +410,6 @@ else:
             jetMaxEta=2.399, #TODO: change to 2.4
             jetMinNConstituents=3,
             jetId=JetSelection.LOOSE,
-            storeKinematics=['pt', 'eta'],
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -473,6 +456,7 @@ else:
         )
     )
 
+    
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
@@ -486,32 +470,17 @@ else:
         )
     )
     
+    
     analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelGunPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4]
-            ],
-            taggerName="llpdnnx_gun",
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1)
-        )
-    )
-    '''
-    analyzerChain.append(
-       EventCategorization(
-            muonsTight=lambda event: event.tightMuon, 
-            electronsTight=lambda event: event.tightElectron, 
-            muonsLoose=lambda event: event.looseMuons, 
-            electronsLoose=lambda event: event.looseElectrons,    
+	EventCategorization(
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
+            taggerName="llpdnnx",
             outputName="category_nominal",
             globalOptions=globalOptions
+       
        )
     )
-    '''
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='leadingLeptons',
@@ -538,14 +507,12 @@ else:
         )
     )
 
-
-if not testMode:
-     analyzerChain.append(
-         PileupWeight(
-             outputName="puweight",
-             globalOptions=globalOptions
-         )
-     )
+analyzerChain.append(
+    PileupWeight(
+        outputName="puweight",
+        globalOptions=globalOptions
+    )
+)
 
 storeVariables = [
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,
@@ -572,7 +539,15 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
+taggerTypes = ['EventCategorization', 'TaggerEvaluationProfiled']
 
+if testMode:
+    for ianalyzer, analyzer in enumerate(analyzerChain):
+        if type(analyzer).__name__ == "PileupWeight":
+            analyzerChain.pop(ianalyzer)   
+
+if args.noTagger:
+    analyzerChain = ([module for module in analyzerChain if type(module).__name__ not in taggerTypes])
 
 p = PostProcessor(
     args.output[0],

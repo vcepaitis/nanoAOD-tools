@@ -30,7 +30,7 @@ class JetSelection(Module):
          dRCleaning=0.4,
          dRP4Subtraction=0.4,
          flagDA=False,
-         storeKinematics=['pt', 'eta'],
+         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptLeptonSubtracted'],
          globalOptions={"isData": False, "year": 2016},
          jetId=LOOSE
      ):
@@ -76,6 +76,7 @@ class JetSelection(Module):
 
         jets = self.inputCollection(event)
 
+
         selectedJets = []
         unselectedJets = []
 
@@ -87,7 +88,6 @@ class JetSelection(Module):
             flagsDA = [0.]*event.nJet
 
         for jet in jets:
-            
             if math.fabs(jet.eta) > self.jetMaxEta:
                 unselectedJets.append(jet)
                 continue
@@ -102,12 +102,15 @@ class JetSelection(Module):
                 
             #note: tagger only trained for these jets
             if self.jetMinNConstituents > 0 and jet.nConstituents < self.jetMinNConstituents:
-                unselectedJets.append(jet)
+                unselectedJets.append(jet.nConstituents)
                 continue
 
+            minDeltaRSubtraction = 999.
+
             leptonP4 = ROOT.TLorentzVector(0,0,0,0)
-            if self.dRP4Subtraction > 0. and len(leptonsForP4Subtraction) > 0:
+            if len(leptonsForP4Subtraction) > 0:
                 for lepton in leptonsForP4Subtraction:
+                    minDeltaRSubtraction = min(minDeltaRSubtraction, deltaR(lepton, jet))
                     if deltaR(lepton,jet)<self.dRP4Subtraction:
                         leptonP4 += lepton.p4()
                
@@ -116,7 +119,8 @@ class JetSelection(Module):
             
             setattr(jet,"ptLepton",leptonPt)
             setattr(jet,"ptLeptonSubtracted",jetPtLeptonSubtracted)
-                        
+            setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
+            
             if jetPtLeptonSubtracted<self.jetMinPt:
                 unselectedJets.append(jet)
                 continue
@@ -129,13 +133,14 @@ class JetSelection(Module):
                 if mindr < self.dRCleaning:
                     unselectedJets.append(jet)
                     continue
+                    
                 setattr(jet,"minDPhiClean",mindphi)
                 setattr(jet,"minDRClean",mindr)
-                selectedJets.append(jet)
             else:
                 setattr(jet,"minDPhiClean",100)
                 setattr(jet,"minDRClean",100)
-                selectedJets.append(jet)
+                
+            selectedJets.append(jet)
 
 
             if self.flagDA:
@@ -153,3 +158,4 @@ class JetSelection(Module):
         setattr(event, self.outputName+"_unselected", unselectedJets)
 
         return True
+

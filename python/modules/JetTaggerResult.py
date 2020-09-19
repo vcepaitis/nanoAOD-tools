@@ -15,19 +15,15 @@ class JetTaggerResult(Module):
 
     def __init__(
         self,
-        inputCollection=lambda event: Collection(event, "Jet"),
+        inputCollection="selectedJets_nominal",
         taggerName="llpdnnx",
-        outputName="selectedJets",
-        predictionLabels=["B", "C", "UDS", "G", "PU", "isLLP_QMU_QQMU", "isLLP_Q_QQ"],
-        evalValues=range(-1, 4),
+        profiledLabels = ['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'],
         globalOptions={"isData": False}
     ):
-        self.globalOptions = globalOptions
-        self.taggerName = taggerName
-        self.outputName = outputName
         self.inputCollection = inputCollection
-        self.predictionLabels = predictionLabels
-        self.evalValues = evalValues
+        self.taggerName = taggerName
+        self.profiledLabels = profiledLabels
+        self.globalOptions = globalOptions
 
     def beginJob(self):
         pass
@@ -37,9 +33,9 @@ class JetTaggerResult(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        for ctau in self.evalValues:
-            for label in self.predictionLabels:
-                self.out.branch(self.outputName+"_"+self.taggerName+"_"+str(ctau).replace(".", "p").replace("-", "m")+"_"+label,"F",lenVar="n"+self.outputName)
+        self.out.branch(self.inputCollection+"_"+self.taggerName+"_parameter","F",lenVar="n"+self.inputCollection)
+        for label in self.profiledLabels:
+            self.out.branch(self.inputCollection+"_"+self.taggerName+"_"+label,"F",lenVar="n"+self.inputCollection)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -47,21 +43,26 @@ class JetTaggerResult(Module):
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
 
-        jets = self.inputCollection(event)
+        jets = getattr(event, self.inputCollection)
 
-        taggerResults = {ctau: {className: [-1.]*len(jets) for className in self.predictionLabels} for ctau in self.evalValues}
+        jetPredictionsPerLabel = {}
+        jetParameters = []
+        for label in self.profiledLabels:
+            jetPredictionsPerLabel[label] = []
+
         for ijet, jet in enumerate(jets):
-            if not hasattr(jet, self.taggerName):
-                print "WARNING - jet ", jet, " has no ", self.taggerName, " result stored -> skip"
-                continue
-            predictions = getattr(jet,self.taggerName)
-            for ctau in self.evalValues:
-                for label in self.predictionLabels:
-                    taggerResults[ctau][label][ijet] = predictions[ctau][label]
-  
-        for ctau in self.evalValues:
-            for label in self.predictionLabels:
-                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+str(ctau).replace(".", "p").replace("-", "m")+"_"+label,
-                                    taggerResults[ctau][label])
+            for label in self.profiledLabels:
+                if not hasattr(jet, self.taggerName):
+                    print "WARNING - jet ", jet, " has no ", self.taggerName, " set to minus 1"
+                    jetPredictionsPerLabel[label].append(-1.)
+                    jetParameters.append(-999.)
+                else:
+                    jetPredictionsPerLabel[label].append(getattr(jet, self.taggerName)[label])
+                    jetParameters.append(getattr(jet, self.taggerName)['parameter'])
+
+        self.out.fillBranch(self.inputCollection+"_"+self.taggerName+"_parameter", jetParameters)
+
+        for label in self.profiledLabels:
+            self.out.fillBranch(self.inputCollection+"_"+self.taggerName+"_"+label, jetPredictionsPerLabel[label])
 
         return True
