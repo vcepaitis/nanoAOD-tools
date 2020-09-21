@@ -365,6 +365,7 @@ class TFEval
         
     private:
         std::vector<FeatureGroup*> _featureGroups;
+        std::vector<FeatureGroup*> _featureGroupsInModel;
         std::unique_ptr<tensorflow::Session> _session;
         tensorflow::GraphDef _graphDef;
         std::vector<std::string> _outputNodeNames;
@@ -444,13 +445,19 @@ class TFEval
             {
                 _doReallocation = _inputs[0].second.dim_size(0)!=batchSize;
             }
+            else
+            {
+                _doReallocation = true;
+            }
+            
             if (_doReallocation)
             {
                 _inputs.clear();
+                _featureGroupsInModel.clear();
                 for (auto featureGroup: _featureGroups)
                 {
                     auto tensor = featureGroup->createTensor(batchSize);
-                    _inputs.emplace_back(featureGroup->name(),tensor);
+                    
                     
                     //check input shapes
                     bool foundNode = false;
@@ -477,24 +484,34 @@ class TFEval
                             break;
                         }
                     }
-                    if (not foundNode)
+                    if (foundNode)
                     {
-                        throw std::runtime_error("Cannot find input node '"+featureGroup->name()+"' in pb file '"+_graphFilePath+"'");
+                        _inputs.emplace_back(featureGroup->name(),tensor);
+                        _featureGroupsInModel.push_back(featureGroup);
+                    }
+                    else
+                    {
+                        //throw std::runtime_error("Cannot find input node '"+featureGroup->name()+"' in pb file '"+_graphFilePath+"'");
+                        //std::cout<<"Cannot find input node '"+featureGroup->name()+"' in pb file '"+_graphFilePath+"' -> skip"<<std::endl;
                     }
                 }
                 _doReallocation = false;
+            }
+            if (_inputs.size()==0)
+            {
+                throw std::runtime_error("No input tensors have been allocated for '"+_graphFilePath+"'");
             }
         }
         
         void fillInputs(int64_t jetIndex, int64_t batchIndex=0)
         {
-            if (_featureGroups.size()!=_inputs.size())
+            if (_featureGroupsInModel.size()!=_inputs.size() or _inputs.size()==0)
             {
                 throw std::runtime_error("Logic error occured: input tensors should have been reallocated");
             }
-            for (size_t i = 0; i < _inputs.size(); ++i)
+            for (size_t i = 0; i < _featureGroupsInModel.size(); ++i)
             {
-                _featureGroups[i]->fillTensor(_inputs[i].second,jetIndex,batchIndex);
+                _featureGroupsInModel[i]->fillTensor(_inputs[i].second,jetIndex,batchIndex);
             }
         }
         
