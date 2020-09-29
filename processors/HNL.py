@@ -565,7 +565,7 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
-taggerTypes = ['EventCategorization', 'TaggerEvaluationProfiled']
+taggerTypes = ['EventCategorization', 'SimplifiedEventCategorization', 'TaggerEvaluationProfiled']
 
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):
