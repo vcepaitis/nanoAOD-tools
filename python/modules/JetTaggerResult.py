@@ -17,7 +17,7 @@ class JetTaggerResult(Module):
         self,
         inputCollection="selectedJets_nominal",
         taggerName="llpdnnx",
-        profiledLabels = ['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'],
+        profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU'],
         globalOptions={"isData": False}
     ):
         self.inputCollection = inputCollection

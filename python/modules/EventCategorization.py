@@ -297,6 +297,7 @@ class EventCategorization(Module):
         elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
 
           xbin  = 6
+
  
         '''
         elif nleptons == 2 and nLLP == 2 and  (resolved  == 3 or resolved == 5) : 
