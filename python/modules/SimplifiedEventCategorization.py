@@ -28,11 +28,9 @@ class SimplifiedEventCategorization(Module):
             'isUDS': ['isS', 'isUD'],
             'isG': ['isG'],
             'isPU': ['isPU'],
-            'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ'],
+            'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ', 'isLLP_TAU', 'isLLP_QTAU', 'isLLP_QQTAU'],
             'isLLP_QMU': ['isLLP_QMU', 'isLLP_QQMU', 'isLLP_MU'],
             'isLLP_QE': ['isLLP_QE','isLLP_QQE', 'isLLP_E'],
-            'isLLP_TAU': ['isLLP_TAU'],
-            'isLLP_QTAU': ['isLLP_QTAU','isLLP_QQTAU'],
             'isUndefined': ['isUndefined'],
         },
     ):
@@ -62,9 +60,16 @@ class SimplifiedEventCategorization(Module):
             self.out.branch("{}_resJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_resJets")
 
         if self.globalOptions["isSignal"]:
+            self.out.branch(self.outputName+"_index_truth", "I")
+            self.out.branch("n"+self.outputName+"_TrueJets", "I")
+            self.out.branch("n"+self.outputName+"_TrueLepJets", "I")
+            self.out.branch("n"+self.outputName+"_TrueResJets", "I")
+
             for truth_class in self.flags.keys():
+                self.out.branch(self.outputName+"_Jet_"+truth_class, "I", lenVar="n"+self.outputName+"_Jets")
                 self.out.branch(self.outputName+"_lepJet_"+truth_class, "I", lenVar="n"+self.outputName+"_lepJets")
                 self.out.branch(self.outputName+"_resJet_"+truth_class, "I", lenVar="n"+self.outputName+"_resJets")
+        self.out.branch(self.outputName+"_Jet_category", "I", lenVar="n"+self.outputName+"_Jets")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -155,7 +160,38 @@ class SimplifiedEventCategorization(Module):
 
         if self.globalOptions["isSignal"]:
             for truth_class in self.flags.keys():
+                self.out.fillBranch(self.outputName+"_Jet_"+truth_class, [getattr(jet, truth_class) for jet in Jets])
                 self.out.fillBranch(self.outputName+"_lepJet_"+truth_class, [getattr(jet, truth_class) for jet in lepJets])
                 self.out.fillBranch(self.outputName+"_resJet_"+truth_class, [getattr(jet, truth_class) for jet in resJets])
+
+            nTrueResJets = 0
+            nTrueLepJets = 0
+            category_index_truth = -1
+
+            for jet in jets:
+                if jet.isLLP_Q > 0:
+                    nTrueResJets += 1
+                if jet.isLLP_QMU > 0 or jet.isLLP_QE > 0:
+                    nTrueLepJets += 1
+
+            nTrueJets = nTrueLepJets+nTrueResJets
+
+            if nTrueJets == 1:
+                if nTrueResJets == 1:
+                    category_index_truth = 1
+                elif nTrueLepJets == 1:
+                    category_index_truth = 2
+            elif nTrueJets > 1:
+                if nTrueLepJets > 0:
+                    category_index_truth = 4
+                else:
+                    category_index_truth = 3
+            self.out.fillBranch("n"+self.outputName+"_TrueJets", nTrueJets)
+            self.out.fillBranch("n"+self.outputName+"_TrueLepJets", nTrueLepJets)
+            self.out.fillBranch("n"+self.outputName+"_TrueResJets", nTrueResJets)
+
+        self.out.fillBranch(self.outputName+"_Jet_category", nJets*[category_index])
+        self.out.fillBranch(self.outputName+"_index_truth", category_index_truth)
+
 
         return True
