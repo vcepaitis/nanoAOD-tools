@@ -132,23 +132,18 @@ class SimplifiedEventCategorization(Module):
         setattr(event, self.outputName+"_resJets", resJets)
 
         if len(looseLeptons) > 0:
-            if nJets == 1:
-                if nresJets == 1:
-                    category_index = 1
-                elif nlepJets == 1:
-                    category_index = 2
-            elif nJets > 1:
+            if nJets > 0:
                 if nlepJets > 0:
-                    category_index = 4
+                    category_index = 2
                 else:
-                    category_index = 3
+                    category_index = 1
             else:
                 category_index = -1
         else:
-            if nresJets == 1:
-                category_index = 5
-            elif nresJets > 1:
-                category_index = 6
+            if nJets == 1:
+                category_index = 3
+            elif nJets > 1:
+                category_index = 4
             else:
                 category_index = -1
 
@@ -189,9 +184,9 @@ class SimplifiedEventCategorization(Module):
             self.out.fillBranch("n"+self.outputName+"_TrueJets", nTrueJets)
             self.out.fillBranch("n"+self.outputName+"_TrueLepJets", nTrueLepJets)
             self.out.fillBranch("n"+self.outputName+"_TrueResJets", nTrueResJets)
+            self.out.fillBranch(self.outputName+"_index_truth", category_index_truth)
 
         self.out.fillBranch(self.outputName+"_Jet_category", nJets*[category_index])
-        self.out.fillBranch(self.outputName+"_index_truth", category_index_truth)
 
 
         return True
