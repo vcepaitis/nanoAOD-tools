@@ -139,8 +139,8 @@ class EventCategorization(Module):
       	bestValues = []
       	bestParams = []
       	bestDicts = []
-      	bestJets.append(-10.)
-
+        
+        bestJets.append(-10.)
         bestIndices.append(-10.)
         bestValues.append(-10.)
         bestParams.append(-10.)
@@ -154,7 +154,7 @@ class EventCategorization(Module):
                     bestValues[0] = taggerOutput[label]
                     bestParams[0] = taggerOutput['parameter']
                     bestJets[0] = jet
-        bestDicts[0] = taggerOutput
+                    bestDicts[0] = taggerOutput
 
         # looking for second llp proba  jet.
         secondValue = -10.
@@ -173,6 +173,7 @@ class EventCategorization(Module):
                             secondParam = taggerOutput['parameter']
                             secondJet  = jet
                             secondDict = taggerOutput
+
         bestValues.append(secondValue)
         bestIndices.append(secondIndex)
         bestParams.append(secondParam)
@@ -206,23 +207,23 @@ class EventCategorization(Module):
             output = 0.
             if not jet == -10.:
                 for label in self.jetLabels:
-           	        output += getattr(jet, self.taggerName)[label]
+           	    output += getattr(jet, self.taggerName)[label]
                 outputSums.append(output)
 
 
         nLLP = 0
         deltaRllpJet = []
         if len(looseLeptons) == 0:
-           for l in bestJets:
-              deltaRllpJet.append( -1.)
+            for l in bestJets:
+                deltaRllpJet.append( -1.)
         else:
-           for j in bestJets:
-             if not j == -10.:
-                 deltaRllpJet.append(deltaR(looseLeptons[0], j))
+            for j in bestJets:
+                if not j == -10.:
+                    deltaRllpJet.append(deltaR(looseLeptons[0], j))
 
         for i, o in enumerate(outputSums):
             if o > 0.5:
-              nLLP +=1
+                nLLP +=1
 
         nleptons = 0
         if len(looseLeptons) == 0 :
@@ -234,14 +235,14 @@ class EventCategorization(Module):
         merged = 0
 
         if nLLP == 1:
-          if bestIndices[0] == 0: resolved = 1
-          elif bestIndices[0] == 1 or bestIndices[0] == 2: merged = 1
+            if bestIndices[0] == 0: resolved = 1
+            elif bestIndices[0] == 1 or bestIndices[0] == 2: merged = 1
 
         elif nLLP == 2:
-          sum_ = 2
-          for i in bestIndices:
-            sum_ += i
-          resolved = sum_
+            sum_ = 2
+            for i in bestIndices:
+                sum_ += i
+            resolved = sum_
 
         # binning the categories.
         xbin = -1
@@ -268,7 +269,7 @@ class EventCategorization(Module):
         taggerJetsPt = []
         for index, b in enumerate(bestJets) :
             if not b < -9.:
-     		     taggerJetsPt.append(b.pt)
+     	        taggerJetsPt.append(b.pt)
 
         self.out.fillBranch(self.outputName+"_allCategories", xbin)
         self.out.fillBranch("n"+self.outputName, nLLP)
