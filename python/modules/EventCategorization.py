@@ -75,11 +75,6 @@ class EventCategorization(Module):
             self.out.branch("n"+self.outputName+"_TrueLepJets", "I")
             self.out.branch("n"+self.outputName+"_TrueResJets", "I")
 
-            for truth_class in self.flags.keys():
-                self.out.branch(self.outputName+"_Jet_"+truth_class, "I", lenVar="n"+self.outputName+"_Jets")
-                self.out.branch(self.outputName+"_lepJet_"+truth_class, "I", lenVar="n"+self.outputName+"_lepJets")
-                self.out.branch(self.outputName+"_resJet_"+truth_class, "I", lenVar="n"+self.outputName+"_resJets")
-
         self.out.branch("n"+self.outputName, "I")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
