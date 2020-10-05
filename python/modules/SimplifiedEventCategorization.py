@@ -14,6 +14,7 @@ class SimplifiedEventCategorization(Module):
         self,
         globalOptions={"isData":False, "isSignal":False},
         outputName="category_simplified",
+        tightLeptons=None,
         looseLeptons=None,
         jetsCollection=None,
         taggerName="llpdnnx",
@@ -36,6 +37,7 @@ class SimplifiedEventCategorization(Module):
     ):
         self.globalOptions = globalOptions
         self.outputName = outputName
+        self.tightLeptons = tightLeptons
         self.looseLeptons = looseLeptons
         self.jetsCollection = jetsCollection
         self.taggerName = taggerName
@@ -55,6 +57,9 @@ class SimplifiedEventCategorization(Module):
         self.out.branch("n"+self.outputName+"_Jets", "I")
         self.out.branch("n"+self.outputName+"_lepJets", "I")
         self.out.branch("n"+self.outputName+"_resJets", "I")
+        self.out.branch(self.outputName+"_WCandidateMass", "F")
+        self.out.branch(self.outputName+"_HNLCandidateMass", "F")
+
         for label in self.jetLabels:
             self.out.branch("{}_lepJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_lepJets")
             self.out.branch("{}_resJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_resJets")
@@ -78,6 +83,7 @@ class SimplifiedEventCategorization(Module):
 
         jets = self.jetsCollection(event)
         looseLeptons = self.looseLeptons(event)
+        tightLeptons = self.tightLeptons(event)
 
         # only for MC: truth labels
         if self.globalOptions["isSignal"]:
@@ -188,5 +194,31 @@ class SimplifiedEventCategorization(Module):
 
         self.out.fillBranch(self.outputName+"_Jet_category", nJets*[category_index])
 
+
+        HNLCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
+        WCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
+
+
+        if category_index == 2:
+            HNLCandidateLorentzVector += lepJets[0].p4()
+            WCandidateLorentzVector += lepJets[0].p4()
+        elif category_index > 0:
+            HNLCandidateLorentzVector += resJets[0].p4()
+            WCandidateLorentzVector += resJets[0].p4()
+        for lepton in looseLeptons:
+            HNLCandidateLorentzVector += lepton.p4()
+            WCandidateLorentzVector += lepton.p4()
+        for lepton in tightLeptons:
+            WCandidateLorentzVector += lepton.p4()
+
+        WCandidateMass = WCandidateLorentzVector.M()
+
+        if category_index > 2:
+            HNLCandidateMass = resJets[0].mass
+        else:
+            HNLCandidateMass = HNLCandidateLorentzVector.M()
+
+        self.out.fillBranch(self.outputName+"_WCandidateMass", WCandidateMass)
+        self.out.fillBranch(self.outputName+"_HNLCandidateMass", HNLCandidateMass)
 
         return True
