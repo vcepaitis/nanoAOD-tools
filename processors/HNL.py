@@ -98,6 +98,8 @@ leptonSelection = [
                          'dzErr', 'phi', 'pfRelIso04_all', 'charge'],
         storeWeights=True,
         muonMinPt=minMuonPt[globalOptions["year"]],
+        muonMaxDxy=0.01,
+        muonMaxDz=0.05,
         triggerMatch=True,
         muonID=MuonSelection.TIGHT,
         muonIso=MuonSelection.TIGHT,
@@ -112,6 +114,8 @@ leptonSelection = [
         electronID="Iso_WP90",
         storeWeights=True,
         triggerMatch=True,
+        electronMaxDxy=0.05,
+        electronMaxDz=0.1,
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
@@ -161,7 +165,8 @@ leptonSelection = [
         looseMuonCollection=lambda event:event.looseMuons,
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons"
-    )
+    ),
+    EventSkim(selection=lambda event: event.isTriggered),
 
 ]
 
@@ -180,9 +185,9 @@ analyzerChain.append(
 
 '''
 # left for debugging
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import * 
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import *
 jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", jesUncert="All", redojec=True)
-#jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")  
+#jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")
 analyzerChain.append(jetmetCorrector())
 '''
 
@@ -319,7 +324,7 @@ if isMC:
         )
     )
 
-    
+
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
@@ -336,7 +341,7 @@ if isMC:
             evalValues = np.linspace(-3,2,5*5+1),
         )
     )
-   
+
     for systName, jetCollection in [
         ("nominal", lambda event: event.selectedJets_nominal[:4]),
         ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
@@ -346,7 +351,7 @@ if isMC:
     ]:
 
         analyzerChain.append(
-           EventCategorization(	
+           EventCategorization(
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
                 taggerName="llpdnnx",
@@ -354,7 +359,17 @@ if isMC:
                 globalOptions=globalOptions
            )
         )
-    
+
+        analyzerChain.append(
+           SimplifiedEventCategorization(
+                looseLeptons=lambda event: event.subleadingLeptons,
+                jetsCollection=jetCollection,
+                taggerName="llpdnnx",
+                outputName="category_simplified_"+systName,
+                globalOptions=globalOptions
+           )
+        )
+
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
@@ -391,14 +406,14 @@ if isMC:
             )
         )
 
-        
+
         analyzerChain.append(
             XGBEvaluation(
                 systName=systName,
                 jetCollection=jetCollection
             )
         )
-        
+
 
 else:
     analyzerChain.append(
@@ -456,7 +471,7 @@ else:
         )
     )
 
-    
+
     analyzerChain.append(
         TaggerEvaluationProfiled(
             modelPath=modelPath[year],
@@ -469,8 +484,8 @@ else:
             evalValues = np.linspace(-3,2,5*5+1)
         )
     )
-    
-    
+
+
     analyzerChain.append(
 	EventCategorization(
             looseLeptons=lambda event: event.subleadingLeptons,
@@ -478,9 +493,20 @@ else:
             taggerName="llpdnnx",
             outputName="category_nominal",
             globalOptions=globalOptions
-       
+
        )
     )
+
+    analyzerChain.append(
+       SimplifiedEventCategorization(
+            looseLeptons=lambda event: event.subleadingLeptons,
+            jetsCollection=lambda event: event.selectedJets_nominal[:4],
+            taggerName="llpdnnx",
+            outputName="category_simplified_nominal",
+            globalOptions=globalOptions
+       )
+    )
+
     analyzerChain.extend([
         WbosonReconstruction(
             leptonCollectionName='leadingLeptons',
@@ -544,7 +570,7 @@ taggerTypes = ['EventCategorization', 'TaggerEvaluationProfiled']
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):
         if type(analyzer).__name__ == "PileupWeight":
-            analyzerChain.pop(ianalyzer)   
+            analyzerChain.pop(ianalyzer)
 
 if args.noTagger:
     analyzerChain = ([module for module in analyzerChain if type(module).__name__ not in taggerTypes])

@@ -53,6 +53,17 @@ chain = []
 
 chain.append(LeptonGenEfficiency())
 
+storeVariables = [
+]
+
+for coupling in range(1,68):
+    storeVariables.append([
+        lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
+        lambda tree, event, coupling=coupling: tree.fillBranch('LHEWeights_coupling_%i'%coupling,getattr(event,"LHEWeights_coupling_%i"%coupling)),
+    ])
+
+chain.append(EventInfo(storeVariables=storeVariables))
+
 p = PostProcessor(
     args.output[0],
     [args.inputFiles],
