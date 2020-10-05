@@ -172,7 +172,7 @@ class EventCategorization(Module):
                             secondValue = taggerOutput[label]
                             secondParam = taggerOutput['parameter']
                             secondJet  = jet
-                        secondDict = taggerOutput
+                            secondDict = taggerOutput
         bestValues.append(secondValue)
         bestIndices.append(secondIndex)
         bestParams.append(secondParam)
