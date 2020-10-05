@@ -18,7 +18,7 @@ class LeptonCollecting(Module):
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron","relIso"]
+        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz"]
     ):
 
         self.globalOptions = globalOptions
@@ -40,7 +40,7 @@ class LeptonCollecting(Module):
         self.out.branch("nleading"+self.outputName, "I")
         self.out.branch("nsubleading"+self.outputName, "I")
 
-        self.out.branch(self.outputName+"_muonmuon", "I") 
+        self.out.branch(self.outputName+"_muonmuon", "I")
         self.out.branch(self.outputName+"_electronelectron", "I")
         self.out.branch(self.outputName+"_muonelectron", "I")
         self.out.branch(self.outputName+"_electronmuon", "I")
@@ -85,7 +85,11 @@ class LeptonCollecting(Module):
         tightLeptons = sorted(tightLeptons, key=lambda x: x.pt, reverse=True)
         # select leading only, move subleading to "loose"
         looseLeptons.extend(tightLeptons[1:])
-        tightLeptons = tightLeptons[:1]
+
+        if len(tightLeptons) > 0:
+            tightLeptons = [tightLeptons[0]]
+        else:
+            tightLeptons = []
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
 
         muonmuon = 0
@@ -96,26 +100,39 @@ class LeptonCollecting(Module):
         electronjets = 0
 
         ## flavour categorisation :
+        if len(tightLeptons) > 0 and len(looseLeptons) > 0:
+            if tightLeptons[0].isMuon and looseLeptons[0].isMuon:
+                muonmuon = 1
 
-        if len(tightLeptons)>0:
-            if len(looseLeptons) > 0:
-                if tightLeptons[0].isMuon and looseLeptons[0].isMuon:
-                    muonmuon = 1
-                
-                elif tightLeptons[0].isElectron and looseLeptons[0].isElectron:
-                    electronelectron= 1
+            elif tightLeptons[0].isElectron and looseLeptons[0].isElectron:
+                electronelectron= 1
+
+            elif tightLeptons[0].isMuon and looseLeptons[0].isElectron:
+                muonelectron = 1
+
 
                 elif tightLeptons[0].isMuon and looseLeptons[0].isElectron:
                     muonelectron = 1
 
-                elif tightLeptons[0].isElectron and looseLeptons[0].isMuon:
-                    electronmuon = 1
-            else:
-                if tightLeptons[0].isMuon:
-                    muonjets = 1 
-                elif tightLeptons[0].isElectron:
-                    electronjets = 1 
 
+        elif len(tightLeptons) > 0:
+            if tightLeptons[0].isMuon:
+                muonjets = 1
+            elif tightLeptons[0].isElectron:
+                electronjets = 1
+
+        if muonmuon or muonelectron or muonjets:
+            if event.IsoMuTrigger_flag:
+                setattr(event, "isTriggered", 1)
+            else:
+                setattr(event, "isTriggered", 0)
+        elif electronelectron or electronmuon or electronjets:
+            if event.IsoElectronTrigger_flag:
+                setattr(event, "isTriggered", 1)
+            else:
+                setattr(event, "isTriggered", 0)
+        else:
+            setattr(event, "isTriggered", 0)
 
 
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
@@ -125,7 +142,7 @@ class LeptonCollecting(Module):
             self.out.fillBranch("leading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),tightLeptons))
             self.out.fillBranch("subleading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),looseLeptons))
 
-        self.out.fillBranch(self.outputName+"_muonmuon", muonmuon) 
+        self.out.fillBranch(self.outputName+"_muonmuon", muonmuon)
         self.out.fillBranch(self.outputName+"_electronelectron", electronelectron)
         self.out.fillBranch(self.outputName+"_muonelectron", muonelectron)
         self.out.fillBranch(self.outputName+"_electronmuon", electronmuon)
@@ -136,4 +153,3 @@ class LeptonCollecting(Module):
         setattr(event, "subleading"+self.outputName, looseLeptons)
 
         return True
-    

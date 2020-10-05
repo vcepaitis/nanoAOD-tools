@@ -26,6 +26,8 @@ class MuonSelection(Module):
         muonIso=TIGHT,
         muonMinPt=25.,
         muonMaxEta=2.4,
+        muonMaxDxy=-1.,
+        muonMaxDz=-1.,
         storeKinematics=['pt','eta'],
         storeWeights=False,
         selectLeadingOnly=False,
@@ -37,6 +39,8 @@ class MuonSelection(Module):
         self.outputName = outputName
         self.muonMinPt = muonMinPt
         self.muonMaxEta = muonMaxEta
+        self.muonMaxDxy = muonMaxDxy
+        self.muonMaxDz = muonMaxDz
         self.storeKinematics = storeKinematics
         self.storeWeights = storeWeights
         self.selectLeadingOnly = selectLeadingOnly
@@ -275,6 +279,10 @@ class MuonSelection(Module):
         #https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Tight_Muon
         for muon in muons:
             if muon.pt>self.muonMinPt and math.fabs(muon.eta)<self.muonMaxEta and self.muonId(muon) and self.muonIso(muon) and self.triggerMatched(muon, trigger_object):
+                if self.muonMaxDxy > 0. and abs(muon.dxy) > self.muonMaxDxy:
+                    continue
+                if self.muonMaxDz > 0. and abs(muon.dz) > self.muonMaxDz:
+                    continue
                 selectedMuons.append(muon)
                 if not self.globalOptions["isData"] and self.storeWeights:
                     if self.globalOptions["year"] == 2016:

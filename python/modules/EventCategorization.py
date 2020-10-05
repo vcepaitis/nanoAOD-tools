@@ -57,11 +57,12 @@ class EventCategorization(Module):
         self.out = wrappedOutputTree
         self.out.branch("n"+self.outputName, "I") 	
         self.out.branch(self.outputName+"_lepton_dxy_sig","F")
-        self.out.branch(self.outputName+"_taggerBestJet_deltaR", "F")
         self.out.branch(self.outputName+"_taggerBestOutputValue" , "F", lenVar="n"+self.outputName ) 
         self.out.branch(self.outputName+"_taggerBestOutputLabel", "F", lenVar="n"+self.outputName )      
         self.out.branch(self.outputName+"_taggerBestOutputParameter", "F" , lenVar="n"+self.outputName)     
+        self.out.branch(self.outputName+"_taggerBestJet_deltaR", "F" , lenVar="n"+self.outputName)
         self.out.branch(self.outputName+"_outputSum", "F", lenVar="n"+self.outputName) 
+        self.out.branch(self.outputName+"_taggerJetsPt", "F", lenVar="n"+self.outputName) 
         self.out.branch(self.outputName+"_allCategories", "I")
         if self.globalOptions["isSignal"]:
             self.out.branch(self.outputName+"_taggerBestOutputTruth","F",lenVar="n"+self.outputName)    
@@ -73,7 +74,6 @@ class EventCategorization(Module):
         ## you need to add the variables you want to store and to fill the branches afterword.
         jets = self.jetsCollection(event) 
         looseLeptons = self.looseLeptons(event)
-        deltaRllpJet = -1.
         '''
         dict = {'LLP_Q': 0,
                 'LLP_MU': 1,
@@ -111,6 +111,7 @@ class EventCategorization(Module):
                       'isLLP_B' : 16 ,  
                     }
 
+
         # only for MC: truth labels
         if self.globalOptions["isSignal"]:
             jetOrigin = Collection(event, "jetorigin")
@@ -127,16 +128,17 @@ class EventCategorization(Module):
       	bestValue = []
       	bestParam = [] 
       	bestDict = []
-      	bestJet.append(jets[0])
-        bestIndex.append( dict[self.jetLabels[0]])
-      	bestValue.append(getattr(bestJet[0], self.taggerName)[self.jetLabels[0]] )
-      	bestParam.append(getattr(bestJet[0], self.taggerName)['parameter'])
-      	bestDict.append(getattr(bestJet[0], self.taggerName))
-    	
+      	bestJet.append(-10.)
+       
+        bestIndex.append(-10.)
+        bestValue.append(-10. )
+        bestParam.append(-10.)
+        bestDict.append(-10.)
+        
         for ijet, jet in enumerate(jets):
             taggerOutput = getattr(jet, self.taggerName)
             for label in self.jetLabels:
-                 if bestValue[0] < taggerOutput[label]:
+                 if bestValue[0] < taggerOutput[label] :
                     bestIndex[0] = dict[label]
                     bestValue[0] = taggerOutput[label] 
                     bestParam[0] = taggerOutput['parameter']
@@ -144,27 +146,27 @@ class EventCategorization(Module):
 		    bestDict[0] = taggerOutput 
 
 	# looking for second llp proba  jet. 
-	secondValue = 0.
+	secondValue = -10.
 	secondIndex = -10
 	secondParam = -10.
-	secondJet = 0. 
+	secondJet = -10. 
 	secondDict = {}
 	if len(jets) > 1 :
            for ijet, jet in enumerate(jets):
              if jet !=  bestJet[0]:
                taggerOutput = getattr(jet, self.taggerName)
                for label in self.jetLabels:
-                 if secondValue < taggerOutput[label] and taggerOutput[label] < bestValue[0] :
+                 if secondValue < taggerOutput[label] and taggerOutput[label] < bestValue[0]  :
                     secondIndex= dict[label]
                     secondValue = taggerOutput[label] 
                     secondParam = taggerOutput['parameter']
                     secondJet  = jet 
                     secondDict = taggerOutput 
-           bestValue.append(secondValue)
-           bestIndex.append(secondIndex)
-           bestParam.append(secondParam)
-           bestJet.append(secondJet)
-           bestDict.append(secondDict)
+        bestValue.append(secondValue)
+        bestIndex.append(secondIndex)
+        bestParam.append(secondParam)
+        bestJet.append(secondJet)
+        bestDict.append(secondDict)
 
 
         # looking for the truth labeling for each best jet per label. only for MC
@@ -174,11 +176,11 @@ class EventCategorization(Module):
                 # loop over sub true flags 
 
                 for originFlag in self.flags[k]:
-		    if  len(bestJet) == 1 : 
+		    if  len(bestJet) == 1  and bestJet[0]!= -10. : 
                          flagValue = getattr(jetOrigin[bestJet[0]._index], originFlag)
                          if (flagValue > 0.5):
                               indexFlag[0]  = dictTruth[k]
-		    elif len(bestJet) > 1 : 
+		    elif len(bestJet) > 1 and bestJet[1]!= -10.  : 
                       flagValue = getattr(jetOrigin[bestJet[0]._index], originFlag)
                       flagValue2 = getattr(jetOrigin[bestJet[1]._index], originFlag)
                       if (flagValue > 0.5):
@@ -188,78 +190,43 @@ class EventCategorization(Module):
 	   
                                
 	# sum of all llp proba for the best LLP jets.
-        '''
+        
         outputSum = []
         
         for i , jet in enumerate(bestJet) : 
            output = 0.
-           for label in self.jetLabels : 
-		output += getattr(jet, self.taggerName)[label]
-	   outputSum.append(output)
-        '''       
+           if not jet == -10. : 
+              for label in self.jetLabels : 
+	       	  output += getattr(jet, self.taggerName)[label]
+	      outputSum.append(output)
+             
 
-        # higher level categorisation 
-        # number of leptons per event. 
+ 
+        nLLP = 0 
+        deltaRllpJet = [] 
+        if len(looseLeptons) == 0 : 
+           for l in bestJet : 
+              deltaRllpJet.append( -1.)
+        else : 
+           for j in bestJet : 
+             if not j == -10. : 
+                 deltaRllpJet.append(deltaR(looseLeptons[0], j))
+
+
+
+        for i , o in enumerate(outputSum) : 
+            if o > 0.5  :
+              nLLP +=1 
+       
+ 
         nleptons = 0 
 	if len(looseLeptons) == 0 :
            nleptons = 1 
         else : 
            nleptons = 2 
 
-        nLLP = 0 
-        '''
-        for o in outputSum : 
-            if o > 0.5 :
-             nLLP +=1 
-        '''
-        if len (bestJet )== 1 : nLLP = 1 
-        else : nLLP = 2 
-
-        if len(bestJet) == 1 : 
-           bestValue.append(-10.)
-           bestIndex.append(-10)
-           bestParam.append(-10)
-           if self.globalOptions["isSignal"]:
-                 indexFlag.append(-10)                 
-
-        # resolved value will depend on the  nb of LLP and their labels 
-
-        # resolved =
-        # 1  // 1 llp_Q 
-        # 2  // 2 LLP_Q 
-        # 3  // 1 LLP_Q + 1 LLP_MU
-        # 4  // 1 LLP_Q + 1 LLP_QMU
-        # 5 //  1 LLP_Q + 1 LLP_E  
-        # 6 //  1 LLP_Q + 1 LLP_QE
-
-        ##### new resolved cases : 
-        # resolved = 
-        # 1 // 1 llp_Q 
-        # 2 // 2 llp_Q
-        # 3 // 1 llp_Q + LLP_QMU 
-        # 4 // 1 llp_Q + LLP_QE
-
-
         resolved = 0
         merged = 0
-        #bkgd = 0
-
-         
-        '''
-        if nLLP == 1 : 
-          if bestIndex[0] == 0 : 
-              resolved = 1 
-          elif bestIndex[0] == 2 or bestIndex[0] == 4 or bestIndex[0] == 6 : 
-	      merged = 1
-          else : 
-              bkgd = 1 
-
-        elif  nLLP == 2 : 
-           sum = 2 
-           for i in bestIndex : 
-               sum += i 
-           resolved = sum 
-        '''
 
         if nLLP == 1 : 
           if bestIndex[0] == 0 : resolved = 1 
@@ -284,60 +251,40 @@ class EventCategorization(Module):
              
         elif nleptons == 2 and nLLP == 2 and  resolved  == 2 : 
 
-          xbin  = 3 
+          #xbin  = 3   # merging the 2 jets with 1 jet diplepton events 
+ 	  xbin   = 2
 
         elif nleptons == 2 and nLLP == 2 and   (resolved  == 3 or resolved == 4) :
 
-          xbin = 4
+          #xbin = 4
+	  xbin = 1
  
         elif nleptons == 1 and nLLP == 1 and  resolved  == 1 : 
 
-          xbin  = 5
+          xbin  = 3
 
         elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
 
-          xbin  = 6
- 
-        '''
-        elif nleptons == 2 and nLLP == 2 and  (resolved  == 3 or resolved == 5) : 
+          xbin  = 4
 
-          xbin  = 4 
-
-
-        elif nleptons == 2 and nLLP == 2  and  (resolved  == 4 or resolved == 6) : 
-
-          xbin  = 5 
-
-        elif nleptons == 1 and nLLP == 1 and  resolved  == 1 : 
-
-          xbin  = 6 
-
-        elif nleptons == 1 and nLLP == 2 and  resolved  == 2 : 
-
-          xbin  = 7 
-        '''
-
-    
-     
-	# you need now the deltaR of the second muon with the llp jet.  0 and >1 loose lepton categories
-        if len(looseLeptons) == 0: 
-           deltaRllpJet = -1. 
-        else :  
-           deltaRllpJet = deltaR(looseLeptons[0], bestJet[0])  
-        self.out.fillBranch(self.outputName+"_taggerBestJet_deltaR", deltaRllpJet)
-        self.out.fillBranch(self.outputName+"_allCategories" , xbin)
- 
+	tagggerJetsPt = [] 
+	for index , b in enumerate(bestJet) : 
+          if not b < -9. : 
+ 		tagggerJetsPt.append(b.pt)
+      
+        self.out.fillBranch(self.outputName+"_allCategories" , xbin) 
         if len(looseLeptons) == 0 or math.fabs(looseLeptons[0].dxyErr) < 1e-6 :
-             self.out.fillBranch(self.outputName+"_lepton_dxy_sig",-1
-)
+             self.out.fillBranch(self.outputName+"_lepton_dxy_sig",-1)
         elif math.fabs(looseLeptons[0].dxyErr) > 1e-6 and len(looseLeptons) > 0 :
              self.out.fillBranch(self.outputName+"_lepton_dxy_sig", math.fabs(looseLeptons[0].dxy)/math.fabs(looseLeptons[0].dxyErr))
 
-        self.out.fillBranch("n"+self.outputName, 2)  
+        self.out.fillBranch("n"+self.outputName, nLLP)  
+        self.out.fillBranch(self.outputName+"_taggerJetsPt", tagggerJetsPt)
+        self.out.fillBranch(self.outputName+"_taggerBestJet_deltaR", deltaRllpJet)
         self.out.fillBranch(self.outputName+"_taggerBestOutputValue", bestValue)
         self.out.fillBranch(self.outputName+"_taggerBestOutputParameter",bestParam)
         self.out.fillBranch(self.outputName+"_taggerBestOutputLabel",bestIndex)
-        #self.out.fillBranch(self.outputName+"_outputSum",outputSum)
+        self.out.fillBranch(self.outputName+"_outputSum",outputSum)
         if self.globalOptions["isSignal"]:
         	self.out.fillBranch(self.outputName+"_taggerBestOutputTruth",indexFlag)
         return True 

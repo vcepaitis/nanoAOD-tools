@@ -70,6 +70,8 @@ class LeptonGenEfficiency(Module):
         self.out.branch("nmuon", "I")
         self.out.branch("nelectron", "I")
         self.out.branch("ntau", "I")
+        self.out.branch("nGenLeptonsFromW", "I")
+        self.out.branch("nGenLeptonsFromTauFromW", "I")
 
         for feature in self.muon_features:
             self.out.branch("muon_"+feature, "F", lenVar="nmuon")
@@ -77,6 +79,8 @@ class LeptonGenEfficiency(Module):
             self.out.branch("electron_"+feature, "F", lenVar="nelectron")
         for feature in self.tau_features:
             self.out.branch("tau_"+feature, "F", lenVar="ntau")
+        self.out.branch("GenLeptonsFromW_pt", "F", lenVar="nGenLeptonsFromW")
+        self.out.branch("GenLeptonsFromTauFromW_pt", "F", lenVar="nGenLeptonsFromTauFromW")
 
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -88,6 +92,26 @@ class LeptonGenEfficiency(Module):
         photons = self.photonCollection(event)
         muons = self.muonCollection(event)
         jets = self.jetCollection(event)
+
+
+        genLeptonsFromW = []
+        genLeptonsFromTauFromW = []
+
+        for genParticle in genParticles:
+            if genParticle.genPartIdxMother != -1 and abs(genParticle.pdgId) in [11, 13]:
+                mother = genParticles[genParticle.genPartIdxMother]
+                if abs(mother.pdgId == 24):
+                    genLeptonsFromW.append(genParticle)
+                elif abs(mother.pdgId == 15):
+                    if mother.genPartIdxMother != -1:
+                        grandmother = genParticles[mother.genPartIdxMother]
+                        if abs(grandmother.pdgId) == 24:
+                            genLeptonsFromTauFromW.append(genParticle)
+
+        self.out.fillBranch("nGenLeptonsFromW", len(genLeptonsFromW)) 
+        self.out.fillBranch("nGenLeptonsFromTauFromW", len(genLeptonsFromTauFromW)) 
+        self.out.fillBranch("GenLeptonsFromW_pt", [getattr(lepton, "pt") for lepton in genLeptonsFromW])
+        self.out.fillBranch("GenLeptonsFromTauFromW_pt", [getattr(lepton, "pt") for lepton in genLeptonsFromTauFromW])
 
         genElectrons = list(filter(lambda genParticle: abs(genParticle.pdgId) == 11 and genParticle.genPartIdxMother != -1, genParticles))
         genMuons = list(filter(lambda genParticle: abs(genParticle.pdgId) == 13 and genParticle.genPartIdxMother != -1, genParticles))

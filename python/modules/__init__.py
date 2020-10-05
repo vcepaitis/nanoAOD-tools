@@ -1,6 +1,5 @@
 import ROOT
 import sys
-
 #can only load this once
 if (ROOT.gSystem.Load("libPhysicsToolsNanoAODTools.so")!=0):
     print "Cannot load 'libPhysicsToolsNanoAODTools'"
@@ -37,5 +36,6 @@ from XGBEvaluation import XGBEvaluation
 from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
 from EventCategorization import EventCategorization
+from SimplifiedEventCategorization import SimplifiedEventCategorization
 from LHEWeights import LHEWeights
 from LeptonGenEfficiency import LeptonGenEfficiency
