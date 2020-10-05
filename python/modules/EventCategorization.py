@@ -172,7 +172,7 @@ class EventCategorization(Module):
         secondParam = -10.
         secondJet = -10.
         secondDict = {}
-        if len(jets) > 1:
+        if len(selectedJets) > 1:
             for ijet, jet in enumerate(selectedJets):
                 if jet != bestJets[0]:
                     taggerOutput = getattr(jet, self.taggerName)
@@ -232,8 +232,8 @@ class EventCategorization(Module):
                     deltaRllpJet.append(deltaR(looseLeptons[0], j))
 
         for i, o in enumerate(outputSums):
-            if o > 0.5:
-                nLLP +=1
+            #if o > 0.5:
+            nLLP +=1
 
         nleptons = 0
         if len(looseLeptons) == 0 :
