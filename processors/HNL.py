@@ -362,6 +362,7 @@ if isMC:
 
         analyzerChain.append(
            SimplifiedEventCategorization(
+                tightLeptons=lambda event: event.leadingLeptons,
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
                 taggerName="llpdnnx",
@@ -499,6 +500,7 @@ else:
 
     analyzerChain.append(
        SimplifiedEventCategorization(
+            tightLeptons=lambda event: event.leadingLeptons,
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
             taggerName="llpdnnx",
