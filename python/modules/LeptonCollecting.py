@@ -18,9 +18,9 @@ class LeptonCollecting(Module):
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz"]
+        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ):
-        
+
         self.globalOptions = globalOptions
         self.tightMuonCollection = tightMuonCollection
         self.tightElectronCollection = tightElectronCollection
@@ -28,19 +28,19 @@ class LeptonCollecting(Module):
         self.looseElectronCollection = looseElectronCollection
         self.outputName = outputName
         self.storeKinematics = storeKinematics
- 
+
     def beginJob(self):
         pass
-        
+
     def endJob(self):
         pass
-        
+
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         self.out.branch("nleading"+self.outputName, "I")
         self.out.branch("nsubleading"+self.outputName, "I")
 
-        self.out.branch(self.outputName+"_muonmuon", "I") 
+        self.out.branch(self.outputName+"_muonmuon", "I")
         self.out.branch(self.outputName+"_electronelectron", "I")
         self.out.branch(self.outputName+"_muonelectron", "I")
         self.out.branch(self.outputName+"_electronmuon", "I")
@@ -53,10 +53,10 @@ class LeptonCollecting(Module):
 
         #for variable in self.storeKinematics:
             #self.out.branch(self.outputName+"_"+variable,"F",lenVar="n"+self.outputName)
-        
+
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-        
+
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
 
@@ -86,7 +86,7 @@ class LeptonCollecting(Module):
         # select leading only, move subleading to "loose"
         looseLeptons.extend(tightLeptons[1:])
         if len(tightLeptons) > 0:
-            tightLeptons = [tightLeptons[0]] 
+            tightLeptons = [tightLeptons[0]]
         else:
             tightLeptons = []
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
@@ -103,7 +103,7 @@ class LeptonCollecting(Module):
         if len(tightLeptons) > 0 and len(looseLeptons) > 0:
             if tightLeptons[0].isMuon and looseLeptons[0].isMuon:
                 muonmuon = 1
-            
+
             elif tightLeptons[0].isElectron and looseLeptons[0].isElectron:
                 electronelectron= 1
 
@@ -115,9 +115,9 @@ class LeptonCollecting(Module):
 
         elif len(tightLeptons) > 0:
             if tightLeptons[0].isMuon:
-                muonjets = 1 
+                muonjets = 1
             elif tightLeptons[0].isElectron:
-                electronjets = 1 
+                electronjets = 1
 
         if muonmuon or muonelectron or muonjets:
             if event.IsoMuTrigger_flag:
@@ -132,6 +132,16 @@ class LeptonCollecting(Module):
         else:
             setattr(event, "isTriggered", 0)
 
+        for lepton in tightLeptons+looseLeptons:
+            if lepton.dxyErr < 1e-6:
+                 setattr(lepton, "dxysig", -1.)
+            else:
+                 setattr(lepton, "dxysig", math.fabs(lepton.dxy)/math.fabs(lepton.dxyErr))
+
+            if lepton.dzErr < 1e-6:
+                 setattr(lepton, "dzsig", -1.)
+            else:
+                 setattr(lepton, "dzsig", math.fabs(lepton.dz)/math.fabs(lepton.dzErr))
 
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
         self.out.fillBranch("nsubleading"+self.outputName, len(looseLeptons))
@@ -140,7 +150,7 @@ class LeptonCollecting(Module):
             self.out.fillBranch("leading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),tightLeptons))
             self.out.fillBranch("subleading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),looseLeptons))
 
-        self.out.fillBranch(self.outputName+"_muonmuon", muonmuon) 
+        self.out.fillBranch(self.outputName+"_muonmuon", muonmuon)
         self.out.fillBranch(self.outputName+"_electronelectron", electronelectron)
         self.out.fillBranch(self.outputName+"_muonelectron", muonelectron)
         self.out.fillBranch(self.outputName+"_electronmuon", electronmuon)
@@ -151,4 +161,3 @@ class LeptonCollecting(Module):
         setattr(event, "subleading"+self.outputName, looseLeptons)
 
         return True
-        
