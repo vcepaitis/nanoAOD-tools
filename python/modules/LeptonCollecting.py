@@ -18,7 +18,7 @@ class LeptonCollecting(Module):
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron","relIso"]
+        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz"]
     ):
         
         self.globalOptions = globalOptions
@@ -85,7 +85,10 @@ class LeptonCollecting(Module):
         tightLeptons = sorted(tightLeptons, key=lambda x: x.pt, reverse=True)
         # select leading only, move subleading to "loose"
         looseLeptons.extend(tightLeptons[1:])
-        tightLeptons = [tightLeptons[0]]
+        if len(tightLeptons) > 0:
+            tightLeptons = [tightLeptons[0]] 
+        else:
+            tightLeptons = []
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
 
         muonmuon = 0
@@ -97,7 +100,7 @@ class LeptonCollecting(Module):
 
         ## flavour categorisation :
 
-        if len(looseLeptons) > 0:
+        if len(tightLeptons) > 0 and len(looseLeptons) > 0:
             if tightLeptons[0].isMuon and looseLeptons[0].isMuon:
                 muonmuon = 1
             
@@ -110,17 +113,24 @@ class LeptonCollecting(Module):
             elif tightLeptons[0].isElectron and looseLeptons[0].isMuon:
                 electronmuon = 1
 
-        elif tightLeptons[0].isMuon:
-            muonjets = 1 
-        elif tightLeptons[0].isElectron:
-            electronjets = 1 
+        elif len(tightLeptons) > 0:
+            if tightLeptons[0].isMuon:
+                muonjets = 1 
+            elif tightLeptons[0].isElectron:
+                electronjets = 1 
 
         if muonmuon or muonelectron or muonjets:
-            if not event.IsoMuTrigger_flag:
-                return False
+            if event.IsoMuTrigger_flag:
+                setattr(event, "isTriggered", 1)
+            else:
+                setattr(event, "isTriggered", 0)
         elif electronelectron or electronmuon or electronjets:
-            if not event.IsoElectronTrigger_flag:
-                return False
+            if event.IsoElectronTrigger_flag:
+                setattr(event, "isTriggered", 1)
+            else:
+                setattr(event, "isTriggered", 0)
+        else:
+            setattr(event, "isTriggered", 0)
 
 
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))

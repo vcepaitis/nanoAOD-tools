@@ -143,7 +143,7 @@ p = PostProcessor(
     args.output[0],
     [args.inputFiles],
     modules=analyzerChain,
-    maxEvents=30000,
+    maxEvents=10000,
     cut="(nJet>0)",
     friend=True
 )
