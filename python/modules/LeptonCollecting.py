@@ -111,10 +111,6 @@ class LeptonCollecting(Module):
                 muonelectron = 1
 
 
-                elif tightLeptons[0].isMuon and looseLeptons[0].isElectron:
-                    muonelectron = 1
-
-
         elif len(tightLeptons) > 0:
             if tightLeptons[0].isMuon:
                 muonjets = 1

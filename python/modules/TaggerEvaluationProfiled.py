@@ -22,9 +22,9 @@ class TaggerEvaluationProfiled(Module):
         taggerName = "llpdnnx",
         evalValues = range(-1, 4),
         profiledLabelDict = {
-                            'LLP_Q': ['LLP_Q', 'LLP_TAU', 'LLP_QTAU'],
-                            'LLP_QE': ['LLP_E', 'LLP_QE'],
-                            'LLP_QMU': ['LLP_MU', 'LLP_QMU']
+                            'LLP_Q': ['LLP_Q', 'LLP_QTAU'],
+                            'LLP_QE': [ 'LLP_QE'],
+                            'LLP_QMU': [ 'LLP_QMU']
                             },
         globalOptions = {"isData":False},
     ):
@@ -54,7 +54,7 @@ class TaggerEvaluationProfiled(Module):
                         str(self.predictionLabels)
                     )
                     sys.exit(1)
-        
+
         self.taggerName = taggerName
 
 
@@ -237,4 +237,3 @@ class TaggerEvaluationProfiled(Module):
                     taggerOutput['parameter'] = -10
                     setattr(jet, self.taggerName, taggerOutput)
         return True
-
