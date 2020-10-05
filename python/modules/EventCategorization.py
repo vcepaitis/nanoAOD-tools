@@ -136,17 +136,27 @@ class EventCategorization(Module):
 
         bestJets = []
         bestIndices = []
-      	bestValues = []
-      	bestParams = []
-      	bestDicts = []
-        
+        bestValues = []
+        bestParams = []
+        bestDicts = []
+
         bestJets.append(-10.)
         bestIndices.append(-10.)
         bestValues.append(-10.)
         bestParams.append(-10.)
         bestDicts.append(-10.)
 
+        selectedJets = []
+
         for ijet, jet in enumerate(jets):
+            if len(looseLeptons) > 0:
+                minDeltaR = min([deltaR(jet, lepton) for lepton in looseLeptons])
+                if (minDeltaR < self.maxDeltaR):
+                    selectedJets.append(jet)
+            else:
+                selectedJets.append(jet)
+
+        for ijet, jet in enumerate(selectedJets):
             taggerOutput = getattr(jet, self.taggerName)
             for label in self.jetLabels:
                  if bestValues[0] < taggerOutput[label]:
@@ -163,7 +173,7 @@ class EventCategorization(Module):
         secondJet = -10.
         secondDict = {}
         if len(jets) > 1:
-            for ijet, jet in enumerate(jets):
+            for ijet, jet in enumerate(selectedJets):
                 if jet != bestJets[0]:
                     taggerOutput = getattr(jet, self.taggerName)
                     for label in self.jetLabels:
