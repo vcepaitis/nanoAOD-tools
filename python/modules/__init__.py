@@ -17,7 +17,6 @@ from EventSkim import EventSkim
 from EventObservables import EventObservables
 from WbosonReconstruction import WbosonReconstruction
 from MetFilter import MetFilter
-from JetDYMixing import JetDYMixing
 from PileupWeight import PileupWeight
 from TaggerWorkingpoints import TaggerWorkingpoints
 from EventInfo import EventInfo
