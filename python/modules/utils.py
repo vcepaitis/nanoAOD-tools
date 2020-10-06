@@ -140,3 +140,8 @@ def getAbscissasAndWeights(N=5):
 
     return roots, weights
 
+def calcHash(value):
+    h = ((value >> 16) ^ value) * 0x45d9f3b
+    h = ((h >> 16) ^ h) * 0x45d9f3b
+    h = (h >> 16) ^ h
+    return h

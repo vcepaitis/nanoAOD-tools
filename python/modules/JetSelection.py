@@ -8,7 +8,7 @@ import random
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import deltaR
+from utils import deltaR, deltaPhi
 
 
 class JetSelection(Module):
@@ -124,14 +124,24 @@ class JetSelection(Module):
             if jetPtLeptonSubtracted<self.jetMinPt:
                 unselectedJets.append(jet)
                 continue
+            
 
-            if self.dRCleaning > 0. and len(leptonsForDRCleaning) > 0:
+            if len(leptonsForDRCleaning) > 0:
+                mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))
                 mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsForDRCleaning))
+                
                 if mindr < self.dRCleaning:
                     unselectedJets.append(jet)
                     continue
-
+                    
+                setattr(jet,"minDPhiClean",mindphi)
+                setattr(jet,"minDRClean",mindr)
+            else:
+                setattr(jet,"minDPhiClean",100)
+                setattr(jet,"minDRClean",100)
+                
             selectedJets.append(jet)
+
 
             if self.flagDA:
                 flagsDA[jet._index] = 1.
@@ -148,3 +158,4 @@ class JetSelection(Module):
         setattr(event, self.outputName+"_unselected", unselectedJets)
 
         return True
+

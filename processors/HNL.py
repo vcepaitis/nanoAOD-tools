@@ -193,16 +193,11 @@ analyzerChain.append(jetmetCorrector())
 
 
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict_mixed.py"
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2016.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2017.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2018.pb"
-}
-modelGunPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2016.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2017.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weightGun2018.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2018.pb"
 }
 
 jesUncertaintyFile = {
@@ -400,7 +395,6 @@ if isMC:
         analyzerChain.append(
             EventObservables(
                 jetCollection=jetCollection,
-                leptonCollection=lambda event: event.leadingLeptons[0],
                 metInput=metObject,
                 globalOptions=globalOptions,
                 outputName="EventObservables_"+systName
@@ -521,7 +515,6 @@ else:
     analyzerChain.append(
         EventObservables(
             jetCollection=lambda event: event.selectedJets_nominal,
-            leptonCollection=lambda event: event.leadingLeptons[0],
             metInput=met_variable[year],
             globalOptions=globalOptions,
             outputName="EventObservables_nominal"

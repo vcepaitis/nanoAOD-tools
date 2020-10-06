@@ -26,6 +26,7 @@ from EventDump import EventDump
 from InvariantSystem import InvariantSystem
 from JetTruthFlags import JetTruthFlags
 from JetTaggerResult import JetTaggerResult
+from JetTaggerProfiledResult import JetTaggerProfiledResult
 from PDFWeights import PDFWeights
 from WNLOWeights import WNLOWeights
 from JetFeatures import JetFeatures
