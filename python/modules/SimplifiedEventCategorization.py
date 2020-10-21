@@ -7,7 +7,7 @@ import random
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
-from utils import deltaR, getCtauLabel
+from utils import deltaR, getCtauLabel, deltaPhi
 
 class SimplifiedEventCategorization(Module):
     def __init__(
@@ -30,7 +30,7 @@ class SimplifiedEventCategorization(Module):
             'isG': ['isG'],
             'isPU': ['isPU'],
             'isLLP_Q': ['isLLP_RAD','isLLP_Q','isLLP_QQ', 'isLLP_TAU', 'isLLP_QTAU', 'isLLP_QQTAU'],
-            'isLLP_QMU': ['isLLP_QMU', 'isLLP_QQMU', 'isLLP_MU'],
+          'isLLP_QMU': ['isLLP_QMU', 'isLLP_QQMU', 'isLLP_MU'],
             'isLLP_QE': ['isLLP_QE','isLLP_QQE', 'isLLP_E'],
             'isUndefined': ['isUndefined'],
         },
@@ -58,6 +58,7 @@ class SimplifiedEventCategorization(Module):
         self.out.branch("n"+self.outputName+"_lepJets", "I")
         self.out.branch("n"+self.outputName+"_resJets", "I")
         self.out.branch(self.outputName+"_WCandidateMass", "F")
+        self.out.branch(self.outputName+"_Lepton_LLPjet_deltaPhi", "F")
         self.out.branch(self.outputName+"_HNLCandidateMass", "F")
 
         for label in self.jetLabels:
@@ -84,12 +85,9 @@ class SimplifiedEventCategorization(Module):
         jets = self.jetsCollection(event)
         looseLeptons = self.looseLeptons(event)
         tightLeptons = self.tightLeptons(event)
-
-        # only for MC: truth labels
         if self.globalOptions["isSignal"]:
             jetOrigin = Collection(event, "jetorigin")
-            indexFlag = []
-            indexFlag.append(-10.)
+
 
         lepJets = []
         resJets = []
@@ -112,7 +110,7 @@ class SimplifiedEventCategorization(Module):
         elif len(jets) > 0:
             for jet in jets:
                 minDeltaR = min([deltaR(jet, lepton) for lepton in looseLeptons])
-                if(minDeltaR) < 0.4:
+                if (minDeltaR) < 0.4:
                     lepJets.append(jet)
                 elif (minDeltaR < self.maxDeltaR):
                     resJets.append(jet)
@@ -199,17 +197,26 @@ class SimplifiedEventCategorization(Module):
         WCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
 
 
+        lepton_LLPjet_deltaPhi = -999
         if category_index == 2:
-            HNLCandidateLorentzVector += lepJets[0].p4()
-            WCandidateLorentzVector += lepJets[0].p4()
+            HNLCandidateLorentzVector += lepJets[0].p4LeptonSubtracted
+            WCandidateLorentzVector += lepJets[0].p4LeptonSubtracted
+            if len(tightLeptons) > 0:
+                lepton_LLPjet_deltaPhi = abs(deltaPhi(tightLeptons[0], lepJets[0]))
         elif category_index > 0:
-            HNLCandidateLorentzVector += resJets[0].p4()
-            WCandidateLorentzVector += resJets[0].p4()
+            HNLCandidateLorentzVector += resJets[0].p4LeptonSubtracted
+            WCandidateLorentzVector += resJets[0].p4LeptonSubtracted
+            if len(tightLeptons) > 0:
+                lepton_LLPjet_deltaPhi = abs(deltaPhi(tightLeptons[0], resJets[0]))
+
         for lepton in looseLeptons:
             HNLCandidateLorentzVector += lepton.p4()
             WCandidateLorentzVector += lepton.p4()
+
         for lepton in tightLeptons:
             WCandidateLorentzVector += lepton.p4()
+
+
 
         WCandidateMass = WCandidateLorentzVector.M()
 
@@ -218,6 +225,7 @@ class SimplifiedEventCategorization(Module):
         else:
             HNLCandidateMass = HNLCandidateLorentzVector.M()
 
+        self.out.fillBranch(self.outputName+"_Lepton_LLPjet_deltaPhi", lepton_LLPjet_deltaPhi)
         self.out.fillBranch(self.outputName+"_WCandidateMass", WCandidateMass)
         self.out.fillBranch(self.outputName+"_HNLCandidateMass", HNLCandidateMass)
 

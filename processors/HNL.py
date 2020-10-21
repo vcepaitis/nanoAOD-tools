@@ -24,15 +24,18 @@ parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
+parser.add_argument('--skim', dest='skim', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
 testMode = args.testMode
+skim = args.skim
 print "isData:",args.isData
 print "isSignal:",args.isSignal
 print "inputs:",len(args.inputFiles)
 print "Running tagger", not args.noTagger
+
 
 for inputFile in args.inputFiles:
     if "-2016" in inputFile or "Run2016" in inputFile:
@@ -183,8 +186,8 @@ analyzerChain.append(
         outputName="dilepton"
     )
 )
-
-analyzerChain.append(EventSkim(selection=lambda event: ((event.dilepton_mass < 80. and event.dilepton_mass > 10.) or event.dilepton_mass > 100.) or event.Leptons_muonjets or event.Leptons_electronjets))
+if skim:
+    analyzerChain.append(EventSkim(selection=lambda event: ((event.dilepton_mass < 80. and event.dilepton_mass > 10.) or event.dilepton_mass > 100.) or event.Leptons_muonjets or event.Leptons_electronjets))
 
 
 '''
@@ -358,17 +361,18 @@ if isMC:
             )
         )
 
-    analyzerChain.append(
-        EventSkim(selection=lambda event: \
-            getattr(event, "EventObservables_nominal_met") < 100 or
-            getattr(event, "EventObservables_jerUp_met") < 100 or
-            getattr(event, "EventObservables_jerDown_met") < 100 or
-            getattr(event, "EventObservables_jesTotalUp_met") < 100 or
-            getattr(event, "EventObservables_jesTotalDown_met") < 100 or
-            getattr(event, "EventObservables_unclEnUp_met") < 100 or
-            getattr(event, "EventObservables_unclEnDown_met") < 100
+    if skim:
+        analyzerChain.append(
+            EventSkim(selection=lambda event: \
+                getattr(event, "EventObservables_nominal_met") < 100 or
+                getattr(event, "EventObservables_jerUp_met") < 100 or
+                getattr(event, "EventObservables_jerDown_met") < 100 or
+                getattr(event, "EventObservables_jesTotalUp_met") < 100 or
+                getattr(event, "EventObservables_jesTotalDown_met") < 100 or
+                getattr(event, "EventObservables_unclEnUp_met") < 100 or
+                getattr(event, "EventObservables_unclEnDown_met") < 100
+            )
         )
-    )
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
@@ -507,7 +511,8 @@ else:
         )
     )
 
-    analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
+    if skim:
+        analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
 
     analyzerChain.append(
         XGBEvaluation(
