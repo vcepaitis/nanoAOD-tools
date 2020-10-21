@@ -263,7 +263,6 @@ if isMC:
                 leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
                 jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
-                jetMinNConstituents=3,
                 jetId=JetSelection.LOOSE,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -450,7 +449,6 @@ else:
             leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
             jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
-            jetMinNConstituents=3,
             jetId=JetSelection.LOOSE,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
