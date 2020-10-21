@@ -19,8 +19,7 @@ class ElectronSelection(Module):
         electronID = "Iso_WP90",
         electronMinPt = 5.,
         electronMaxEta = 2.4,
-        electronMaxDxy=-1.,
-        electronMaxDz=-1.,
+        electronIPCuts = False,
         storeKinematics=['pt','eta'],
         storeWeights=False,
         selectLeadingOnly=False,
@@ -41,8 +40,7 @@ class ElectronSelection(Module):
         self.outputName = outputName
         self.electronMinPt = electronMinPt
         self.electronMaxEta = electronMaxEta
-        self.electronMaxDxy = electronMaxDxy
-        self.electronMaxDz = electronMaxDz
+        self.electronIPCuts = electronIPCuts
         self.storeKinematics = storeKinematics
         self.storeWeights = storeWeights
         self.selectLeadingOnly = selectLeadingOnly
@@ -179,12 +177,16 @@ class ElectronSelection(Module):
 
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
                 and self.electronID(electron) and self.triggerMatched(electron, trigger_object):
-
-                if self.electronMaxDxy > 0. and abs(electron.dxy) > self.electronMaxDxy:
-                    continue
-                if self.electronMaxDz > 0. and abs(electron.dz) > self.electronMaxDz:
-                    continue
-
+                # https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2
+                if self.electronIPCuts:
+                    if math.fabs(electron.eta) < 1.479:
+                        if abs(electron.dxy) > 0.05 or abs(electron.dz) > 0.10:
+                            unselectedElectrons.append(electron)
+                            continue
+                    else:
+                        if abs(electron.dxy) > 0.10 or abs(electron.dz) > 0.20:
+                            unselectedElectrons.append(electron)
+                            continue
 
                 if muons is not None and len(muons) > 0:
                     mindr = min(map(lambda muon: deltaR(muon, electron), muons))

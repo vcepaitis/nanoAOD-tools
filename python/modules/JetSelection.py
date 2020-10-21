@@ -76,10 +76,8 @@ class JetSelection(Module):
 
         jets = self.inputCollection(event)
 
-
         selectedJets = []
         unselectedJets = []
-
 
         leptonsForDRCleaning = self.leptonCollectionDRCleaning(event)
         leptonsForP4Subtraction = self.leptonCollectionP4Subraction(event)
@@ -115,10 +113,12 @@ class JetSelection(Module):
                         leptonP4 += lepton.p4()
                
             leptonPt = leptonP4.Pt()
-            jetPtLeptonSubtracted = (jet.p4()-leptonP4).Pt()
+            jetP4LeptonSubtracted = jet.p4()-leptonP4
+            jetPtLeptonSubtracted = jetP4LeptonSubtracted.Pt()
             
-            setattr(jet,"ptLepton",leptonPt)
-            setattr(jet,"ptLeptonSubtracted",jetPtLeptonSubtracted)
+            setattr(jet,"ptLepton", leptonPt)
+            setattr(jet,"p4LeptonSubtracted", jetP4LeptonSubtracted)
+            setattr(jet,"ptLeptonSubtracted", jetPtLeptonSubtracted)
             setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
             
             if jetPtLeptonSubtracted<self.jetMinPt:

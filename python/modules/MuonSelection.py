@@ -280,8 +280,10 @@ class MuonSelection(Module):
         for muon in muons:
             if muon.pt>self.muonMinPt and math.fabs(muon.eta)<self.muonMaxEta and self.muonId(muon) and self.muonIso(muon) and self.triggerMatched(muon, trigger_object):
                 if self.muonMaxDxy > 0. and abs(muon.dxy) > self.muonMaxDxy:
+                    unselectedMuons.append(muon)
                     continue
                 if self.muonMaxDz > 0. and abs(muon.dz) > self.muonMaxDz:
+                    unselectedMuons.append(muon)
                     continue
                 selectedMuons.append(muon)
                 if not self.globalOptions["isData"] and self.storeWeights:
