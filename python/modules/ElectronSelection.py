@@ -166,13 +166,12 @@ class ElectronSelection(Module):
             electron.GsfEleConversionVetoCut = cuts[8]
             electron.GsfEleMissingHitsCut = cuts[9]
 
-            electron.customID = electron.GsfEleSCEtaMultiRangeCut>0 and \
-                                electron.GsfEleDEtaInSeedCut>0 and \
-                                electron.GsfEleDPhiInCut>0 and \
-                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>0 and \
-                                electron.GsfEleEInverseMinusPInverseCut>0 and \
-                                electron.GsfEleConversionVetoCut>0
-                                #electron.GsfEleHadronicOverEMEnergyScaledCut>0 and \
+            electron.customID = electron.GsfEleSCEtaMultiRangeCut>1 and \
+                                electron.GsfEleDEtaInSeedCut>1 and \
+                                electron.GsfEleDPhiInCut>1 and \
+                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
+                                electron.GsfEleEInverseMinusPInverseCut>1 and \
+                                electron.GsfEleConversionVetoCut>1
 
 
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
