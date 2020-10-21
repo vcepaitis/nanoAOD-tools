@@ -114,8 +114,7 @@ leptonSelection = [
         electronID="Iso_WP90",
         storeWeights=True,
         triggerMatch=True,
-        electronMaxDxy=0.05,
-        electronMaxDz=0.1,
+        electronIPCuts=True,
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
@@ -167,6 +166,8 @@ leptonSelection = [
         outputName = "Leptons"
     ),
     EventSkim(selection=lambda event: event.isTriggered),
+    EventSkim(selection=lambda event: event.nsubleadingLeptons<2),
+
 
 ]
 
@@ -182,6 +183,9 @@ analyzerChain.append(
         outputName="dilepton"
     )
 )
+
+analyzerChain.append(EventSkim(selection=lambda event: ((event.dilepton_mass < 80. and event.dilepton_mass > 10.) or event.dilepton_mass > 100.) or event.Leptons_muonjets or event.Leptons_electronjets))
+
 
 '''
 # left for debugging
@@ -301,14 +305,6 @@ if isMC:
             )
         )
 
-        analyzerChain.append(
-            LepJetFinder(
-                jetCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
-                leptonCollection=lambda event: event.subleadingLeptons,
-                outputName="lepJet_"+systName
-            )
-        )
-
     analyzerChain.append(
         EventSkim(selection=lambda event: \
             getattr(event, "nselectedJets_nominal") > 0 or
@@ -319,6 +315,84 @@ if isMC:
         )
     )
 
+    analyzerChain.append(
+        EventSkim(selection=lambda event: \
+            getattr(event, "nselectedJets_nominal") < 5 or
+            getattr(event, "nselectedJets_jesTotalUp") < 5 or
+            getattr(event, "nselectedJets_jesTotalDown") < 5 or
+            getattr(event, "nselectedJets_jerUp") < 5 or
+            getattr(event, "nselectedJets_jerDown") < 5
+        )
+    )
+
+    for systName, jetCollection, metObject in [
+        ("nominal", lambda event: event.selectedJets_nominal,
+            lambda event: event.met_nominal),
+        ("jerUp", lambda event: event.selectedJets_jerUp,
+           lambda event: event.met_jerUp),
+        ("jerDown", lambda event: event.selectedJets_jerDown,
+            lambda event: event.met_jerDown),
+        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.met_jesTotalUp),
+        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.met_jesTotalDown),
+        ("unclEnUp", lambda event: event.selectedJets_nominal,
+            lambda event: event.met_unclEnUp),
+        ("unclEnDown", lambda event: event.selectedJets_nominal,
+            lambda event: event.met_unclEnDown),
+    ]:
+        analyzerChain.extend([
+            WbosonReconstruction(
+                leptonCollectionName='leadingLeptons',
+                metObject=metObject,
+                globalOptions=globalOptions,
+                outputName=systName
+            )
+        ])
+
+        analyzerChain.append(
+            EventObservables(
+                jetCollection=jetCollection,
+                metInput=metObject,
+                globalOptions=globalOptions,
+                outputName="EventObservables_"+systName
+            )
+        )
+
+    analyzerChain.append(
+        EventSkim(selection=lambda event: \
+            getattr(event, "EventObservables_nominal_met") < 100 or
+            getattr(event, "EventObservables_jerUp_met") < 100 or
+            getattr(event, "EventObservables_jerDown_met") < 100 or
+            getattr(event, "EventObservables_jesTotalUp_met") < 100 or
+            getattr(event, "EventObservables_jesTotalDown_met") < 100 or
+            getattr(event, "EventObservables_unclEnUp_met") < 100 or
+            getattr(event, "EventObservables_unclEnDown_met") < 100
+        )
+    )
+
+    for systName, jetCollection, metObject in [
+        ("nominal", lambda event: event.selectedJets_nominal,
+            lambda event: event.met_nominal),
+        ("jerUp", lambda event: event.selectedJets_jerUp,
+           lambda event: event.met_jerUp),
+        ("jerDown", lambda event: event.selectedJets_jerDown,
+            lambda event: event.met_jerDown),
+        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.met_jesTotalUp),
+        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.met_jesTotalDown),
+        ("unclEnUp", lambda event: event.selectedJets_nominal,
+            lambda event: event.met_unclEnUp),
+        ("unclEnDown", lambda event: event.selectedJets_nominal,
+            lambda event: event.met_unclEnDown),
+    ]:
+        analyzerChain.append(
+            XGBEvaluation(
+                systName=systName,
+                jetCollection=jetCollection
+            )
+        )
 
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -368,49 +442,6 @@ if isMC:
         )
 
 
-    for systName, jetCollection, metObject in [
-        ("nominal", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_nominal),
-        ("jerUp", lambda event: event.selectedJets_jerUp,
-           lambda event: event.met_jerUp),
-        ("jerDown", lambda event: event.selectedJets_jerDown,
-            lambda event: event.met_jerDown),
-        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
-            lambda event: event.met_jesTotalUp),
-        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown,
-            lambda event: event.met_jesTotalDown),
-        ("unclEnUp", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_unclEnUp),
-        ("unclEnDown", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_unclEnDown),
-    ]:
-        analyzerChain.extend([
-            WbosonReconstruction(
-                leptonCollectionName='leadingLeptons',
-                metObject=metObject,
-                globalOptions=globalOptions,
-                outputName=systName
-            )
-        ])
-
-        analyzerChain.append(
-            EventObservables(
-                jetCollection=jetCollection,
-                metInput=metObject,
-                globalOptions=globalOptions,
-                outputName="EventObservables_"+systName
-            )
-        )
-
-
-        analyzerChain.append(
-            XGBEvaluation(
-                systName=systName,
-                jetCollection=jetCollection
-            )
-        )
-
-
 else:
     analyzerChain.append(
         JetSelection(
@@ -453,20 +484,39 @@ else:
         )
     )
 
+    analyzerChain.extend([
+        WbosonReconstruction(
+            leptonCollectionName='leadingLeptons',
+            metObject=met_variable[year],
+            globalOptions=globalOptions,
+            outputName="nominal"
+        )
+    ])
+
     analyzerChain.append(
-        LepJetFinder(
+        EventObservables(
             jetCollection=lambda event: event.selectedJets_nominal,
-            leptonCollection=lambda event: event.subleadingLeptons,
-            outputName="lepJet_nominal"
+            metInput=met_variable[year],
+            globalOptions=globalOptions,
+            outputName="EventObservables_nominal"
         )
     )
+
 
     analyzerChain.append(
         EventSkim(
-            selection=lambda event: event.nselectedJets_nominal > 0
+            selection=lambda event: event.nselectedJets_nominal > 0 and event.nselectedJets_nominal < 5
         )
     )
 
+    analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
+
+    analyzerChain.append(
+        XGBEvaluation(
+            systName="nominal",
+            jetCollection=lambda event: event.selectedJets_nominal
+        )
+    )
 
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -503,31 +553,6 @@ else:
             outputName="category_simplified_nominal",
             globalOptions=globalOptions
        )
-    )
-
-    analyzerChain.extend([
-        WbosonReconstruction(
-            leptonCollectionName='leadingLeptons',
-            metObject=met_variable[year],
-            globalOptions=globalOptions,
-            outputName="nominal"
-        )
-    ])
-
-    analyzerChain.append(
-        EventObservables(
-            jetCollection=lambda event: event.selectedJets_nominal,
-            metInput=met_variable[year],
-            globalOptions=globalOptions,
-            outputName="EventObservables_nominal"
-        )
-    )
-
-    analyzerChain.append(
-        XGBEvaluation(
-            systName="nominal",
-            jetCollection=lambda event: event.selectedJets_nominal
-        )
     )
 
 analyzerChain.append(
