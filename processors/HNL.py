@@ -266,7 +266,7 @@ if isMC:
                 leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
                 jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
-                jetId=JetSelection.LOOSE,
+                jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -279,7 +279,7 @@ if isMC:
                 jetMinPt=30.,
                 jetMinEta=2.4,
                 jetMaxEta=5.,
-                jetId=JetSelection.LOOSE,
+                jetId=JetSelection.TIGHT,
                 storeKinematics=[],
                 outputName="selectedFwdJets_"+systName,
                 globalOptions=globalOptions
@@ -292,7 +292,7 @@ if isMC:
                 jetMinPt=100.,
                 jetMinEta=2.25,
                 jetMaxEta=3.0,
-                jetId=JetSelection.LOOSE,
+                jetId=JetSelection.TIGHT,
                 storeKinematics=[],
                 outputName="selectedL1PreFiringJets_"+systName,
                 globalOptions=globalOptions
@@ -453,7 +453,7 @@ else:
             leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
             jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
-            jetId=JetSelection.LOOSE,
+            jetId=JetSelection.TIGHT,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -466,7 +466,7 @@ else:
             jetMinPt=30.,
             jetMinEta=2.4,
             jetMaxEta=5.,
-            jetId=JetSelection.LOOSE,
+            jetId=JetSelection.TIGHT,
             storeKinematics=[],
             outputName="selectedFwdJets_nominal",
             globalOptions=globalOptions
@@ -479,7 +479,7 @@ else:
             jetMinPt=100.,
             jetMinEta=2.25,
             jetMaxEta=3.0,
-            jetId=JetSelection.LOOSE,
+            jetId=JetSelection.TIGHT,
             storeKinematics=[],
             outputName="selectedL1PreFiringJets_nominal",
             globalOptions=globalOptions
