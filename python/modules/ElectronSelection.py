@@ -9,7 +9,7 @@ import numpy as np
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getGraph, getHist, combineHist2D, getSFXY, deltaR
+from utils import getHist, getSFXY, deltaR
 
 class ElectronSelection(Module):
     def __init__(
@@ -56,13 +56,12 @@ class ElectronSelection(Module):
         elif electronID == "Custom":
             self.storeWeights = False
             self.electronID = lambda electron:  \
-                                electron.GsfEleSCEtaMultiRangeCut>0 and \
-                                electron.GsfEleDEtaInSeedCut>0 and \
-                                electron.GsfEleDPhiInCut>0 and \
-                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>0 and \
-                                electron.GsfEleHadronicOverEMEnergyScaledCut>0 and \
-                                electron.GsfEleEInverseMinusPInverseCut>0 and \
-                                electron.GsfEleConversionVetoCut>0
+                                electron.GsfEleSCEtaMultiRangeCut>1 and \
+                                electron.GsfEleDEtaInSeedCut>1 and \
+                                electron.GsfEleDPhiInCut>1 and \
+                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
+                                electron.GsfEleEInverseMinusPInverseCut>1 and \
+                                electron.GsfEleConversionVetoCut>1
         elif electronID == "Inv":
             self.electronID = lambda electron: electron.mvaFall17V2Iso_WPL<1 and electron.pfRelIso03_all<0.8
             self.storeWeights = False
@@ -166,14 +165,6 @@ class ElectronSelection(Module):
             electron.GsfEleConversionVetoCut = cuts[8]
             electron.GsfEleMissingHitsCut = cuts[9]
 
-            electron.customID = electron.GsfEleSCEtaMultiRangeCut>1 and \
-                                electron.GsfEleDEtaInSeedCut>1 and \
-                                electron.GsfEleDPhiInCut>1 and \
-                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
-                                electron.GsfEleEInverseMinusPInverseCut>1 and \
-                                electron.GsfEleConversionVetoCut>1
-
-
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
                 and self.electronID(electron) and self.triggerMatched(electron, trigger_object):
                 # https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2
@@ -225,7 +216,7 @@ class ElectronSelection(Module):
 
         self.out.fillBranch("n"+self.outputName,len(selectedElectrons))
         for variable in self.storeKinematics:
-            self.out.fillBranch(self.outputName+"_"+variable,map(lambda electron: getattr(electron,variable),selectedElectrons))
+            self.out.fillBranch(self.outputName+"_"+variable,map(lambda electron: getattr(electron,variable), selectedElectrons))
 
 
         setattr(event,self.outputName,selectedElectrons)

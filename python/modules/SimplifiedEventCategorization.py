@@ -199,13 +199,13 @@ class SimplifiedEventCategorization(Module):
 
         lepton_LLPjet_deltaPhi = -999
         if category_index == 2:
-            HNLCandidateLorentzVector += lepJets[0].p4LeptonSubtracted
-            WCandidateLorentzVector += lepJets[0].p4LeptonSubtracted
+            HNLCandidateLorentzVector += lepJets[0].p4()
+            WCandidateLorentzVector += lepJets[0].p4()
             if len(tightLeptons) > 0:
                 lepton_LLPjet_deltaPhi = abs(deltaPhi(tightLeptons[0], lepJets[0]))
         elif category_index > 0:
-            HNLCandidateLorentzVector += resJets[0].p4LeptonSubtracted
-            WCandidateLorentzVector += resJets[0].p4LeptonSubtracted
+            HNLCandidateLorentzVector += resJets[0].p4()
+            WCandidateLorentzVector += resJets[0].p4()
             if len(tightLeptons) > 0:
                 lepton_LLPjet_deltaPhi = abs(deltaPhi(tightLeptons[0], resJets[0]))
 
@@ -215,8 +215,6 @@ class SimplifiedEventCategorization(Module):
 
         for lepton in tightLeptons:
             WCandidateLorentzVector += lepton.p4()
-
-
 
         WCandidateMass = WCandidateLorentzVector.M()
 

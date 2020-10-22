@@ -65,7 +65,7 @@ class XGBEvaluation(Module):
         dict_list["leadingLeptons_nominal_deltaPhi"] = getattr(event, "leadingLeptons_"+self.systName+"_deltaPhi")
         dict_list["subleadingLeptons_pt"] = subleadingLeptons[0].pt
         dict_list["subleadingLeptons_eta"] = subleadingLeptons[0].eta
-        dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].ptLeptonSubtracted
+        dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].pt
         dict_list["selectedJets_nominal_eta"] = jets[0].eta
 
 

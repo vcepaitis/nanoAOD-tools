@@ -30,9 +30,9 @@ class JetSelection(Module):
          dRCleaning=0.4,
          dRP4Subtraction=0.4,
          flagDA=False,
-         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptLeptonSubtracted'],
+         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal'],
          globalOptions={"isData": False, "year": 2016},
-         jetId=LOOSE
+         jetId=TIGHT
      ):
         self.globalOptions = globalOptions
 
@@ -98,7 +98,6 @@ class JetSelection(Module):
                 unselectedJets.append(jet)
                 continue
                 
-            #note: tagger only trained for these jets
             if self.jetMinNConstituents > 0 and jet.nConstituents < self.jetMinNConstituents:
                 unselectedJets.append(jet.nConstituents)
                 continue
@@ -111,20 +110,20 @@ class JetSelection(Module):
                     minDeltaRSubtraction = min(minDeltaRSubtraction, deltaR(lepton, jet))
                     if deltaR(lepton,jet)<self.dRP4Subtraction:
                         leptonP4 += lepton.p4()
-               
-            leptonPt = leptonP4.Pt()
-            jetP4LeptonSubtracted = jet.p4()-leptonP4
-            jetPtLeptonSubtracted = jetP4LeptonSubtracted.Pt()
-            
-            setattr(jet,"ptLepton", leptonPt)
-            setattr(jet,"p4LeptonSubtracted", jetP4LeptonSubtracted)
-            setattr(jet,"ptLeptonSubtracted", jetPtLeptonSubtracted)
+
             setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
+
+            leptonPt = leptonP4.Pt()
+            setattr(jet,"ptLepton", leptonPt)
+            setattr(jet,"p4Original", jet.p4())
+            setattr(jet,"ptOriginal", jet.pt)
+            jetP4LeptonSubtracted = jet.p4()-leptonP4
+
+            jet.pt = jetP4LeptonSubtracted.Pt()
             
-            if jetPtLeptonSubtracted<self.jetMinPt:
+            if jet.pt<self.jetMinPt:
                 unselectedJets.append(jet)
-                continue
-            
+                continue            
 
             if len(leptonsForDRCleaning) > 0:
                 mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))
