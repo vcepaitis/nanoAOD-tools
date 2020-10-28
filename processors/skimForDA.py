@@ -83,6 +83,9 @@ met_variable = {2016: lambda event: Object(event, "MET"),
                 }
 
 
+yields = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/da/"+str(year)+"/eventyields.json"
+
+
 
 
 leptonSelection = [
@@ -193,12 +196,12 @@ analyzerChain.append(
     JetSelection(
         inputCollection=lambda event: Collection(event, "Jet"),
         leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
-        leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
+        #leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
         jetMinPt=15.,
         jetMaxEta=2.399, #TODO: change to 2.4
         jetMinNConstituents=3,
-        jetId=JetSelection.LOOSE,
-        outputName="selectedJets_nominal",
+        jetId=JetSelection.TIGHT,
+        outputName="Jet",
         globalOptions=globalOptions,
         flagDA=True,
     )
@@ -206,19 +209,12 @@ analyzerChain.append(
 
 analyzerChain.append(
     EventObservables(
-        jetCollection=lambda event: event.selectedJets_nominal,
         metInput=met_variable[year],
         globalOptions=globalOptions,
         outputName="EventObservables_nominal"
     )
 )
 
-
-analyzerChain.append(
-    EventSkim(
-        selection=lambda event: event.nselectedJets_nominal > 0 and event.nselectedJets_nominal < 5
-    )
-)
 
 analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
 
@@ -230,9 +226,17 @@ analyzerChain.append(
     )
 )
 
+analyzerChain.append(
+    DataFlag(
+        yields,
+        globalOptions=globalOptions,
+    )
+)
+
 p = PostProcessor(
     args.output[0],
     [args.inputFiles],
+    cut="(nJet<5)&&(nJet>0)&&((nElectron+nMuon)>0)",
     modules=analyzerChain,
     maxEvents=-1,
     friend=False

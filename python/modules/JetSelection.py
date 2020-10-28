@@ -141,7 +141,6 @@ class JetSelection(Module):
                 
             selectedJets.append(jet)
 
-
             if self.flagDA:
                 flagsDA[jet._index] = 1.
 

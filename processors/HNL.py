@@ -435,10 +435,8 @@ if isMC:
 
         analyzerChain.append(
            SimplifiedEventCategorization(
-                tightLeptons=lambda event: event.leadingLeptons,
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
-                taggerName="llpdnnx",
                 outputName="category_simplified_"+systName,
                 globalOptions=globalOptions
            )
@@ -590,7 +588,7 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
-taggerTypes = ['SimplifiedEventCategorization', 'EventCategorization', 'TaggerEvaluationProfiled']
+taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled']
 
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):
