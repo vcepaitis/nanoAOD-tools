@@ -54,15 +54,6 @@ class SimplifiedEventCategorization(Module):
         self.out.branch("n"+self.outputName+"_Jets", "I")
         self.out.branch("n"+self.outputName+"_lepJets", "I")
         self.out.branch("n"+self.outputName+"_resJets", "I")
-        '''
-        self.out.branch(self.outputName+"_WCandidateMass", "F")
-        self.out.branch(self.outputName+"_Lepton_LLPjet_deltaPhi", "F")
-        self.out.branch(self.outputName+"_HNLCandidateMass", "F")
-
-        for label in self.jetLabels:
-            self.out.branch("{}_lepJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_lepJets")
-            self.out.branch("{}_resJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_resJets")
-        '''
 
         if self.globalOptions["isSignal"]:
             self.out.branch(self.outputName+"_index_truth", "I")
@@ -90,10 +81,6 @@ class SimplifiedEventCategorization(Module):
         resJets = []
 
         for jet in jets:
-            #taggerScore = getattr(jet, self.taggerName)
-            #for label in self.jetLabels:
-                #setattr(jet, "{}_{}".format(self.taggerName, label), taggerScore[label])
-
             if self.globalOptions["isSignal"]:
                 for truth_class, subclass_dict in self.flags.iteritems():
                     setattr(jet, truth_class, 0)
@@ -111,15 +98,6 @@ class SimplifiedEventCategorization(Module):
                     lepJets.append(jet)
                 elif (minDeltaR < self.maxDeltaR):
                     resJets.append(jet)
-
-        '''
-        if len(lepJets) > 0:
-            lepJets = sorted(lepJets, key=lambda lepJet: \
-                max(getattr(lepJet, self.taggerName+"_LLP_QMU"), getattr(lepJet, self.taggerName+"_LLP_QE")),
-                reverse=True)
-        if len(resJets) > 0:
-            resJets = sorted(resJets, key=lambda resJet: getattr(resJet, self.taggerName+"_LLP_Q"), reverse=True)
-        '''
 
         nlepJets = len(lepJets)
         nresJets = len(resJets)
@@ -151,13 +129,6 @@ class SimplifiedEventCategorization(Module):
                 category_index = -1
 
         self.out.fillBranch(self.outputName+"_index", category_index)
-
-        '''
-
-        for label in self.jetLabels:
-            self.out.fillBranch("{}_lepJet_{}_{}".format(self.outputName, self.taggerName, label), [getattr(jet, "{}_{}".format(self.taggerName, label)) for jet in lepJets])
-            self.out.fillBranch("{}_resJet_{}_{}".format(self.outputName, self.taggerName, label), [getattr(jet, "{}_{}".format(self.taggerName, label)) for jet in resJets])
-        '''
 
         if self.globalOptions["isSignal"]:
             for truth_class in self.flags.keys():
@@ -193,41 +164,4 @@ class SimplifiedEventCategorization(Module):
             self.out.fillBranch(self.outputName+"_index_truth", category_index_truth)
 
         self.out.fillBranch(self.outputName+"_Jet_category", nJets*[category_index])
-
-        '''
-        HNLCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
-        WCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
-
-
-        lepton_LLPjet_deltaPhi = -999
-        if category_index == 2:
-            HNLCandidateLorentzVector += lepJets[0].p4()
-            WCandidateLorentzVector += lepJets[0].p4()
-            if len(tightLeptons) > 0:
-                lepton_LLPjet_deltaPhi = abs(deltaPhi(tightLeptons[0], lepJets[0]))
-        elif category_index > 0:
-            HNLCandidateLorentzVector += resJets[0].p4()
-            WCandidateLorentzVector += resJets[0].p4()
-            if len(tightLeptons) > 0:
-                lepton_LLPjet_deltaPhi = abs(deltaPhi(tightLeptons[0], resJets[0]))
-
-        for lepton in looseLeptons:
-            HNLCandidateLorentzVector += lepton.p4()
-            WCandidateLorentzVector += lepton.p4()
-
-        for lepton in tightLeptons:
-            WCandidateLorentzVector += lepton.p4()
-
-        WCandidateMass = WCandidateLorentzVector.M()
-
-        if category_index > 2:
-            HNLCandidateMass = resJets[0].mass
-        else:
-            HNLCandidateMass = HNLCandidateLorentzVector.M()
-
-        self.out.fillBranch(self.outputName+"_Lepton_LLPjet_deltaPhi", lepton_LLPjet_deltaPhi)
-        self.out.fillBranch(self.outputName+"_WCandidateMass", WCandidateMass)
-        self.out.fillBranch(self.outputName+"_HNLCandidateMass", HNLCandidateMass)
-        '''
-
         return True

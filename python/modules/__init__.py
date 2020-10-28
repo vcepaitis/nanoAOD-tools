@@ -36,5 +36,6 @@ from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
 from EventCategorization import EventCategorization
 from SimplifiedEventCategorization import SimplifiedEventCategorization
+from TaggerMassReconstruction import TaggerMassReconstruction
 from LHEWeights import LHEWeights
 from LeptonGenEfficiency import LeptonGenEfficiency

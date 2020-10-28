@@ -442,6 +442,18 @@ if isMC:
            )
         )
 
+        analyzerChain.append(
+            TaggerMassReconstruction(
+                globalOptions=globalOptions,
+                outputName="category_simplified_"+systName,
+                tightLeptons=lambda event: event.leadingLeptons,
+                looseLeptons=lambda event: event.subleadingLeptons,
+                lepJets="category_simplified_"+systName+"_lepJets",
+                resJets="category_simplified_"+systName+"_resJets",
+                taggerName="llpdnnx",
+                jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
+            )
+        )
 
 else:
     analyzerChain.append(
@@ -547,13 +559,24 @@ else:
 
     analyzerChain.append(
        SimplifiedEventCategorization(
-            tightLeptons=lambda event: event.leadingLeptons,
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
-            taggerName="llpdnnx",
             outputName="category_simplified_nominal",
             globalOptions=globalOptions
        )
+    )
+
+    analyzerChain.append(
+        TaggerMassReconstruction(
+            globalOptions=globalOptions,
+            outputName="category_simplified_nominal",
+            tightLeptons=lambda event: event.leadingLeptons,
+            looseLeptons=lambda event: event.subleadingLeptons,
+            lepJets="category_simplified_nominal_lepJets",
+            resJets="category_simplified_nominal_resJets",
+            taggerName="llpdnnx",
+            jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
+        )
     )
 
 analyzerChain.append(
