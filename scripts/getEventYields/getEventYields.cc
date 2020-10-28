@@ -14,6 +14,7 @@ int main(int argc, char **argv){
     std::string output_path{argv[2]};
     std::map<std::string, TH1F> pileupHists;
     std::map<std::string, double> processDict;
+    std::map<std::string, double> processDictWeighted;
     //std::map<std::string, TH1F> mapOfHists;
 
     if (auto dir = opendir(path.c_str())) {
@@ -36,6 +37,7 @@ int main(int argc, char **argv){
             pileupHists[process].SetDirectory(0);
 
             processDict.insert(std::make_pair(process, 0));
+            processDictWeighted.insert(std::make_pair(process, 0));
 
             std::ifstream file(file_path);
             if (file.is_open()) {
@@ -50,13 +52,15 @@ int main(int argc, char **argv){
                     }
                     TTree* tree = (TTree*)rootFile->Get("Events");
                     TH1F* h = new TH1F("pu","",101,0,100);
-                    tree->Project(h->GetName(),"Pileup_nTrueInt","genWeight");
-                    processDict[process] += h->Integral();
+                    tree->Project(h->GetName(),"Pileup_nTrueInt", "genWeight");
+                    processDictWeighted[process] += h->Integral();
+                    processDict[process] += h->GetEntries();
                     pileupHists[process].Add(h);
                     delete tree;
                     rootFile->Close();
                 }
             }
+            //break;
         }
         closedir(dir);
     }
@@ -75,10 +79,15 @@ int main(int argc, char **argv){
 
     rootFile->Close();
     json j_map(processDict);
-
+    json j_map_weighted(processDictWeighted);
     output_string = output_path+"/eventyields.json";
     std::ofstream o(output_string.c_str());
     o << j_map.dump(0) << std::endl;
+
+    output_string = output_path+"/eventyields_weighted.json";
+    std::ofstream o_weighted(output_string.c_str());
+    o_weighted << j_map_weighted.dump(0) << std::endl;
+
 
     return 0;
 }
