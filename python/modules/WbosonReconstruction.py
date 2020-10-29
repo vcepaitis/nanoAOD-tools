@@ -47,7 +47,7 @@ class WbosonReconstruction(Module):
         for i,lepton in enumerate(leptons):
             dPhi[i] = deltaPhi(lepton,met)
             mtw[i] = math.sqrt(2*lepton.pt*met.pt*(1-math.cos(dPhi[i])))
-            
+
         self.out.fillBranch(self.leptonCollectionName+"_"+self.outputName+"_mtw", mtw)
         self.out.fillBranch(self.leptonCollectionName+"_"+self.outputName+"_deltaPhi", dPhi)
         

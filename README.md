@@ -29,6 +29,11 @@ Skimming ntuples for DA:
 python PhysicsTools/NanoAODTools/processors/skimForDA.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root --isData --year 2016 .
 ```
 
+Example: check output of batch jobs for failed files:
+```
+python PhysicsTools/NanoAODTools/scripts/check_output.py --input batch/years/2016_mc.txt --output /vols/cms/vc1117/LLP/nanoAOD_friends/HNL/28Oct20_noTagger --file 2016_mc.txt
+```
+
 
 The basic syntax of the command is the following:
 

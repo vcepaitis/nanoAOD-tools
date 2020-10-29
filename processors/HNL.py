@@ -374,28 +374,20 @@ if isMC:
             )
         )
 
-    for systName, jetCollection, metObject in [
-        ("nominal", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_nominal),
-        ("jerUp", lambda event: event.selectedJets_jerUp,
-           lambda event: event.met_jerUp),
-        ("jerDown", lambda event: event.selectedJets_jerDown,
-            lambda event: event.met_jerDown),
-        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp,
-            lambda event: event.met_jesTotalUp),
-        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown,
-            lambda event: event.met_jesTotalDown),
-        ("unclEnUp", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_unclEnUp),
-        ("unclEnDown", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_unclEnDown),
-    ]:
-        analyzerChain.append(
-            XGBEvaluation(
-                systName=systName,
-                jetCollection=jetCollection
-            )
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal", "jerUp", "jerDown", "jesTotalUp", "jesTotalDown", "unclEnUp", "unclEnDown"],
+            jetCollections=[
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.selectedJets_jerUp,
+            lambda event: event.selectedJets_jerDown,
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_nominal
+        ],
         )
+    )
 
     analyzerChain.append(
         TaggerEvaluationProfiled(
@@ -526,8 +518,8 @@ else:
 
     analyzerChain.append(
         XGBEvaluation(
-            systName="nominal",
-            jetCollection=lambda event: event.selectedJets_nominal
+            systematics=["nominal"],
+            jetCollections=[lambda event: event.selectedJets_nominal]
         )
     )
 
@@ -611,7 +603,7 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
-taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled']
+taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled', 'XGBEvaluation']
 
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):
