@@ -12,19 +12,19 @@ class XGBEvaluation(Module):
         self,
         modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt.model",
         featurePath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt",
-        systName="nominal",
-        jetCollection= lambda event: event.selectedJets_nominal,
+        systematics=["nominal"],
+        jetCollections= lambda event: event.selectedJets_nominal,
         leadingLeptonCollection= lambda event: event.leadingLeptons,
         subleadingLeptonCollection= lambda event: event.subleadingLeptons,
         outputName ="bdt_score"
     ):
         self.modelPath = modelPath
         self.featurePath = featurePath
-        self.systName = systName
-        self.jetCollection = jetCollection
+        self.systematics = systematics
+        self.jetCollections = jetCollections
         self.leadingLeptonCollection = leadingLeptonCollection
         self.subleadingLeptonCollection = subleadingLeptonCollection
-        self.outputName = outputName+"_"+systName
+        self.outputName = outputName
 
     def beginJob(self):
         pass
@@ -32,61 +32,58 @@ class XGBEvaluation(Module):
         pass
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch(self.outputName,"F")
+        for systematic in self.systematics:
+            self.out.branch(self.outputName+"_"+systematic, "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
     def analyze(self, event):
         
-        jets = self.jetCollection(event)
         leadingLeptons = self.leadingLeptonCollection(event)
         subleadingLeptons = self.subleadingLeptonCollection(event)
-
+        '''
         if len(jets) == 0 or len(leadingLeptons) == 0 or len(subleadingLeptons) == 0:
             setattr(event, "bdt_score", "-999.")
             self.out.fillBranch(self.outputName,-999.)
             return True
+        '''
 
         '''
         with open(os.path.expandvars(self.featurePath)) as f:
             array_list = [line.rstrip() for line in f]
         '''
-
-        dict_list = {}
-        dict_list["EventObservables_nominal_met"] = getattr(event, "EventObservables_"+self.systName+"_met")
-        dict_list["EventObservables_nominal_ht"] = getattr(event, "EventObservables_"+self.systName+"_ht")
-        dict_list["dilepton_mass"] = event.dilepton_mass
-        dict_list["dilepton_deltaPhi"] = event.dilepton_deltaPhi
-        dict_list["dilepton_deltaR"] = event.dilepton_deltaR
-        dict_list["leadingLeptons_pt"] = leadingLeptons[0].pt
-        dict_list["leadingLeptons_eta"] = leadingLeptons[0].eta
-        dict_list["leadingLeptons_nominal_mtw"] = getattr(event, "leadingLeptons_"+self.systName+"_mtw")
-        dict_list["leadingLeptons_nominal_deltaPhi"] = getattr(event, "leadingLeptons_"+self.systName+"_deltaPhi")
-        dict_list["subleadingLeptons_pt"] = subleadingLeptons[0].pt
-        dict_list["subleadingLeptons_eta"] = subleadingLeptons[0].eta
-        dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].pt
-        dict_list["selectedJets_nominal_eta"] = jets[0].eta
-
-
-        '''
-        for feature in array_list:
-            feature = feature.replace("nominal", self.systName)
-            value = getattr(event, feature)
-            if isinstance(value, list):
-                if len(value) > 0:
-                    dict_list[feature] = value[0]
+        i = 0
+        for jetCollection, systematic in zip(self.jetCollections, self.systematics):
+            jets = jetCollection(event)
+            dict_list = {}
+            dict_list["EventObservables_nominal_met"] = getattr(event, "EventObservables_"+systematic+"_met")
+            dict_list["EventObservables_nominal_ht"] = getattr(event, "EventObservables_"+systematic+"_ht")
+            dict_list["dilepton_mass"] = event.dilepton_mass
+            dict_list["dilepton_deltaPhi"] = event.dilepton_deltaPhi
+            dict_list["dilepton_deltaR"] = event.dilepton_deltaR
+            dict_list["leadingLeptons_pt"] = leadingLeptons[0].pt
+            dict_list["leadingLeptons_eta"] = leadingLeptons[0].eta
+            dict_list["leadingLeptons_nominal_mtw"] = getattr(event, "leadingLeptons_"+systematic+"_mtw")
+            dict_list["leadingLeptons_nominal_deltaPhi"] = getattr(event, "leadingLeptons_"+systematic+"_deltaPhi")
+            dict_list["subleadingLeptons_pt"] = subleadingLeptons[0].pt if len(subleadingLeptons) > 0 else 0
+            dict_list["subleadingLeptons_eta"] = subleadingLeptons[0].eta if len(subleadingLeptons) > 0 else 0
+            dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].pt if len(jets) > 0 else 0
+            dict_list["selectedJets_nominal_eta"] = jets[0].eta if len(jets) > 0 else 0
+            if i == 0:
+                data = pd.DataFrame(data=dict_list, index=[0])
             else:
-                dict_list[feature] = value
-        '''
+                _data = pd.DataFrame(data=dict_list, index=[0])
+                data = data.append(_data, ignore_index=True)
 
-        data = pd.DataFrame(data=dict_list, index=[0])
+            i += 1
         data = data.reindex(sorted(data.columns), axis=1)
         model = XGBClassifier()
         booster = Booster(model_file=os.path.expandvars(self.modelPath))
         model._Booster = booster
         bdt_score = model.predict_proba(data)
-        setattr(event, "bdt_score", bdt_score[:, 1])
-        self.out.fillBranch(self.outputName,bdt_score[:, 1])
+        for i, systematic in enumerate(self.systematics):
+            setattr(event, "bdt_score", bdt_score[i, 1])
+            self.out.fillBranch(self.outputName+"_"+systematic,bdt_score[i, 1])
 
         return True

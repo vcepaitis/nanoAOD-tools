@@ -112,5 +112,4 @@ class TaggerMassReconstruction(Module):
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_m_lljj", WCandidateLorentzVector.M())
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_max2nd", max2ndScore)
 
-
         return True
