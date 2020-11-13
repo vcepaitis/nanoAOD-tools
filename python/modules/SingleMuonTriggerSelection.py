@@ -93,6 +93,11 @@ class SingleMuonTriggerSelection(Module):
             weight_trigger_nominal*=weight_trigger
             weight_trigger_up*=(weight_trigger+weight_trigger_err)
             weight_trigger_down*=(weight_trigger-weight_trigger_err)
+            # additional 0.5% syst
+            #https://twiki.cern.ch/twiki/bin/view/CMS/TWikiEXO-MUODocumentationRun2
+            if self.globalOptions["year"] == 2016:
+                weight_trigger_up+=weight_trigger_nominal*0.5*0.01
+                weight_trigger_down-=weight_trigger_nominal*0.5*0.01
 
         trigger_flag = 0
 

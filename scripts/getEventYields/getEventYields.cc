@@ -80,11 +80,11 @@ int main(int argc, char **argv){
     rootFile->Close();
     json j_map(processDict);
     json j_map_weighted(processDictWeighted);
-    output_string = output_path+"/eventyields.json";
+    output_string = output_path+"/eventyields_unweighted.json";
     std::ofstream o(output_string.c_str());
     o << j_map.dump(0) << std::endl;
 
-    output_string = output_path+"/eventyields_weighted.json";
+    output_string = output_path+"/eventyields.json";
     std::ofstream o_weighted(output_string.c_str());
     o_weighted << j_map_weighted.dump(0) << std::endl;
 

@@ -18,7 +18,6 @@ resubmit_file = args.file
 def check_root_file(f):
     _f = ROOT.TFile.Open(f)
     if not(_f):
-        _f.Close()
         return 1
     try:
         status = _f.IsZombie()
