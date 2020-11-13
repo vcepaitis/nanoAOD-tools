@@ -136,7 +136,7 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
                          'looseId', 'mediumId', 'tightId', 'charge'],
-        muonMinPt=5.,
+        muonMinPt=3.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions
