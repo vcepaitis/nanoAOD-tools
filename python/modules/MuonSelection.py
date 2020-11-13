@@ -57,11 +57,11 @@ class MuonSelection(Module):
         if self.globalOptions["year"] == 2016:
             #tight id efficiency
             idTightSFBToF = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunBCDEF_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunBCDEF_SF_ID.root",
                 "NUM_TightID_DEN_genTracks_eta_pt"
             )
             idTightSFGToH = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunGH_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunGH_SF_ID.root",
                 "NUM_TightID_DEN_genTracks_eta_pt"
             )
             self.idTightSFHist = combineHist2D(
@@ -73,11 +73,11 @@ class MuonSelection(Module):
             
             #loose id efficiency
             idLooseSFBToF = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunBCDEF_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunBCDEF_SF_ID.root",
                 "NUM_LooseID_DEN_genTracks_eta_pt"
             )
             idLooseSFGToH = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunGH_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunGH_SF_ID.root",
                 "NUM_LooseID_DEN_genTracks_eta_pt"
             )
 
@@ -91,11 +91,11 @@ class MuonSelection(Module):
             
             #tight iso and tight id efficiency
             isoTightTightSFBToF = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunBCDEF_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunBCDEF_SF_ISO.root",
                 "NUM_TightRelIso_DEN_TightIDandIPCut_eta_pt"
             )
             isoTightTightSFGToH = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunGH_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunGH_SF_ISO.root",
                 "NUM_TightRelIso_DEN_TightIDandIPCut_eta_pt"
             )
             self.isoTightTightSFHist = combineHist2D(
@@ -107,11 +107,11 @@ class MuonSelection(Module):
             
             #loose iso and loose id efficiency
             isoLooseLooseSFBToF = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunBCDEF_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunBCDEF_SF_ISO.root",
                 "NUM_LooseRelIso_DEN_LooseID_eta_pt"
             )
             isoLooseLooseSFGToH = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2016/RunGH_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunGH_SF_ISO.root",
                 "NUM_LooseRelIso_DEN_LooseID_eta_pt"
             )
             self.isoLooseLooseSFHist = combineHist2D(
@@ -124,25 +124,25 @@ class MuonSelection(Module):
         elif self.globalOptions["year"] == 2017:
             #tight id efficiency
             self.idTightSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ID.root",
                 "NUM_TightID_DEN_genTracks_pt_abseta"
             )
             
             #loose id efficiency
             self.idLooseSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ID.root",
                 "NUM_LooseID_DEN_genTracks_pt_abseta"
             )
             
             #tight iso and tight id efficiency
             self.isoTightTightSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ISO.root",
                 "NUM_TightRelIso_DEN_TightIDandIPCut_pt_abseta"
             )
             
             #loose iso and loose id efficiency
             self.isoLooseLooseSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2017/RunBCDEF_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ISO.root",
                 "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
             )
 
@@ -150,25 +150,25 @@ class MuonSelection(Module):
 
             #tight id efficiency
             self.idTightSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ID.root",
                 "NUM_TightID_DEN_TrackerMuons_pt_abseta"
             )
             
             #loose id efficiency
             self.idLooseSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ID.root",
+                "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ID.root",
                 "NUM_LooseID_DEN_TrackerMuons_pt_abseta"
             )
             
             #tight iso and tight id efficiency
             self.isoTightTightSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ISO.root",
                 "NUM_TightRelIso_DEN_TightIDandIPCut_pt_abseta"
             )
             
             #loose iso and loose id efficiency
             self.isoLooseLooseSFHist = getHist(
-                "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_rootfiles_RunABCD_SF_ISO.root",
+                "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ISO.root",
                 "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
             )
 
@@ -225,7 +225,7 @@ class MuonSelection(Module):
                 if abs(trig_obj.id) != 13:
                     continue
                 trig_deltaR = min(trig_deltaR, deltaR(trig_obj, muon))
-            if trig_deltaR < 0.3:
+            if trig_deltaR < 0.1:
                 return True
             else:
                 return False

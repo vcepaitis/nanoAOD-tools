@@ -67,7 +67,7 @@ globalOptions = {
 
 isMC = not args.isData
 
-minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
+minMuonPt = {2016: 26., 2017: 29., 2018: 26.}
 minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
 
 if isMC:
@@ -141,7 +141,7 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
                          'looseId', 'mediumId', 'tightId', 'charge'],
-        muonMinPt=5.,
+        muonMinPt=3.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions
@@ -373,6 +373,17 @@ if isMC:
                 getattr(event, "EventObservables_unclEnDown_met") < 100
             )
         )
+        analyzerChain.append(
+            EventSkim(selection=lambda event: \
+                getattr(event, "EventObservables_nominal_ht") < 150 or
+                getattr(event, "EventObservables_jerUp_ht") < 150 or
+                getattr(event, "EventObservables_jerDown_ht") < 150 or
+                getattr(event, "EventObservables_jesTotalUp_ht") < 150 or
+                getattr(event, "EventObservables_jesTotalDown_ht") < 150 or
+                getattr(event, "EventObservables_unclEnUp_ht") < 150 or
+                getattr(event, "EventObservables_unclEnDown_ht") < 150
+            )
+        )
 
     analyzerChain.append(
         XGBEvaluation(
@@ -515,6 +526,8 @@ else:
 
     if skim:
         analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
+        analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_ht < 150.))
+
 
     analyzerChain.append(
         XGBEvaluation(
