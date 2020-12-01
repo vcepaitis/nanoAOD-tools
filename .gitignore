@@ -9,3 +9,5 @@ build
 *.d
 *.so
 *.pcm
+proxy
+*.dat

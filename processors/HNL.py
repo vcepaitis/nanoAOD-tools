@@ -114,7 +114,7 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi','pfRelIso03_all', 'charge'],
         electronMinPt=minElectronPt[globalOptions["year"]],
-        electronID="Iso_WP90",
+        electronID="Iso_WP90", #noIso_WP90
         storeWeights=True,
         triggerMatch=True,
         electronIPCuts=True,
@@ -134,7 +134,7 @@ leptonSelection = [
         storeWeights=False,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
+    #EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
     MuonSelection(
         inputCollection=lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
@@ -168,8 +168,8 @@ leptonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons"
     ),
-    EventSkim(selection=lambda event: event.isTriggered),
-    EventSkim(selection=lambda event: event.nsubleadingLeptons<2),
+    #EventSkim(selection=lambda event: event.isTriggered),
+    EventSkim(selection=lambda event: event.nsubleadingLeptons>0 and event.nsubleadingLeptons<2),
 
 
 ]
@@ -202,9 +202,9 @@ analyzerChain.append(jetmetCorrector())
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict_mixed.py"
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2016.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2017.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2018.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2018.pb"
 }
 
 jesUncertaintyFile = {

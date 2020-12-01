@@ -205,7 +205,7 @@ class MuonSelection(Module):
         elif muonIso==MuonSelection.NONE:
             self.muonIso = lambda muon: True
             if muonID==MuonSelection.TIGHT:
-                self.muonIsoSF = self.isoLooseTightSFHist
+                self.muonIsoSF = self.isoTightTightSFHist
             elif muonID==MuonSelection.LOOSE:
                 self.muonIsoSF = self.isoLooseLooseSFHist
             elif muonID==MuonSelection.NONE:
