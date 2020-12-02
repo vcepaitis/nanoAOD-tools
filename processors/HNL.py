@@ -134,7 +134,7 @@ leptonSelection = [
         storeWeights=False,
         globalOptions=globalOptions
     ),
-    #EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
+    EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
     MuonSelection(
         inputCollection=lambda event: event.tightMuon_unselected,
         outputName="looseMuons",
@@ -168,7 +168,7 @@ leptonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons"
     ),
-    #EventSkim(selection=lambda event: event.isTriggered),
+    EventSkim(selection=lambda event: event.isTriggered),
     EventSkim(selection=lambda event: event.nsubleadingLeptons>0 and event.nsubleadingLeptons<2),
 
 
@@ -549,9 +549,8 @@ else:
         )
     )
 
-
     analyzerChain.append(
-	EventCategorization(
+	    EventCategorization(
             tightLeptons=lambda event: event.leadingLeptons,
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
