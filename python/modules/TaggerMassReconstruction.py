@@ -7,6 +7,8 @@ import random
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
+from utils import deltaR, deltaPhi
+
 
 class TaggerMassReconstruction(Module):
     def __init__(
@@ -41,6 +43,9 @@ class TaggerMassReconstruction(Module):
 
         self.out.branch(self.outputName+"_"+self.taggerName+"_m_llj", "F")
         self.out.branch(self.outputName+"_"+self.taggerName+"_m_lljj", "F")
+        self.out.branch(self.outputName+"_"+self.taggerName+"_deltaPhi_lj", "F")
+        self.out.branch(self.outputName+"_"+self.taggerName+"_deltaR_lj", "F")
+
         #self.out.branch(self.outputName+"_m_HNL", "F")
         self.out.branch(self.outputName+"_"+self.taggerName+"_max", "F")
         self.out.branch(self.outputName+"_"+self.taggerName+"_max2nd", "F")
@@ -90,20 +95,31 @@ class TaggerMassReconstruction(Module):
 
         maxScore = -1
         max2ndScore = -1.
+        deltaPhi_lj = -1
+        deltaR_lj = -1
 
         for lepton in looseLeptons+tightLeptons:
             WCandidateLorentzVector += lepton.p4()
 
         if len(lepJets) > 0:
+            if len(tightLeptons) > 0:
+                deltaPhi_lj = deltaPhi(tightLeptons[0], lepJets[0])
+                deltaR_lj = deltaR(tightLeptons[0], lepJets[0])
+
             WCandidateLorentzVector += lepJets[0].p4()
             maxScore = max(lepJets[0].llpdnnx_LLP_QMU, lepJets[0].llpdnnx_LLP_QE)
 
         elif len(resJets) > 0:
+            if len(tightLeptons) > 0:
+                deltaPhi_lj = deltaPhi(tightLeptons[0], resJets[0])
+                deltaR_lj = deltaR(tightLeptons[0], resJets[0])
             WCandidateLorentzVector += resJets[0].p4()
             maxScore = resJets[0].llpdnnx_LLP_Q
 
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_m_llj", WCandidateLorentzVector.M())
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_max", maxScore)
+        self.out.fillBranch(self.outputName+"_"+self.taggerName+"_deltaPhi_lj", deltaPhi_lj)
+        self.out.fillBranch(self.outputName+"_"+self.taggerName+"_deltaR_lj", deltaR_lj)
 
         if len(lepJets) == 0 and len(resJets) > 1:
             WCandidateLorentzVector += resJets[1].p4()

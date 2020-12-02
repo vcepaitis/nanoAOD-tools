@@ -27,10 +27,14 @@ class XGBEvaluation(Module):
         self.outputName = outputName
 
     def beginJob(self):
+
         pass
     def endJob(self):
         pass
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
+        self.model = XGBClassifier()
+        self.booster = Booster(model_file=os.path.expandvars(self.modelPath))
+        self.model._Booster = self.booster
         self.out = wrappedOutputTree
         for systematic in self.systematics:
             self.out.branch(self.outputName+"_"+systematic, "F")
@@ -78,10 +82,7 @@ class XGBEvaluation(Module):
 
             i += 1
         data = data.reindex(sorted(data.columns), axis=1)
-        model = XGBClassifier()
-        booster = Booster(model_file=os.path.expandvars(self.modelPath))
-        model._Booster = booster
-        bdt_score = model.predict_proba(data)
+        bdt_score = self.model.predict_proba(data)
         for i, systematic in enumerate(self.systematics):
             setattr(event, "bdt_score", bdt_score[i, 1])
             self.out.fillBranch(self.outputName+"_"+systematic,bdt_score[i, 1])
