@@ -16,7 +16,7 @@ scram b
 
 Example use: make ntuples for applying the HNL preselection
 ```
-python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/LLP/NANOX_200124/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/200124_012623/0000/nano_3.root --year 2016 .
+python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/HNL/NANOX_201117/HNL_dirac_all_ctau1p0e-01_massHNL12p0_Vall3p272e-03-2016/HNL_dirac_all_ctau1p0e-01_massHNL12p0_Vall3p272e-03/HNL_dirac_all_ctau1p0e-01_massHNL12p0_Vall3p272e-03-2016/201118_145029/0000/nano_4.root --year 2016 .
 ```
 
 Running on data instead:

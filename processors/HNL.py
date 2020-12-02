@@ -25,6 +25,7 @@ parser.add_argument('--year', dest='year',
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
 parser.add_argument('--skim', dest='skim', action='store_true', default=False)
+parser.add_argument('--profile', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
@@ -615,7 +616,7 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
-taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled', 'XGBEvaluation']
+taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled']#, 'XGBEvaluation']
 
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):
