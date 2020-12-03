@@ -22,7 +22,7 @@ class TaggerEvaluationProfiled(Module):
         taggerName = "llpdnnx",
         evalValues = range(-1, 4),
         profiledLabelDict = {
-                            'LLP_Q': ['LLP_Q', 'LLP_QTAU'],
+                            'LLP_Q': ['LLP_Q','LLP_QTAU'],
                             'LLP_QE': [ 'LLP_QE'],
                             'LLP_QMU': [ 'LLP_QMU']
                             },
@@ -34,7 +34,7 @@ class TaggerEvaluationProfiled(Module):
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
         self.profiledLabelDict = profiledLabelDict
-        self.profiledLabels = []
+        self.allProfiledSubLabels = []
 
         self.modelPath = os.path.expandvars(modelPath)
 
@@ -47,7 +47,7 @@ class TaggerEvaluationProfiled(Module):
         self.predictionLabels = feature_dict_module.predictionLabels
         for _, profiledLabels in self.profiledLabelDict.iteritems():
             for profiledSubLabel in profiledLabels:
-                self.profiledLabels.append(profiledSubLabel)
+                self.allProfiledSubLabels.append(profiledSubLabel)
                 if profiledSubLabel not in self.predictionLabels:
                     print "ERROR (TaggerEvaluationProfiled) - label for profiling '%s' not in predicted label list: %s"%(
                         profiledSubLabel,
@@ -184,45 +184,62 @@ class TaggerEvaluationProfiled(Module):
         for ijet,jetIndex in enumerate(jetOriginIndices):
 
 
-            maxSinglePrediction = -1
-            ivalueAtMaxPrediction = 0
-
-            for ilabel,label in enumerate(self.predictionLabels):
-                if label not in self.profiledLabels:
-                    continue
-
-                for ivalue, value in enumerate(self.evalValues):
-                    predictionIndex = ijet*len(self.evalValues)+ivalue
-                    predictions = result.get("prediction",predictionIndex)
-                    singlePrediction = predictions[ilabel]
-                    if singlePrediction>maxSinglePrediction:
-                        maxSinglePrediction = singlePrediction
-                        ivalueAtMaxPrediction = ivalue
+            maxSinglePrediction = {k: 0. for k in self.profiledLabelDict.keys()}
+            valueMaxSinglePrediction = {k: 0 for k in self.profiledLabelDict.keys()}
+            
+            maxRatioPrediction = {k: 0. for k in self.profiledLabelDict.keys()}
+            valueMaxRatioPrediction = {k: 0 for k in self.profiledLabelDict.keys()}
+            
+            avgPrediction = {k: 0. for k in self.profiledLabelDict.keys()}
+            valueAvgPrediction = {k: 0 for k in self.profiledLabelDict.keys()}
 
 
-            maxPredictionIndex = ijet*len(self.evalValues)+ivalueAtMaxPrediction
-            maxPredictions = result.get("prediction",maxPredictionIndex)
+            
 
-            outputPerIndex[jetIndex] = {}
-            outputPerIndex[jetIndex]['parameter'] = self.evalValues[ivalueAtMaxPrediction]
-            for ilabel,label in enumerate(self.predictionLabels):
-                if label not in self.profiledLabels:
-                    continue
-                outputPerIndex[jetIndex][label] = maxPredictions[ilabel]
+            for ivalue, value in enumerate(self.evalValues):
+                predictionIndex = ijet*len(self.evalValues)+ivalue
+                predictions = result.get("prediction",predictionIndex)
+                
+                sumSubPrediction = 0.
+                for profiledSubLabel in self.allProfiledSubLabels:
+                    labelIdx = self.predictionLabels.index(profiledSubLabel)
+                    sumSubPrediction+=max(0.,predictions[labelIdx])
+                
+                for profiledLabelKey, profiledSubLabels in self.profiledLabelDict.iteritems(): 
+                    singlePrediction = 0.
+                    for profiledSubLabel in profiledSubLabels:
+                        labelIdx = self.predictionLabels.index(profiledSubLabel)
+                        singlePrediction += max(0.,predictions[labelIdx])
+                    ratioPrediction = singlePrediction/max(1e-3,1.-sumSubPrediction)  # about the numerical precision             
+                        
+                    if singlePrediction>maxSinglePrediction[profiledLabelKey]:
+                        maxSinglePrediction[profiledLabelKey] = singlePrediction
+                        valueMaxSinglePrediction[profiledLabelKey] = value
+                        
+                    if ratioPrediction>maxRatioPrediction[profiledLabelKey]:
+                        maxRatioPrediction[profiledLabelKey] = ratioPrediction
+                        valueMaxRatioPrediction[profiledLabelKey] = value
+                        
+                    avgPrediction[profiledLabelKey] += singlePrediction
+                    valueAvgPrediction[profiledLabelKey] += singlePrediction*value
+            
+            
+            outputPerIndex[jetIndex] = {'single': {}, 'ratio': {}, 'avg': {}}
+            
+            for profiledLabelKey in self.profiledLabelDict.keys():
+                valueAvgPrediction[profiledLabelKey] = valueAvgPrediction[profiledLabelKey]/avgPrediction[profiledLabelKey]
+                avgPrediction[profiledLabelKey] = avgPrediction[profiledLabelKey]/len(self.evalValues)
+                        
+                outputPerIndex[jetIndex]['single'][profiledLabelKey] = {
+                    'output': maxSinglePrediction[profiledLabelKey], 'parameter': valueMaxSinglePrediction[profiledLabelKey]
+                }
+                outputPerIndex[jetIndex]['ratio'][profiledLabelKey] = {
+                    'output': maxRatioPrediction[profiledLabelKey], 'parameter': valueMaxSinglePrediction[profiledLabelKey]
+                }
+                outputPerIndex[jetIndex]['avg'][profiledLabelKey] = {
+                    'output': avgPrediction[profiledLabelKey], 'parameter': valueAvgPrediction[profiledLabelKey]
+                }
 
-
-        # group some class outputs together
-        # to be removed after retraining
-        outputPerIndexGrouped = {}
-
-        for index, output in outputPerIndex.iteritems():
-            outputGrouped = {}
-            for label, sublabels in self.profiledLabelDict.iteritems():
-                outputGrouped[label] = 0.
-                for sublabel in sublabels:
-                    outputGrouped[label] += output[sublabel]
-            outputGrouped['parameter'] = output['parameter']
-            outputPerIndexGrouped[index] = outputGrouped
 
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
@@ -230,10 +247,14 @@ class TaggerEvaluationProfiled(Module):
             for ijet, jet in enumerate(jets):
 
                 if hasattr(jet, "globalIdx"):
-                    setattr(jet, self.taggerName, outputPerIndexGrouped[jet.globalIdx])
+                    setattr(jet, self.taggerName, outputPerIndex[jet.globalIdx])
                 else:
                     print("Jet output set to -1!")
-                    taggerOutput = {k:-1 for k in self.profiledLabels}
-                    taggerOutput['parameter'] = -10
+                    taggerOutput = {'single': {}, 'ratio': {}, 'avg': {}}
+                    for k in taggerOutput.keys():
+                        for profiledLabelKey in self.profiledLabelDict.keys():
+                            taggerOutput[k][profiledLabelKey] = {'output': -1., 'parameter': -10}
                     setattr(jet, self.taggerName, taggerOutput)
         return True
+        
+        

@@ -25,7 +25,7 @@
 class TFEval
 {
     public:
-        
+
         class Accessor
         {
             public:
@@ -35,21 +35,21 @@ class TFEval
                 {
                 }
         };
-        
-        
+
+
         class BranchAccessor:
             public Accessor
         {
             public:
                 virtual int64_t size() const = 0;
-                
+
                 virtual float value(int64_t jetIndex, int64_t batchIndex) const = 0;
-                
+
                 virtual ~BranchAccessor()
                 {
                 }
         };
-        
+
         template<class TYPE>
         class BranchAccessorTmpl:
             public BranchAccessor
@@ -61,12 +61,12 @@ class TFEval
                     _branch(branch)
                 {
                 }
-                
+
                 virtual int64_t size() const
                 {
                     return _branch->GetSize();
                 }
-                
+
                 virtual float value(int64_t jetIndex, int64_t batchIndex) const
                 {
                     if (std::isnan(_branch->At(jetIndex)) or std::isinf(_branch->At(jetIndex))){
@@ -75,22 +75,22 @@ class TFEval
 
                     return _branch->At(jetIndex);
                 }
-                
+
                 virtual ~BranchAccessorTmpl()
                 {
                 }
         };
-        
+
         static BranchAccessorTmpl<int>* createAccessor(TTreeReaderArray<int>* branch)
         {
             return new BranchAccessorTmpl<int>(branch);
         };
-        
+
         static BranchAccessorTmpl<float>* createAccessor(TTreeReaderArray<float>* branch)
         {
             return new BranchAccessorTmpl<float>(branch);
         };
-        
+
         class PyAccessor:
             public Accessor
         {
@@ -105,7 +105,7 @@ class TFEval
                     Py_XINCREF(_lengthFct);
                     Py_XINCREF(_valueFct);
                 }
-                
+
                 virtual float value(int64_t jetIndex, int64_t batchIndex) const
                 {
                     PyObject* args = PyTuple_Pack(2,PyInt_FromLong(jetIndex),PyInt_FromLong(batchIndex));
@@ -121,7 +121,7 @@ class TFEval
                     Py_DECREF(result);
                     return value;
                 }
-                
+
                 virtual int64_t size() const
                 {
                     if (not _lengthFct) throw std::runtime_error("Size function is NULL");
@@ -135,14 +135,14 @@ class TFEval
                     Py_DECREF(result);
                     return value;
                 }
-                
+
                 virtual ~PyAccessor()
                 {
                     Py_XDECREF(_lengthFct);
                     Py_XDECREF(_valueFct);
                 }
         };
-    
+
         class FeatureGroup
         {
             protected:
@@ -154,25 +154,25 @@ class TFEval
                     _size(size)
                 {
                 }
-                
+
                 inline const std::string name() const
                 {
                     return _name;
                 }
-                
+
                 virtual std::vector<int64_t> getShape() const = 0;
-                
+
                 virtual void addFeature(Accessor* accessor) = 0;//TTreeReaderArray<float>* branch) = 0;
-                
+
                 virtual tensorflow::Tensor createTensor(int64_t batchSize=1) const = 0;
-                
+
                 virtual void fillTensor(tensorflow::Tensor& tensor, int64_t jetIndex, int64_t batchIndex=0) const = 0;
-                
+
                 virtual ~FeatureGroup()
                 {
                 }
         };
-        
+
         class ValueFeatureGroup:
             public FeatureGroup
         {
@@ -183,13 +183,13 @@ class TFEval
                     FeatureGroup(name,size)
                 {
                 }
-                
+
                 ValueFeatureGroup(const ValueFeatureGroup& group):
                     FeatureGroup(group._name,group._size),
                     _branches(group._branches)
                 {
                 }
-                
+
                 ValueFeatureGroup& operator=(const ValueFeatureGroup& group)
                 {
                     _name = group._name;
@@ -197,22 +197,22 @@ class TFEval
                     _branches = group._branches;
                     return *this;
                 }
-                
+
                 virtual std::vector<int64_t> getShape() const
                 {
                     return std::vector<int64_t>({1,_size});
                 }
-                
+
                 virtual tensorflow::Tensor createTensor(int64_t batchSize=1) const
                 {
                     return tensorflow::Tensor(tensorflow::DT_FLOAT, {batchSize,_size});
                 }
-                
+
                 virtual void addFeature(Accessor* accessor) //TTreeReaderArray<float>* branch)
                 {
                     _branches.push_back(accessor);
                 }
-                
+
                 virtual void fillTensor(tensorflow::Tensor& tensor, int64_t jetIndex, int64_t batchIndex=0) const
                 {
                     if ((int64_t)_branches.size()!=_size)
@@ -229,12 +229,12 @@ class TFEval
                         features(batchIndex,ifeature) = _branches[ifeature]->value(jetIndex,batchIndex);
                     }
                 }
-                
+
                 virtual ~ValueFeatureGroup()
                 {
                 }
         };
-        
+
         class ArrayFeatureGroup:
             public FeatureGroup
         {
@@ -249,22 +249,22 @@ class TFEval
                     _lengthBranch(lengthBranch)
                 {
                 }
-                
+
                 virtual void addFeature(Accessor* accessor)//TTreeReaderArray<float>* branch)
                 {
                     _branches.push_back(accessor);
                 }
-                
+
                 virtual std::vector<int64_t> getShape() const
                 {
                     return std::vector<int64_t>({1,_max,_size});
                 }
-                
+
                 virtual tensorflow::Tensor createTensor(int64_t batchSize=1) const
                 {
                     return tensorflow::Tensor(tensorflow::DT_FLOAT, {batchSize,_max,_size});
                 }
-                
+
                 virtual void fillTensor(tensorflow::Tensor& tensor, int64_t jetIndex, int64_t batchIndex=0) const
                 {
                     if ((int64_t)_branches.size()!=_size)
@@ -296,13 +296,13 @@ class TFEval
                         }
                     }
                 }
-                
+
                 virtual ~ArrayFeatureGroup()
                 {
                 }
         };
-        
-        
+
+
         class Result
         {
             private:
@@ -311,7 +311,7 @@ class TFEval
                 Result()
                 {
                 }
-                
+
                 static Result fill(
                     std::vector<std::string> names,
                     std::vector<tensorflow::Tensor>& tensorList
@@ -322,7 +322,7 @@ class TFEval
                     {
                         throw std::runtime_error("Number of names and values do not match");
                     }
-                    
+
                     for (size_t i = 0; i < names.size(); ++i)
                     {
                         auto values = tensorList[i].tensor<float,2>();
@@ -344,13 +344,13 @@ class TFEval
                                 }
                             }
                         }
-                        
+
                         result._result[names[i]] = data;
                     }
                     return result;
                 }
-                
-                
+
+
                 std::vector<float> get(const char* s, size_t batch)
                 {
                     auto it = _result.find(std::string(s));
@@ -361,8 +361,8 @@ class TFEval
                     return it->second[batch];
                 }
         };
-        
-        
+
+
     private:
         std::vector<FeatureGroup*> _featureGroups;
         std::vector<FeatureGroup*> _featureGroupsInModel;
@@ -371,9 +371,9 @@ class TFEval
         std::vector<std::string> _outputNodeNames;
         bool _doReallocation;
         std::string _graphFilePath;
-        
+
         std::vector<std::pair<std::string, tensorflow::Tensor>> _inputs;
-        
+
     public:
         TFEval():
             _session(nullptr),
@@ -388,16 +388,16 @@ class TFEval
             std::cout<<"copy"<<std::endl;
         }
         */
-        
+
         void addOutputNodeName(const char* nodeName)
         {
             _outputNodeNames.push_back(nodeName);
         }
-        
+
         bool loadGraph(const char* filePath)
         {
             tensorflow::Status status;
-            
+
             // load it
             status = ReadBinaryProto(
                 tensorflow::Env::Default(),
@@ -405,7 +405,7 @@ class TFEval
                 &_graphDef
             );
             tensorflow::graph::SetDefaultDevice("/cpu:0", &_graphDef);
-            
+
             // check for success
             if (!status.ok())
             {
@@ -432,24 +432,24 @@ class TFEval
             _graphFilePath = std::string(filePath);
             return true;
         }
-        
+
         void addFeatureGroup(FeatureGroup* featureGroup)
         {
             _doReallocation = true;
             _featureGroups.push_back(featureGroup);
         }
-        
+
         void allocateInputs(int64_t batchSize=1)
         {
             if (_inputs.size()>0)
             {
-                _doReallocation = _inputs[0].second.dim_size(0)!=batchSize;
+                _doReallocation = _inputs[0].second.dim_size(0)<batchSize;
             }
             else
             {
                 _doReallocation = true;
             }
-            
+
             if (_doReallocation)
             {
                 _inputs.clear();
@@ -457,8 +457,8 @@ class TFEval
                 for (auto featureGroup: _featureGroups)
                 {
                     auto tensor = featureGroup->createTensor(batchSize);
-                    
-                    
+
+
                     //check input shapes
                     bool foundNode = false;
                     for (int inode = 0; inode < _graphDef.node_size(); inode++)
@@ -492,7 +492,7 @@ class TFEval
                     else
                     {
                         //throw std::runtime_error("Cannot find input node '"+featureGroup->name()+"' in pb file '"+_graphFilePath+"'");
-                        //std::cout<<"Cannot find input node '"+featureGroup->name()+"' in pb file '"+_graphFilePath+"' -> skip"<<std::endl;
+                        std::cout<<"Cannot find input node '"+featureGroup->name()+"' in pb file '"+_graphFilePath+"' -> skip"<<std::endl;
                     }
                 }
                 _doReallocation = false;
@@ -502,7 +502,7 @@ class TFEval
                 throw std::runtime_error("No input tensors have been allocated for '"+_graphFilePath+"'");
             }
         }
-        
+
         void fillInputs(int64_t jetIndex, int64_t batchIndex=0)
         {
             if (_featureGroupsInModel.size()!=_inputs.size() or _inputs.size()==0)
@@ -514,7 +514,7 @@ class TFEval
                 _featureGroupsInModel[i]->fillTensor(_inputs[i].second,jetIndex,batchIndex);
             }
         }
-        
+
         Result evaluate(int64_t size, int64_t* jetIndex)
         {
             //extra safety mutex but should be single threaded if called from python
@@ -526,12 +526,12 @@ class TFEval
                 fillInputs(jetIndex[i],i);
             }
             std::vector<tensorflow::Tensor> outputs;
-            
+
             if (not _session)
             {
                 throw std::runtime_error("No graph/session loaded");
             }
-            
+
             tensorflow::Status status = _session->Run(_inputs,_outputNodeNames,{},&outputs);
             if (!status.ok())
             {
@@ -540,11 +540,10 @@ class TFEval
 
             return Result::fill(_outputNodeNames,outputs);
         }
-        
+
         ~TFEval()
         {
         }
 };
 
 #endif
-

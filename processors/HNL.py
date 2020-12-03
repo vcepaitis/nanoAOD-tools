@@ -199,13 +199,11 @@ jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", je
 analyzerChain.append(jetmetCorrector())
 '''
 
-
-#featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict_mixed.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2016.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2017.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight2018.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetwork_ref_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_NominalNetwork_ref_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_NominalNetwork_ref_201117.pb"
 }
 
 jesUncertaintyFile = {
@@ -413,8 +411,13 @@ if isMC:
                 lambda event: event.selectedJets_jerDown[:4]
             ],
             taggerName="llpdnnx",
+            profiledLabelDict = {
+                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
+                'LLP_QE': [ 'LLP_QE'],
+                'LLP_QMU': [ 'LLP_QMU']
+            },
             globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1),
+            evalValues = np.linspace(-1.9,1.9,5*4),
         )
     )
 
@@ -432,6 +435,7 @@ if isMC:
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
                 taggerName="llpdnnx",
+                profilingMode = 'ratio',
                 outputName="category_"+systName,
                 globalOptions=globalOptions
            )
@@ -455,6 +459,7 @@ if isMC:
                 lepJets="category_simplified_"+systName+"_lepJets",
                 resJets="category_simplified_"+systName+"_resJets",
                 taggerName="llpdnnx",
+                profilingMode = 'ratio',
                 jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
             )
         )
@@ -545,8 +550,13 @@ else:
                 lambda event: event.selectedJets_nominal[:4]
             ],
             taggerName="llpdnnx",
+            profiledLabelDict = {
+                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
+                'LLP_QE': [ 'LLP_QE'],
+                'LLP_QMU': [ 'LLP_QMU']
+            },
             globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1)
+            evalValues = np.linspace(-1.9,1.9,5*4),
         )
     )
 
@@ -556,6 +566,7 @@ else:
             looseLeptons=lambda event: event.subleadingLeptons,
             jetsCollection=lambda event: event.selectedJets_nominal[:4],
             taggerName="llpdnnx",
+            profilingMode = 'ratio',
             outputName="category_nominal",
             globalOptions=globalOptions
 
@@ -580,6 +591,7 @@ else:
             lepJets="category_simplified_nominal_lepJets",
             resJets="category_simplified_nominal_resJets",
             taggerName="llpdnnx",
+            profilingMode = 'ratio',
             jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
         )
     )

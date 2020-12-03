@@ -20,6 +20,7 @@ class TaggerMassReconstruction(Module):
         lepJets=None,
         resJets=None,
         taggerName="llpdnnx",
+        profilingMode = 'ratio',
         jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
 
     ):
@@ -30,6 +31,7 @@ class TaggerMassReconstruction(Module):
         self.lepJets = lepJets
         self.resJets = resJets
         self.taggerName = taggerName
+        self.profilingMode = profilingMode
         self.jetLabels = jetLabels
 
     def beginJob(self):
@@ -72,7 +74,7 @@ class TaggerMassReconstruction(Module):
         for jet in jets:
             taggerScore = getattr(jet, self.taggerName)
             for label in self.jetLabels:
-                setattr(jet, "{}_{}".format(self.taggerName, label), taggerScore[label])
+                setattr(jet, "{}_{}".format(self.taggerName, label), taggerScore[self.profilingMode][label]['output'])
 
         if len(lepJets) > 0:
             lepJets = sorted(lepJets, key=lambda lepJet: \
