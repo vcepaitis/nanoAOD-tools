@@ -13,10 +13,10 @@ function run_test()
     scram b || return 1
     echo "--- Test HNL script ---"
     # add data test
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --testMode --noTagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv2p1.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv2p1.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --isData --noTagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv2p1.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --testMode --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --testMode --noTagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --testMode --isData --noTagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
 }
 
 run_test

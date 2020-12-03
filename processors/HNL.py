@@ -24,15 +24,19 @@ parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
+parser.add_argument('--skim', dest='skim', action='store_true', default=False)
+parser.add_argument('--profile', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
 
 testMode = args.testMode
+skim = args.skim
 print "isData:",args.isData
 print "isSignal:",args.isSignal
 print "inputs:",len(args.inputFiles)
 print "Running tagger", not args.noTagger
+
 
 for inputFile in args.inputFiles:
     if "-2016" in inputFile or "Run2016" in inputFile:
@@ -64,7 +68,7 @@ globalOptions = {
 
 isMC = not args.isData
 
-minMuonPt = {2016: 25., 2017: 28., 2018: 25.}
+minMuonPt = {2016: 26., 2017: 29., 2018: 26.}
 minElectronPt = {2016: 29., 2017: 34., 2018: 34.}
 
 if isMC:
@@ -111,11 +115,10 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi','pfRelIso03_all', 'charge'],
         electronMinPt=minElectronPt[globalOptions["year"]],
-        electronID="Iso_WP90",
+        electronID="Iso_WP90", #noIso_WP90
         storeWeights=True,
         triggerMatch=True,
-        electronMaxDxy=0.05,
-        electronMaxDz=0.1,
+        electronIPCuts=True,
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
@@ -139,7 +142,7 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
                          'looseId', 'mediumId', 'tightId', 'charge'],
-        muonMinPt=5.,
+        muonMinPt=3.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions
@@ -167,6 +170,8 @@ leptonSelection = [
         outputName = "Leptons"
     ),
     EventSkim(selection=lambda event: event.isTriggered),
+    EventSkim(selection=lambda event: event.nsubleadingLeptons>0 and event.nsubleadingLeptons<2),
+
 
 ]
 
@@ -182,6 +187,9 @@ analyzerChain.append(
         outputName="dilepton"
     )
 )
+if skim:
+    analyzerChain.append(EventSkim(selection=lambda event: ((event.dilepton_mass < 80. and event.dilepton_mass > 10.) or event.dilepton_mass > 100.) or event.Leptons_muonjets or event.Leptons_electronjets))
+
 
 '''
 # left for debugging
@@ -191,13 +199,11 @@ jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", je
 analyzerChain.append(jetmetCorrector())
 '''
 
-
-#featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict_notau.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight_notau_2016.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight_notau_2017.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight_notau_2018.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetwork_ref_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_NominalNetwork_ref_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_NominalNetwork_ref_201117.pb"
 }
 
 jesUncertaintyFile = {
@@ -259,8 +265,7 @@ if isMC:
                 leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
                 jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
-                jetMinNConstituents=3,
-                jetId=JetSelection.LOOSE,
+                jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )
@@ -273,7 +278,7 @@ if isMC:
                 jetMinPt=30.,
                 jetMinEta=2.4,
                 jetMaxEta=5.,
-                jetId=JetSelection.LOOSE,
+                jetId=JetSelection.TIGHT,
                 storeKinematics=[],
                 outputName="selectedFwdJets_"+systName,
                 globalOptions=globalOptions
@@ -286,7 +291,7 @@ if isMC:
                 jetMinPt=100.,
                 jetMinEta=2.25,
                 jetMaxEta=3.0,
-                jetId=JetSelection.LOOSE,
+                jetId=JetSelection.TIGHT,
                 storeKinematics=[],
                 outputName="selectedL1PreFiringJets_"+systName,
                 globalOptions=globalOptions
@@ -301,14 +306,6 @@ if isMC:
             )
         )
 
-        analyzerChain.append(
-            LepJetFinder(
-                jetCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
-                leptonCollection=lambda event: event.subleadingLeptons,
-                outputName="lepJet_"+systName
-            )
-        )
-
     analyzerChain.append(
         EventSkim(selection=lambda event: \
             getattr(event, "nselectedJets_nominal") > 0 or
@@ -319,53 +316,15 @@ if isMC:
         )
     )
 
-
     analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
-                lambda event: event.selectedJets_jesTotalUp[:4],
-                lambda event: event.selectedJets_jesTotalDown[:4],
-                lambda event: event.selectedJets_jerUp[:4],
-                lambda event: event.selectedJets_jerDown[:4]
-            ],
-            taggerName="llpdnnx",
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-1.1,2.1,17),
+        EventSkim(selection=lambda event: \
+            getattr(event, "nselectedJets_nominal") < 5 or
+            getattr(event, "nselectedJets_jesTotalUp") < 5 or
+            getattr(event, "nselectedJets_jesTotalDown") < 5 or
+            getattr(event, "nselectedJets_jerUp") < 5 or
+            getattr(event, "nselectedJets_jerDown") < 5
         )
     )
-
-    for systName, jetCollection in [
-        ("nominal", lambda event: event.selectedJets_nominal[:4]),
-        ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
-        ("jerDown", lambda event: event.selectedJets_jerDown[:4]),
-        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp[:4]),
-        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown[:4]),
-    ]:
-
-        analyzerChain.append(
-           EventCategorization(
-                looseLeptons=lambda event: event.subleadingLeptons,
-                jetsCollection=jetCollection,
-                taggerName="llpdnnx",
-                outputName="category_"+systName,
-                globalOptions=globalOptions
-           )
-        )
-
-        analyzerChain.append(
-           SimplifiedEventCategorization(
-                tightLeptons=lambda event: event.leadingLeptons,
-                looseLeptons=lambda event: event.subleadingLeptons,
-                jetsCollection=jetCollection,
-                taggerName="llpdnnx",
-                outputName="category_simplified_"+systName,
-                globalOptions=globalOptions
-           )
-        )
-
 
     for systName, jetCollection, metObject in [
         ("nominal", lambda event: event.selectedJets_nominal,
@@ -401,14 +360,109 @@ if isMC:
             )
         )
 
-
+    if skim:
         analyzerChain.append(
-            XGBEvaluation(
-                systName=systName,
-                jetCollection=jetCollection
+            EventSkim(selection=lambda event: \
+                getattr(event, "EventObservables_nominal_met") < 100 or
+                getattr(event, "EventObservables_jerUp_met") < 100 or
+                getattr(event, "EventObservables_jerDown_met") < 100 or
+                getattr(event, "EventObservables_jesTotalUp_met") < 100 or
+                getattr(event, "EventObservables_jesTotalDown_met") < 100 or
+                getattr(event, "EventObservables_unclEnUp_met") < 100 or
+                getattr(event, "EventObservables_unclEnDown_met") < 100
+            )
+        )
+        analyzerChain.append(
+            EventSkim(selection=lambda event: \
+                getattr(event, "EventObservables_nominal_ht") < 150 or
+                getattr(event, "EventObservables_jerUp_ht") < 150 or
+                getattr(event, "EventObservables_jerDown_ht") < 150 or
+                getattr(event, "EventObservables_jesTotalUp_ht") < 150 or
+                getattr(event, "EventObservables_jesTotalDown_ht") < 150 or
+                getattr(event, "EventObservables_unclEnUp_ht") < 150 or
+                getattr(event, "EventObservables_unclEnDown_ht") < 150
             )
         )
 
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal", "jerUp", "jerDown", "jesTotalUp", "jesTotalDown", "unclEnUp", "unclEnDown"],
+            jetCollections=[
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.selectedJets_jerUp,
+            lambda event: event.selectedJets_jerDown,
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_nominal
+        ],
+        )
+    )
+
+    analyzerChain.append(
+        TaggerEvaluationProfiled(
+            modelPath=modelPath[year],
+            featureDictFile=featureDictFile,
+            inputCollections=[
+                lambda event: event.selectedJets_nominal[:4],
+                lambda event: event.selectedJets_jesTotalUp[:4],
+                lambda event: event.selectedJets_jesTotalDown[:4],
+                lambda event: event.selectedJets_jerUp[:4],
+                lambda event: event.selectedJets_jerDown[:4]
+            ],
+            taggerName="llpdnnx",
+            profiledLabelDict = {
+                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
+                'LLP_QE': [ 'LLP_QE'],
+                'LLP_QMU': [ 'LLP_QMU']
+            },
+            globalOptions=globalOptions,
+            evalValues = np.linspace(-1.9,1.9,5*4),
+        )
+    )
+
+    for systName, jetCollection in [
+        ("nominal", lambda event: event.selectedJets_nominal[:4]),
+        ("jerUp", lambda event: event.selectedJets_jerUp[:4]),
+        ("jerDown", lambda event: event.selectedJets_jerDown[:4]),
+        ("jesTotalUp", lambda event: event.selectedJets_jesTotalUp[:4]),
+        ("jesTotalDown", lambda event: event.selectedJets_jesTotalDown[:4]),
+    ]:
+
+        analyzerChain.append(
+           EventCategorization(
+                tightLeptons=lambda event: event.leadingLeptons,
+                looseLeptons=lambda event: event.subleadingLeptons,
+                jetsCollection=jetCollection,
+                taggerName="llpdnnx",
+                profilingMode = 'ratio',
+                outputName="category_"+systName,
+                globalOptions=globalOptions
+           )
+        )
+
+        analyzerChain.append(
+           SimplifiedEventCategorization(
+                looseLeptons=lambda event: event.subleadingLeptons,
+                jetsCollection=jetCollection,
+                outputName="category_simplified_"+systName,
+                globalOptions=globalOptions
+           )
+        )
+
+        analyzerChain.append(
+            TaggerMassReconstruction(
+                globalOptions=globalOptions,
+                outputName="category_simplified_"+systName,
+                tightLeptons=lambda event: event.leadingLeptons,
+                looseLeptons=lambda event: event.subleadingLeptons,
+                lepJets="category_simplified_"+systName+"_lepJets",
+                resJets="category_simplified_"+systName+"_resJets",
+                taggerName="llpdnnx",
+                profilingMode = 'ratio',
+                jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
+            )
+        )
 
 else:
     analyzerChain.append(
@@ -418,8 +472,7 @@ else:
             leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
             jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
-            jetMinNConstituents=3,
-            jetId=JetSelection.LOOSE,
+            jetId=JetSelection.TIGHT,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
@@ -432,7 +485,7 @@ else:
             jetMinPt=30.,
             jetMinEta=2.4,
             jetMaxEta=5.,
-            jetId=JetSelection.LOOSE,
+            jetId=JetSelection.TIGHT,
             storeKinematics=[],
             outputName="selectedFwdJets_nominal",
             globalOptions=globalOptions
@@ -445,62 +498,11 @@ else:
             jetMinPt=100.,
             jetMinEta=2.25,
             jetMaxEta=3.0,
-            jetId=JetSelection.LOOSE,
+            jetId=JetSelection.TIGHT,
             storeKinematics=[],
             outputName="selectedL1PreFiringJets_nominal",
             globalOptions=globalOptions
         )
-    )
-
-    analyzerChain.append(
-        LepJetFinder(
-            jetCollection=lambda event: event.selectedJets_nominal,
-            leptonCollection=lambda event: event.subleadingLeptons,
-            outputName="lepJet_nominal"
-        )
-    )
-
-    analyzerChain.append(
-        EventSkim(
-            selection=lambda event: event.nselectedJets_nominal > 0
-        )
-    )
-
-
-    analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4]
-            ],
-            taggerName="llpdnnx",
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1)
-        )
-    )
-
-
-    analyzerChain.append(
-	EventCategorization(
-            looseLeptons=lambda event: event.subleadingLeptons,
-            jetsCollection=lambda event: event.selectedJets_nominal[:4],
-            taggerName="llpdnnx",
-            outputName="category_nominal",
-            globalOptions=globalOptions
-
-       )
-    )
-
-    analyzerChain.append(
-       SimplifiedEventCategorization(
-            tightLeptons=lambda event: event.leadingLeptons,
-            looseLeptons=lambda event: event.subleadingLeptons,
-            jetsCollection=lambda event: event.selectedJets_nominal[:4],
-            taggerName="llpdnnx",
-            outputName="category_simplified_nominal",
-            globalOptions=globalOptions
-       )
     )
 
     analyzerChain.extend([
@@ -521,10 +523,76 @@ else:
         )
     )
 
+
+    analyzerChain.append(
+        EventSkim(
+            selection=lambda event: event.nselectedJets_nominal > 0 and event.nselectedJets_nominal < 5
+        )
+    )
+
+    if skim:
+        analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
+        analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_ht < 150.))
+
+
     analyzerChain.append(
         XGBEvaluation(
-            systName="nominal",
-            jetCollection=lambda event: event.selectedJets_nominal
+            systematics=["nominal"],
+            jetCollections=[lambda event: event.selectedJets_nominal]
+        )
+    )
+
+    analyzerChain.append(
+        TaggerEvaluationProfiled(
+            modelPath=modelPath[year],
+            featureDictFile=featureDictFile,
+            inputCollections=[
+                lambda event: event.selectedJets_nominal[:4]
+            ],
+            taggerName="llpdnnx",
+            profiledLabelDict = {
+                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
+                'LLP_QE': [ 'LLP_QE'],
+                'LLP_QMU': [ 'LLP_QMU']
+            },
+            globalOptions=globalOptions,
+            evalValues = np.linspace(-1.9,1.9,5*4),
+        )
+    )
+
+    analyzerChain.append(
+	    EventCategorization(
+            tightLeptons=lambda event: event.leadingLeptons,
+            looseLeptons=lambda event: event.subleadingLeptons,
+            jetsCollection=lambda event: event.selectedJets_nominal[:4],
+            taggerName="llpdnnx",
+            profilingMode = 'ratio',
+            outputName="category_nominal",
+            globalOptions=globalOptions
+
+       )
+    )
+
+    analyzerChain.append(
+       SimplifiedEventCategorization(
+            looseLeptons=lambda event: event.subleadingLeptons,
+            jetsCollection=lambda event: event.selectedJets_nominal[:4],
+            outputName="category_simplified_nominal",
+            globalOptions=globalOptions
+       )
+    )
+
+    analyzerChain.append(
+        TaggerMassReconstruction(
+            globalOptions=globalOptions,
+            outputName="category_simplified_nominal",
+            tightLeptons=lambda event: event.leadingLeptons,
+            looseLeptons=lambda event: event.subleadingLeptons,
+            lepJets="category_simplified_nominal_lepJets",
+            resJets="category_simplified_nominal_resJets",
+            taggerName="llpdnnx",
+            profilingMode = 'ratio',
+            jetLabels=['LLP_Q','LLP_QE','LLP_QMU']
         )
     )
 
@@ -560,7 +628,7 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
-taggerTypes = ['SimplifiedEventCategorization', 'EventCategorization', 'TaggerEvaluationProfiled']
+taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled']#, 'XGBEvaluation']
 
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):

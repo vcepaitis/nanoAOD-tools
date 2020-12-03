@@ -1,5 +1,6 @@
 __init__.py
 *.pyc
+*.DS_Store
 .*.swp
 .#*
 #*#
@@ -8,3 +9,5 @@ build
 *.d
 *.so
 *.pcm
+proxy
+*.dat

@@ -7,25 +7,23 @@ import random
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
-from utils import deltaR, getCtauLabel
+from utils import deltaR, getCtauLabel, deltaPhi
 
 class SimplifiedEventCategorization(Module):
     def __init__(
         self,
         globalOptions={"isData":False, "isSignal":False},
         outputName="category_simplified",
-        tightLeptons=None,
         looseLeptons=None,
         jetsCollection=None,
-        taggerName="llpdnnx",
         maxDeltaR=1.3,
         jetLabels=['LLP_Q','LLP_QE','LLP_QMU'],
         flags={
             'isPrompt_MU': ['isPrompt_MU'],
             'isPrompt_E': ['isPrompt_E'],
             'isPrompt_TAU': ['isPrompt_TAU'],
-            'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
-            'isC': ['isC', 'isCC', 'isGCC'],
+            'isB': ['isB', 'isBB',  'isLeptonic_B', 'isLeptonic_C'],
+            'isC': ['isC', 'isCC'],
             'isUDS': ['isS', 'isUD'],
             'isG': ['isG'],
             'isPU': ['isPU'],
@@ -34,15 +32,14 @@ class SimplifiedEventCategorization(Module):
             'isLLP_QE': ['isLLP_QE','isLLP_QQE', 'isLLP_E'],
             'isUndefined': ['isUndefined'],
         },
+
     ):
         self.globalOptions = globalOptions
         self.outputName = outputName
-        self.tightLeptons = tightLeptons
         self.looseLeptons = looseLeptons
         self.jetsCollection = jetsCollection
-        self.taggerName = taggerName
-        self.jetLabels = jetLabels
         self.maxDeltaR = maxDeltaR
+        self.jetLabels = jetLabels
         self.flags = flags
 
     def beginJob(self):
@@ -57,12 +54,6 @@ class SimplifiedEventCategorization(Module):
         self.out.branch("n"+self.outputName+"_Jets", "I")
         self.out.branch("n"+self.outputName+"_lepJets", "I")
         self.out.branch("n"+self.outputName+"_resJets", "I")
-        self.out.branch(self.outputName+"_WCandidateMass", "F")
-        self.out.branch(self.outputName+"_HNLCandidateMass", "F")
-
-        for label in self.jetLabels:
-            self.out.branch("{}_lepJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_lepJets")
-            self.out.branch("{}_resJet_{}_{}".format(self.outputName, self.taggerName, label), "F", lenVar="n"+self.outputName+"_resJets")
 
         if self.globalOptions["isSignal"]:
             self.out.branch(self.outputName+"_index_truth", "I")
@@ -83,22 +74,13 @@ class SimplifiedEventCategorization(Module):
 
         jets = self.jetsCollection(event)
         looseLeptons = self.looseLeptons(event)
-        tightLeptons = self.tightLeptons(event)
-
-        # only for MC: truth labels
         if self.globalOptions["isSignal"]:
             jetOrigin = Collection(event, "jetorigin")
-            indexFlag = []
-            indexFlag.append(-10.)
 
         lepJets = []
         resJets = []
 
         for jet in jets:
-            taggerScore = getattr(jet, self.taggerName)
-            for label in self.jetLabels:
-                setattr(jet, "{}_{}".format(self.taggerName, label), taggerScore[label])
-
             if self.globalOptions["isSignal"]:
                 for truth_class, subclass_dict in self.flags.iteritems():
                     setattr(jet, truth_class, 0)
@@ -112,17 +94,10 @@ class SimplifiedEventCategorization(Module):
         elif len(jets) > 0:
             for jet in jets:
                 minDeltaR = min([deltaR(jet, lepton) for lepton in looseLeptons])
-                if(minDeltaR) < 0.4:
+                if (minDeltaR) < 0.4:
                     lepJets.append(jet)
                 elif (minDeltaR < self.maxDeltaR):
                     resJets.append(jet)
-
-        if len(lepJets) > 0:
-            lepJets = sorted(lepJets, key=lambda lepJet: \
-                max(getattr(lepJet, self.taggerName+"_LLP_QMU"), getattr(lepJet, self.taggerName+"_LLP_QE")),
-                reverse=True)
-        if len(resJets) > 0:
-            resJets = sorted(resJets, key=lambda resJet: getattr(resJet, self.taggerName+"_LLP_Q"), reverse=True)
 
         nlepJets = len(lepJets)
         nresJets = len(resJets)
@@ -154,10 +129,6 @@ class SimplifiedEventCategorization(Module):
                 category_index = -1
 
         self.out.fillBranch(self.outputName+"_index", category_index)
-
-        for label in self.jetLabels:
-            self.out.fillBranch("{}_lepJet_{}_{}".format(self.outputName, self.taggerName, label), [getattr(jet, "{}_{}".format(self.taggerName, label)) for jet in lepJets])
-            self.out.fillBranch("{}_resJet_{}_{}".format(self.outputName, self.taggerName, label), [getattr(jet, "{}_{}".format(self.taggerName, label)) for jet in resJets])
 
         if self.globalOptions["isSignal"]:
             for truth_class in self.flags.keys():
@@ -193,32 +164,4 @@ class SimplifiedEventCategorization(Module):
             self.out.fillBranch(self.outputName+"_index_truth", category_index_truth)
 
         self.out.fillBranch(self.outputName+"_Jet_category", nJets*[category_index])
-
-
-        HNLCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
-        WCandidateLorentzVector = ROOT.TLorentzVector(0,0,0,0)
-
-
-        if category_index == 2:
-            HNLCandidateLorentzVector += lepJets[0].p4()
-            WCandidateLorentzVector += lepJets[0].p4()
-        elif category_index > 0:
-            HNLCandidateLorentzVector += resJets[0].p4()
-            WCandidateLorentzVector += resJets[0].p4()
-        for lepton in looseLeptons:
-            HNLCandidateLorentzVector += lepton.p4()
-            WCandidateLorentzVector += lepton.p4()
-        for lepton in tightLeptons:
-            WCandidateLorentzVector += lepton.p4()
-
-        WCandidateMass = WCandidateLorentzVector.M()
-
-        if category_index > 2:
-            HNLCandidateMass = resJets[0].mass
-        else:
-            HNLCandidateMass = HNLCandidateLorentzVector.M()
-
-        self.out.fillBranch(self.outputName+"_WCandidateMass", WCandidateMass)
-        self.out.fillBranch(self.outputName+"_HNLCandidateMass", HNLCandidateMass)
-
         return True

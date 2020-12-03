@@ -18,7 +18,7 @@ class LeptonCollecting(Module):
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz"]
+        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ):
 
         self.globalOptions = globalOptions
@@ -109,7 +109,9 @@ class LeptonCollecting(Module):
 
             elif tightLeptons[0].isMuon and looseLeptons[0].isElectron:
                 muonelectron = 1
-
+               
+            elif tightLeptons[0].isElectron and looseLeptons[0].isMuon:
+                electronmuon = 1
 
         elif len(tightLeptons) > 0:
             if tightLeptons[0].isMuon:
@@ -130,6 +132,16 @@ class LeptonCollecting(Module):
         else:
             setattr(event, "isTriggered", 0)
 
+        for lepton in tightLeptons+looseLeptons:
+            if lepton.dxyErr < 1e-6:
+                 setattr(lepton, "dxysig", -1.)
+            else:
+                 setattr(lepton, "dxysig", math.fabs(lepton.dxy)/math.fabs(lepton.dxyErr))
+
+            if lepton.dzErr < 1e-6:
+                 setattr(lepton, "dzsig", -1.)
+            else:
+                 setattr(lepton, "dzsig", math.fabs(lepton.dz)/math.fabs(lepton.dzErr))
 
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
         self.out.fillBranch("nsubleading"+self.outputName, len(looseLeptons))

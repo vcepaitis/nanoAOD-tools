@@ -17,7 +17,6 @@ from EventSkim import EventSkim
 from EventObservables import EventObservables
 from WbosonReconstruction import WbosonReconstruction
 from MetFilter import MetFilter
-from JetDYMixing import JetDYMixing
 from PileupWeight import PileupWeight
 from TaggerWorkingpoints import TaggerWorkingpoints
 from EventInfo import EventInfo
@@ -37,5 +36,6 @@ from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
 from EventCategorization import EventCategorization
 from SimplifiedEventCategorization import SimplifiedEventCategorization
+from TaggerMassReconstruction import TaggerMassReconstruction
 from LHEWeights import LHEWeights
 from LeptonGenEfficiency import LeptonGenEfficiency
