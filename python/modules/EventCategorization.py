@@ -20,6 +20,7 @@ class EventCategorization(Module):
         taggerName="llpdnnx",
         maxDeltaR=1.3,
         jetLabels=['LLP_Q','LLP_QE','LLP_QMU'],
+        profilingMode = 'ratio',
         flags={
             'isPrompt_MU': ['isPrompt_MU'],
             'isPrompt_E': ['isPrompt_E'],
@@ -47,6 +48,7 @@ class EventCategorization(Module):
         self.jetsCollection = jetsCollection
         self.taggerName = taggerName
         self.jetLabels = jetLabels
+        self.profilingMode = profilingMode
         self.maxDeltaR = maxDeltaR
         self.flags = flags
 
@@ -159,10 +161,10 @@ class EventCategorization(Module):
         for ijet, jet in enumerate(selectedJets):
             taggerOutput = getattr(jet, self.taggerName)
             for label in self.jetLabels:
-                 if bestValues[0] < taggerOutput[label]:
+                 if bestValues[0] < taggerOutput[self.profilingMode][label]['output']:
                     bestIndices[0] = dict[label]
-                    bestValues[0] = taggerOutput[label]
-                    bestParams[0] = taggerOutput['parameter']
+                    bestValues[0] = taggerOutput[self.profilingMode][label]['output']
+                    bestParams[0] = taggerOutput[self.profilingMode][label]['parameter']
                     bestJets[0] = jet
                     bestDicts[0] = taggerOutput
 
@@ -177,10 +179,10 @@ class EventCategorization(Module):
                 if jet != bestJets[0]:
                     taggerOutput = getattr(jet, self.taggerName)
                     for label in self.jetLabels:
-                        if secondValue < taggerOutput[label] and taggerOutput[label] < bestValues[0]:
+                        if secondValue < taggerOutput[self.profilingMode][label]['output'] and taggerOutput[self.profilingMode][label]['output'] < bestValues[0]:
                             secondIndex = dict[label]
-                            secondValue = taggerOutput[label]
-                            secondParam = taggerOutput['parameter']
+                            secondValue = taggerOutput[self.profilingMode][label]['output']
+                            secondParam = taggerOutput[self.profilingMode][label]['parameter']
                             secondJet  = jet
                             secondDict = taggerOutput
 
@@ -217,7 +219,7 @@ class EventCategorization(Module):
             output = 0.
             if not jet == -10.:
                 for label in self.jetLabels:
-           	    output += getattr(jet, self.taggerName)[label]
+           	    output += getattr(jet, self.taggerName)[self.profilingMode][label]['output']
                 outputSums.append(output)
 
 

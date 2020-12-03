@@ -22,7 +22,7 @@ class TaggerEvaluationProfiled(Module):
         taggerName = "llpdnnx",
         evalValues = range(-1, 4),
         profiledLabelDict = {
-                            'LLP_Q': ['LLP_Q'],
+                            'LLP_Q': ['LLP_Q','LLP_QTAU'],
                             'LLP_QE': [ 'LLP_QE'],
                             'LLP_QMU': [ 'LLP_QMU']
                             },
