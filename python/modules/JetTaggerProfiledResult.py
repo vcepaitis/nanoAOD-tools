@@ -37,8 +37,10 @@ class JetTaggerProfiledResult(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        for label in self.profiledLabels+['parameter']:
-            self.out.branch(self.outputName+"_"+self.taggerName+"_"+label,"F",lenVar="n"+self.outputName)
+        for label in self.profiledLabels:
+            for k in ['single','ratio','avg']:
+                self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,"F",lenVar="n"+self.outputName)
+                self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param","F",lenVar="n"+self.outputName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -48,23 +50,30 @@ class JetTaggerProfiledResult(Module):
 
         jets = self.inputCollection(event)
 
-        taggerResults = {label: [-1.]*len(jets) for label in self.profiledLabels}
-        taggerResults['parameter'] = [-10]*len(jets)
+        taggerResults = {}
+        taggerParameters = {}
+        for k in ['single','ratio','avg']:
+            taggerResults[k] = {label: [-1.]*len(jets) for label in self.profiledLabels}
+            taggerParameters[k] = {label: [-1.]*len(jets) for label in self.profiledLabels}
+        
         hasTagger = False
         for ijet, jet in enumerate(jets):
             if not hasattr(jet, self.taggerName):
                 continue
             hasTagger = True
             predictions = getattr(jet,self.taggerName)
-            for label in self.profiledLabels+['parameter']:
-                taggerResults[label][ijet] = predictions[label]
+            for label in self.profiledLabels:
+                for k in ['single','ratio','avg']:
+                    taggerResults[k][label][ijet] = predictions[k][label]['output']
+                    taggerParameters[k][label][ijet] = predictions[k][label]['parameter']
 
         if not hasTagger:
             print "WARNING - no jet in the event has the ", self.taggerName, " result stored"
 
         #print len(jets)
-        for k in self.profiledLabels+['parameter']:
-            #print self.outputName+"_"+self.taggerName+"_"+k,taggerResults[k]
-            self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k,taggerResults[k])
+        for label in self.profiledLabels:
+            for k in ['single','ratio','avg']:
+                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,taggerResults[k][label])
+                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param",taggerParameters[k][label])
         #print
         return True

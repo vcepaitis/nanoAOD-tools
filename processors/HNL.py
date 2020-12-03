@@ -193,11 +193,11 @@ analyzerChain.append(jetmetCorrector())
 
 
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200311/feature_dict.py"
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict_mixed.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/feature_dict_notau.py"
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2016.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2017.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/mixed_2018.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight_notau_2016.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight_notau_2017.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/200720/weight_notau_2018.pb"
 }
 
 jesUncertaintyFile = {
@@ -333,7 +333,7 @@ if isMC:
             ],
             taggerName="llpdnnx",
             globalOptions=globalOptions,
-            evalValues = np.linspace(-3,2,5*5+1),
+            evalValues = np.linspace(-1.1,2.1,17),
         )
     )
 
