@@ -12,9 +12,7 @@ using json = nlohmann::json;
 int main(int argc, char **argv){
     std::string path{argv[1]};
     std::string output_path{argv[2]};
-    //std::map<std::string, TH1F> pileupHists;
     std::map<std::string, std::map<std::string, double>> processDict;
-    //std::map<std::string, TH1F> mapOfHists;
 
     if (auto dir = opendir(path.c_str())) {
         while (auto f = readdir(dir)) {
@@ -34,8 +32,6 @@ int main(int argc, char **argv){
             std::cout << "Reading in folder: " << file_path << std::endl;
 
 
-            //pileupHists.insert(std::make_pair(process, TH1F(process.c_str(), "", 101, 0, 100)));
-            //pileupHists[process].SetDirectory(0);
             for (int weight_index=2; weight_index<68; weight_index++){
                 std::map<std::string, double> dummy_map;
                 std::string name_string = "LHEWeights_coupling_"+std::to_string(weight_index);
@@ -62,7 +58,6 @@ int main(int argc, char **argv){
                         tree->Project(h->GetName(), "Pileup_nTrueInt", weight_string.c_str());
                         processDict[process][name_string] += h->Integral();
                     }
-                    //pileupHists[process].Add(h);
                     delete tree;
                     rootFile->Close();
                 }
@@ -71,27 +66,9 @@ int main(int argc, char **argv){
         closedir(dir);
     }
 
-    /*
-    for (std::pair<std::string, std::pair<int, double>> x: processDict) {
-        std::cout << x.first << " => " << x.second << '\n';
-    }
-    */
-
-    std::string output_string = (output_path+"/pileup.root");
-
-    /*
-    TFile *rootFile = TFile::Open(output_string.c_str(), "RECREATE");
-    for (std::pair<std::string, TH1F> x: pileupHists) {
-        x.second.SetDirectory(rootFile);
-        x.second.SetName(x.first.c_str());
-        x.second.Write();
-    }
-
-    rootFile->Close();
-    */
     json j_map(processDict);
 
-    output_string = output_path+"/eventyields.json";
+    std::string output_string = output_path+"/eventyieldsHNL.json";
     std::ofstream o(output_string.c_str());
     o << j_map.dump(0) << std::endl;
 

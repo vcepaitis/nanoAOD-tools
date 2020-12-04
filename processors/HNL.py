@@ -18,8 +18,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--testMode', dest='testMode', action='store_true', default=False)
 parser.add_argument('--isData', dest='isData',
                     action='store_true', default=False)
-parser.add_argument('--isSignal', dest='isSignal',
-                    action='store_true', default=False)
 parser.add_argument('--year', dest='year',
                     action='store', type=int, default=2016)
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
@@ -32,13 +30,16 @@ args = parser.parse_args()
 
 testMode = args.testMode
 skim = args.skim
+isSignal = False
+
 print "isData:",args.isData
-print "isSignal:",args.isSignal
 print "inputs:",len(args.inputFiles)
 print "Running tagger", not args.noTagger
 
 
 for inputFile in args.inputFiles:
+    if "dirac" in inputFile or "majorana" in inputFile or "LLPGun" in inputFile: 
+        isSignal = True
     if "-2016" in inputFile or "Run2016" in inputFile:
         year = 2016
     elif "-2017" in inputFile or "Run2017" in inputFile:
@@ -59,10 +60,11 @@ for inputFile in args.inputFiles:
 
 print "year:", year
 print "output directory:", args.output[0]
+print "isSignal:",isSignal
 
 globalOptions = {
     "isData": args.isData,
-    "isSignal": args.isSignal,
+    "isSignal": isSignal,
     "year": year
 }
 
@@ -372,6 +374,7 @@ if isMC:
                 getattr(event, "EventObservables_unclEnDown_met") < 100
             )
         )
+        '''
         analyzerChain.append(
             EventSkim(selection=lambda event: \
                 getattr(event, "EventObservables_nominal_ht") < 150 or
@@ -383,6 +386,7 @@ if isMC:
                 getattr(event, "EventObservables_unclEnDown_ht") < 150
             )
         )
+        '''
 
     analyzerChain.append(
         XGBEvaluation(
@@ -532,7 +536,7 @@ else:
 
     if skim:
         analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
-        analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_ht < 150.))
+        #analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_ht < 150.))
 
 
     analyzerChain.append(
@@ -620,7 +624,7 @@ if not globalOptions["isData"]:
                            event: tree.fillBranch("genweight",
                            event.Generator_weight)])
 
-    if args.isSignal:
+    if isSignal:
         for coupling in range(1,68):
             storeVariables.append([
                 lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
