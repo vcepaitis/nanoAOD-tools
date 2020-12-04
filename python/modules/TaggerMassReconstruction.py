@@ -119,7 +119,7 @@ class TaggerMassReconstruction(Module):
             maxScore = resJets[0].llpdnnx_LLP_Q
 
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_m_llj", WCandidateLorentzVector.M())
-        self.out.fillBranch(self.outputName+"_"+self.taggerName+"_max", math.tanh(0.1*maxScore))
+        self.out.fillBranch(self.outputName+"_"+self.taggerName+"_max", maxScore)
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_deltaPhi_lj", deltaPhi_lj)
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_deltaR_lj", deltaR_lj)
 
@@ -128,6 +128,6 @@ class TaggerMassReconstruction(Module):
             max2ndScore = resJets[1].llpdnnx_LLP_Q
 
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_m_lljj", WCandidateLorentzVector.M())
-        self.out.fillBranch(self.outputName+"_"+self.taggerName+"_max2nd", math.tanh(0.1*max2ndScore))
+        self.out.fillBranch(self.outputName+"_"+self.taggerName+"_max2nd", max2ndScore)
 
         return True
