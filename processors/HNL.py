@@ -24,6 +24,7 @@ parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
 parser.add_argument('--skim', dest='skim', action='store_true', default=False)
 parser.add_argument('--profile', action='store_true', default=False)
+parser.add_argument('--bdt', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
@@ -95,7 +96,8 @@ met_variable = {2016: lambda event: Object(event, "MET"),
                 2018: lambda event: Object(event, "MET")
                 }
 
-
+muonIso = MuonSelection.NONE if args.bdt else MuonSelection.TIGHT
+eleId = "noIso_WP90" if args.bdt else "Iso_WP90"
 leptonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj > 0),
     MuonSelection(
@@ -108,7 +110,7 @@ leptonSelection = [
         muonMaxDz=0.05,
         triggerMatch=True,
         muonID=MuonSelection.TIGHT,
-        muonIso=MuonSelection.TIGHT,
+        muonIso=muonIso,
         selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
@@ -117,7 +119,7 @@ leptonSelection = [
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi','pfRelIso03_all', 'charge'],
         electronMinPt=minElectronPt[globalOptions["year"]],
-        electronID="Iso_WP90", #noIso_WP90
+        electronID=eleId,
         storeWeights=True,
         triggerMatch=True,
         electronIPCuts=True,
@@ -171,15 +173,14 @@ leptonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons"
     ),
-    EventSkim(selection=lambda event: event.isTriggered),
-    EventSkim(selection=lambda event: event.nsubleadingLeptons>0 and event.nsubleadingLeptons<2),
-
-
 ]
 
 analyzerChain = []
 
 analyzerChain.extend(leptonSelection)
+
+if not args.bdt:
+    analyzerChain.append(EventSkim(selection=lambda event: event.isTriggered))
 
 
 analyzerChain.append(
