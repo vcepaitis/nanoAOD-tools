@@ -39,3 +39,6 @@ from SimplifiedEventCategorization import SimplifiedEventCategorization
 from TaggerMassReconstruction import TaggerMassReconstruction
 from LHEWeights import LHEWeights
 from LeptonGenEfficiency import LeptonGenEfficiency
+from TaggerEvaluationCache import TaggerEvaluationCache
+from XsecWeight import XsecWeight
+

@@ -31,6 +31,9 @@ class JetSelection(Module):
          dRP4Subtraction=0.4,
          flagDA=False,
          storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal'],
+         globalFeatures = ['area','beta','dR2Mean','frac01','frac02','frac03','frac04','jetR','jetRchg',
+                            'n60','n90','chargedEmEnergyFraction','chargedHadronEnergyFraction',
+                            'chargedMuEnergyFraction','electronEnergyFraction'],
          globalOptions={"isData": False, "year": 2016},
          jetId=TIGHT
      ):
@@ -48,6 +51,7 @@ class JetSelection(Module):
         self.dRP4Subtraction = dRP4Subtraction
         self.flagDA = flagDA
         self.storeKinematics = storeKinematics
+        self.globalFeatures = globalFeatures
         if jetId==JetSelection.LOOSE and (globalOptions["year"] == 2017 or globalOptions["year"] == 2018):
             self.jetId = JetSelection.TIGHT
         else:
@@ -65,7 +69,7 @@ class JetSelection(Module):
             self.out.branch(self.outputName+"_forDA", "F", lenVar="nJet")
 
         self.out.branch("n"+self.outputName, "I")
-        for variable in self.storeKinematics:
+        for variable in self.storeKinematics+self.globalFeatures:
             self.out.branch(self.outputName+"_"+variable, "F", lenVar="n"+self.outputName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -75,7 +79,11 @@ class JetSelection(Module):
         """process event, return True (go to next module) or False (fail, go to next event)"""
 
         jets = self.inputCollection(event)
-
+        
+        
+        jetglobal = Collection(event, "global")
+        jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
+        
         selectedJets = []
         unselectedJets = []
 
@@ -85,7 +93,27 @@ class JetSelection(Module):
         if self.flagDA:
             flagsDA = [0.]*event.nJet
 
-        for jet in jets:
+        for ijet,jet in enumerate(jets):
+            
+            #find global jet to access more properties
+            global_jet = None
+            if len(self.globalFeatures)>0 and math.fabs(jet.eta)<2.4:
+                try:
+                    global_jet_index = jetglobal_indices.index(jet._index)
+                    global_jet = jetglobal[global_jet_index]
+                    if abs(jet.eta - global_jet.eta) > 0.01 or \
+                       abs(jet.phi - global_jet.phi) > 0.01:
+                           print "Warning ->> jet might be mismatched!"
+                except ValueError:
+                    print "WARNING: jet (pt: %s, eta: %s) does not have a matching global jet" % (jet.pt, jet.eta)
+                    
+            if global_jet:
+                for feature in self.globalFeatures:
+                    setattr(jet,feature,getattr(global_jet,feature))
+            else:
+                for feature in self.globalFeatures:
+                    setattr(jet,feature,0.0)
+
             if math.fabs(jet.eta) > self.jetMaxEta:
                 unselectedJets.append(jet)
                 continue
@@ -142,13 +170,13 @@ class JetSelection(Module):
             selectedJets.append(jet)
 
             if self.flagDA:
-                flagsDA[jet._index] = 1.
+                flagsDA[ijet] = 1.
 
         if self.flagDA:
             self.out.fillBranch(self.outputName+"_forDA", flagsDA)
 
         self.out.fillBranch("n"+self.outputName, len(selectedJets))
-        for variable in self.storeKinematics:
+        for variable in self.storeKinematics+self.globalFeatures:
             self.out.fillBranch(self.outputName+"_"+variable,
                                 map(lambda jet: getattr(jet, variable), selectedJets))
 
