@@ -180,7 +180,7 @@ leptonSelection = [
     EventSkim(selection=lambda event: event.isTriggered),
     EventSkim(selection=lambda event: event.nsubleadingLeptons==1),
 
-
+    EventSkim(selection=lambda event: (event.Leptons_muonelectron+event.Leptons_electronmuon)>0),
 ]
 
 analyzerChain = []
@@ -228,12 +228,12 @@ if isMC:
     for systName, jetCollection in [
         ("nominal", lambda event: event.jets_nominal),
     ]:
-
+        #no cleaning for 2nd leptons same as in training to increase prompt lepton jet stats
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
                 leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
-                leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
+                leptonCollectionP4Subraction=lambda event: [], #event.subleadingLeptons,
                 jetMinPt=15.,
                 jetMaxEta=2.399, #TODO: change to 2.4
                 jetId=JetSelection.TIGHT,
@@ -254,7 +254,7 @@ else:
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
             leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
-            leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
+            leptonCollectionP4Subraction=lambda event: [], #event.subleadingLeptons,
             jetMinPt=15.,
             jetMaxEta=2.399, #TODO: change to 2.4
             jetId=JetSelection.TIGHT,

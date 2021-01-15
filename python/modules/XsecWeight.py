@@ -65,10 +65,13 @@ class XsecWeight(Module):
         self.out = wrappedOutputTree
         self.out.branch("xsecweight", "F")
         self.out.branch("isData", "F")
+        self.out.branch("processId", "F")
         
         self.processXsec = None
         self.processYield = None
-        for processName in self.xsecs.keys():
+        self.proccessId = 0
+        
+        for i,processName in enumerate(sorted(self.xsecs.keys())):
             if processName in inputFile.GetName():
                 if self.processXsec != None:
                     print "ERROR - ambigious process name '%s' vs '%s' for file '%s' in xsec dict found!"%(
@@ -76,6 +79,7 @@ class XsecWeight(Module):
                     )
                     sys.exit(1)
                 self.processXsec = self.xsecs[processName]
+                self.proccessId = i+1
         
         for processName in self.yields.keys():
             if processName in inputFile.GetName():
@@ -97,9 +101,12 @@ class XsecWeight(Module):
         if self.globalOptions['isData']:
             self.out.fillBranch("xsecweight", 1.)
             self.out.fillBranch("isData", 1.)
+            self.out.fillBranch("processId", 0.)
         else:
             self.out.fillBranch("xsecweight", event.Generator_weight*self.lumi*self.processXsec/self.processYield)
             self.out.fillBranch("isData", 0.)
+            self.out.fillBranch("processId", self.proccessId)
+            
         return True
             
             

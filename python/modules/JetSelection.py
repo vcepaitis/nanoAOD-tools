@@ -66,7 +66,7 @@ class JetSelection(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         if self.flagDA:
-            self.out.branch(self.outputName+"_forDA", "F", lenVar="nJet")
+            self.out.branch("Jet_forDA", "F", lenVar="nJet")
 
         self.out.branch("n"+self.outputName, "I")
         for variable in self.storeKinematics+self.globalFeatures:
@@ -93,7 +93,7 @@ class JetSelection(Module):
         if self.flagDA:
             flagsDA = [0.]*event.nJet
 
-        for ijet,jet in enumerate(jets):
+        for jet in jets:
             
             #find global jet to access more properties
             global_jet = None
@@ -170,10 +170,10 @@ class JetSelection(Module):
             selectedJets.append(jet)
 
             if self.flagDA:
-                flagsDA[ijet] = 1.
+                flagsDA[jet._index] = 1.
 
         if self.flagDA:
-            self.out.fillBranch(self.outputName+"_forDA", flagsDA)
+            self.out.fillBranch("Jet_forDA", flagsDA)
 
         self.out.fillBranch("n"+self.outputName, len(selectedJets))
         for variable in self.storeKinematics+self.globalFeatures:
