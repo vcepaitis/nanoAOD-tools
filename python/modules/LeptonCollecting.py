@@ -12,8 +12,8 @@ class LeptonCollecting(Module):
 
     def __init__(
         self,
-        tightMuonCollection = lambda event: Collection(event, "Muon"),
-        tightElectronCollection = lambda event: Collection(event, "Electron"),
+        tightMuonsCollection = lambda event: Collection(event, "Muon"),
+        tightElectronsCollection = lambda event: Collection(event, "Electron"),
         looseMuonCollection = lambda event: Collection(event, "Muon"),
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
@@ -22,8 +22,8 @@ class LeptonCollecting(Module):
     ):
 
         self.globalOptions = globalOptions
-        self.tightMuonCollection = tightMuonCollection
-        self.tightElectronCollection = tightElectronCollection
+        self.tightMuonsCollection = tightMuonsCollection
+        self.tightElectronsCollection = tightElectronsCollection
         self.looseMuonCollection = looseMuonCollection
         self.looseElectronCollection = looseElectronCollection
         self.outputName = outputName
@@ -60,18 +60,19 @@ class LeptonCollecting(Module):
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
 
-        tightMuon = self.tightMuonCollection(event)
-        tightElectron = self.tightElectronCollection(event)
+        tightMuons = self.tightMuonsCollection(event)
+        tightElectrons = self.tightElectronsCollection(event)
 
         looseMuons = self.looseMuonCollection(event)
         looseElectrons = self.looseElectronCollection(event)
 
-        for lepton in tightMuon+looseMuons:
+
+        for lepton in tightMuons+looseMuons:
             lepton.isMuon = 1
             lepton.isElectron = 0
             lepton.relIso = lepton.pfRelIso04_all
 
-        for lepton in tightElectron+looseElectrons:
+        for lepton in tightElectrons+looseElectrons:
             lepton.isMuon = 0
             lepton.isElectron = 1
             lepton.relIso = lepton.pfRelIso03_all
@@ -79,7 +80,7 @@ class LeptonCollecting(Module):
         tightLeptons = []
         looseLeptons = []
 
-        tightLeptons = tightMuon+tightElectron
+        tightLeptons = tightMuons+tightElectrons
         looseLeptons = looseMuons+looseElectrons
 
         tightLeptons = sorted(tightLeptons, key=lambda x: x.pt, reverse=True)
@@ -99,8 +100,13 @@ class LeptonCollecting(Module):
         muonjets = 0
         electronjets = 0
 
+
         ## flavour categorisation :
         if len(tightLeptons) > 0 and len(looseLeptons) > 0:
+            # Ensure pt(l1) > pt(l2)
+            if tightLeptons[0].pt < looseLeptons[0].pt:
+                return False
+                
             if tightLeptons[0].isMuon and looseLeptons[0].isMuon:
                 muonmuon = 1
 

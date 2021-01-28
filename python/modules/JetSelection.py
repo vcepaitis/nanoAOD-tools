@@ -138,7 +138,7 @@ class JetSelection(Module):
             else:
                 setattr(jet,"minDPhiClean",100)
                 setattr(jet,"minDRClean",100)
-                
+
             selectedJets.append(jet)
 
             if self.flagDA:
