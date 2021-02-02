@@ -24,7 +24,6 @@ class ElectronSelection(Module):
         storeWeights=False,
         selectLeadingOnly=False,
         globalOptions={"isData":False, "year":2016},
-        triggerMatch = False
     ):
         IDs = ["Iso_WP80",
                "Iso_WP90",
@@ -34,6 +33,7 @@ class ElectronSelection(Module):
                "noIso_WPL",
                "None",
                "Custom",
+               "CustomIso",
                "Inv"
               ]
         self.inputCollection = inputCollection
@@ -45,7 +45,6 @@ class ElectronSelection(Module):
         self.storeWeights = storeWeights
         self.selectLeadingOnly = selectLeadingOnly
         self.globalOptions = globalOptions
-        self.triggerMatch = triggerMatch
         if electronID not in IDs:
             print("Undefined electron ID! Choose one of the following")
             print(IDs)
@@ -62,6 +61,17 @@ class ElectronSelection(Module):
                                 electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
                                 electron.GsfEleEInverseMinusPInverseCut>1 and \
                                 electron.GsfEleConversionVetoCut>1
+        elif electronID == "CustomIso":
+            self.storeWeights = False
+            self.electronID = lambda electron:  \
+                                electron.GsfEleSCEtaMultiRangeCut>1 and \
+                                electron.GsfEleDEtaInSeedCut>1 and \
+                                electron.GsfEleDPhiInCut>1 and \
+                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
+                                electron.GsfEleEInverseMinusPInverseCut>1 and \
+                                electron.GsfEleConversionVetoCut>1 and \
+                                electron.pfRelIso03_all<0.15
+
         elif electronID == "Inv":
             self.electronID = lambda electron: electron.mvaFall17V2Iso_WPL<1 and electron.pfRelIso03_all<0.8
             self.storeWeights = False
@@ -69,8 +79,6 @@ class ElectronSelection(Module):
         else:
             self.electronID = lambda electron: getattr(electron, "mvaFall17V2"+electronID)
 
-        if triggerMatch:
-            self.trigger_object = lambda event: Collection(event, "TrigObj")
 
         id_hist_dict = {
                 2016: "2016LegacyReReco_ElectronMVAREPLACE_Fall17V2.root",
@@ -123,21 +131,6 @@ class ElectronSelection(Module):
                 print("Invalid year")
                 sys.exit(1)
 
-    def triggerMatched(self, electron, trigger_object):
-        if self.triggerMatch:
-            trig_deltaR = math.pi
-            for trig_obj in trigger_object:
-                if abs(trig_obj.id) != 11:
-                    continue
-                trig_deltaR = min(trig_deltaR, deltaR(trig_obj, electron))
-            if trig_deltaR < 0.3:
-                return True
-            else:
-                return False
-        else:
-            return True
-
-
     def beginJob(self):
         pass
 
@@ -169,10 +162,6 @@ class ElectronSelection(Module):
         electrons = self.inputCollection(event)
         muons = Collection(event, "Muon")
 
-        if self.triggerMatch:
-            trigger_object = self.trigger_object(event)
-        else:
-            trigger_object = None
 
         selectedElectrons = []
         unselectedElectrons = []
@@ -198,7 +187,7 @@ class ElectronSelection(Module):
             electron.GsfEleMissingHitsCut = cuts[9]
 
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
-                and self.electronID(electron) and self.triggerMatched(electron, trigger_object):
+                and self.electronID(electron):
                 # https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2
                 if self.electronIPCuts:
                     if math.fabs(electron.eta) < 1.479:

@@ -24,6 +24,7 @@ parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('--noTagger', dest='noTagger', action='store_true', default=False)
 parser.add_argument('--skim', dest='skim', action='store_true', default=False)
 parser.add_argument('--profile', action='store_true', default=False)
+parser.add_argument('--bdt', action='store_true', default=False)
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
@@ -95,51 +96,47 @@ met_variable = {2016: lambda event: Object(event, "MET"),
                 2018: lambda event: Object(event, "MET")
                 }
 
-
+muonIso = MuonSelection.NONE if args.bdt else MuonSelection.TIGHT
+eleId = "noIso_WP90" if args.bdt else "Iso_WP90"
 leptonSelection = [
     EventSkim(selection=lambda event: event.nTrigObj > 0),
     MuonSelection(
-        outputName="tightMuon",
+        outputName="tightMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all', 'charge'],
         storeWeights=True,
         muonMinPt=minMuonPt[globalOptions["year"]],
         muonMaxDxy=0.01,
         muonMaxDz=0.05,
-        triggerMatch=True,
         muonID=MuonSelection.TIGHT,
-        muonIso=MuonSelection.TIGHT,
-        selectLeadingOnly=True,
+        muonIso=muonIso,
         globalOptions=globalOptions
     ),
     ElectronSelection(
-        outputName="tightElectron",
+        outputName="tightElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi','pfRelIso03_all', 'charge'],
         electronMinPt=minElectronPt[globalOptions["year"]],
-        electronID="Iso_WP90", #noIso_WP90
+        electronID=eleId,
         storeWeights=True,
-        triggerMatch=True,
         electronIPCuts=True,
-        selectLeadingOnly=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuon + event.ntightElectron > 0),
+    EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0),
     SingleMuonTriggerSelection(
-        inputCollection=lambda event: event.tightMuon,
+        inputCollection=lambda event: event.tightMuons,
         outputName="IsoMuTrigger",
         storeWeights=True,
         globalOptions=globalOptions
     ),
     SingleElectronTriggerSelection(
-        inputCollection=lambda event: event.tightElectron,
+        inputCollection=lambda event: event.tightElectrons,
         outputName="IsoElectronTrigger",
         storeWeights=False,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0),
     MuonSelection(
-        inputCollection=lambda event: event.tightMuon_unselected,
+        inputCollection=lambda event: event.tightMuons_unselected,
         outputName="looseMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi', 'pfRelIso04_all',
@@ -149,8 +146,20 @@ leptonSelection = [
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions
     ),
+    MuonSelection(
+        inputCollection=lambda event: event.looseMuons,
+        outputName="looseIsoMuons",
+        storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
+                         'dzErr', 'phi', 'pfRelIso04_all',
+                         'looseId', 'mediumId', 'tightId', 'charge'],
+        muonMinPt=3.,
+        storeWeights=False,
+        muonID=MuonSelection.LOOSE,
+        muonIso=MuonSelection.TIGHT,
+        globalOptions=globalOptions
+    ),
     ElectronSelection(
-        inputCollection=lambda event: event.tightElectron_unselected,
+        inputCollection=lambda event: event.tightElectrons_unselected,
         outputName="looseElectrons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
                          'dzErr', 'phi','pfRelIso03_all', 'charge',
@@ -162,44 +171,48 @@ leptonSelection = [
         electronID="Custom",
         globalOptions=globalOptions
     ),
-
-
+    ElectronSelection(
+        inputCollection=lambda event: event.looseElectrons,
+        outputName="looseIsoElectrons",
+        storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
+                         'dzErr', 'phi','pfRelIso03_all', 'charge',
+                         'mvaFall17V2noIso_WP80', 'mvaFall17V2noIso_WP90', 'mvaFall17V2noIso_WPL',
+                         'mvaFall17V2Iso_WP80', 'mvaFall17V2Iso_WP90', 'mvaFall17V2Iso_WPL',
+                         'cutBased'],
+        electronMinPt=5.,
+        storeWeights=False,
+        electronID="CustomIso",
+        globalOptions=globalOptions
+    ),
     LeptonCollecting(
-        tightMuonCollection=lambda event:event.tightMuon,
-        tightElectronCollection=lambda event:event.tightElectron,
+        tightMuonsCollection=lambda event:event.tightMuons,
+        tightElectronsCollection=lambda event:event.tightElectrons,
         looseMuonCollection=lambda event:event.looseMuons,
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons"
     ),
-    EventSkim(selection=lambda event: event.isTriggered),
-    EventSkim(selection=lambda event: event.nsubleadingLeptons>0 and event.nsubleadingLeptons<2),
-
-
+    EventSkim(selection=lambda event: event.nsubleadingLeptons > 0)
 ]
 
 analyzerChain = []
 
 analyzerChain.extend(leptonSelection)
 
+if not args.bdt:
+    analyzerChain.append(EventSkim(selection=lambda event: event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag > 0))
+    analyzerChain.append(EventSkim(selection=lambda event: event.isTriggered))
+
 
 analyzerChain.append(
     InvariantSystem(
         inputCollection= lambda event:
-            sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[:2],
+            sorted(event.tightMuons+event.looseMuons+event.tightElectrons+event.looseElectrons,key=lambda x: -x.pt)[:2],
         outputName="dilepton"
     )
 )
 if skim:
     analyzerChain.append(EventSkim(selection=lambda event: ((event.dilepton_mass < 80. and event.dilepton_mass > 10.) or event.dilepton_mass > 100.) or event.Leptons_muonjets or event.Leptons_electronjets))
 
-
-'''
-# left for debugging
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2       import *
-jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, runPeriod="B", jesUncert="All", redojec=True)
-#jetmetCorrector = createJMECorrector(isMC=False, dataYear=2017, runPeriod="E", metBranchName="METFixEE2017")
-analyzerChain.append(jetmetCorrector())
-'''
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 modelPath = {
@@ -263,10 +276,10 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
-                leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=15.,
-                jetMaxEta=2.399, #TODO: change to 2.4
+                jetMaxEta=2.4,
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -276,7 +289,7 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
                 jetMinPt=30.,
                 jetMinEta=2.4,
                 jetMaxEta=5.,
@@ -374,19 +387,6 @@ if isMC:
                 getattr(event, "EventObservables_unclEnDown_met") < 100
             )
         )
-        '''
-        analyzerChain.append(
-            EventSkim(selection=lambda event: \
-                getattr(event, "EventObservables_nominal_ht") < 150 or
-                getattr(event, "EventObservables_jerUp_ht") < 150 or
-                getattr(event, "EventObservables_jerDown_ht") < 150 or
-                getattr(event, "EventObservables_jesTotalUp_ht") < 150 or
-                getattr(event, "EventObservables_jesTotalDown_ht") < 150 or
-                getattr(event, "EventObservables_unclEnUp_ht") < 150 or
-                getattr(event, "EventObservables_unclEnDown_ht") < 150
-            )
-        )
-        '''
 
     analyzerChain.append(
         XGBEvaluation(
@@ -434,18 +434,6 @@ if isMC:
     ]:
 
         analyzerChain.append(
-           EventCategorization(
-                tightLeptons=lambda event: event.leadingLeptons,
-                looseLeptons=lambda event: event.subleadingLeptons,
-                jetsCollection=jetCollection,
-                taggerName="llpdnnx",
-                profilingMode = 'ratio',
-                outputName="category_"+systName,
-                globalOptions=globalOptions
-           )
-        )
-
-        analyzerChain.append(
            SimplifiedEventCategorization(
                 looseLeptons=lambda event: event.subleadingLeptons,
                 jetsCollection=jetCollection,
@@ -472,20 +460,21 @@ else:
     analyzerChain.append(
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
-            leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
-            leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
+            leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+            leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
             jetMinPt=15.,
-            jetMaxEta=2.399, #TODO: change to 2.4
+            jetMaxEta=2.4,
             jetId=JetSelection.TIGHT,
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )
     )
 
+
     analyzerChain.append(
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
-            leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
+            leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
             jetMinPt=30.,
             jetMinEta=2.4,
             jetMaxEta=5.,
@@ -536,7 +525,6 @@ else:
 
     if skim:
         analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_met < 100.))
-        #analyzerChain.append(EventSkim(selection=lambda event: event.EventObservables_nominal_ht < 150.))
 
 
     analyzerChain.append(
@@ -562,19 +550,6 @@ else:
             globalOptions=globalOptions,
             evalValues = np.linspace(-1.9,1.9,5*4),
         )
-    )
-
-    analyzerChain.append(
-	    EventCategorization(
-            tightLeptons=lambda event: event.leadingLeptons,
-            looseLeptons=lambda event: event.subleadingLeptons,
-            jetsCollection=lambda event: event.selectedJets_nominal[:4],
-            taggerName="llpdnnx",
-            profilingMode = 'ratio',
-            outputName="category_nominal",
-            globalOptions=globalOptions
-
-       )
     )
 
     analyzerChain.append(
@@ -632,7 +607,7 @@ if not globalOptions["isData"]:
             ])
 
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
-taggerTypes = ['TaggerMassReconstruction', 'EventCategorization', 'TaggerEvaluationProfiled']#, 'XGBEvaluation']
+taggerTypes = ['TaggerMassReconstruction', 'TaggerEvaluationProfiled', 'XGBEvaluation']
 
 if testMode:
     for ianalyzer, analyzer in enumerate(analyzerChain):
