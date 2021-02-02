@@ -100,7 +100,7 @@ class TaggerMassReconstruction(Module):
         deltaPhi_lj = -1
         deltaR_lj = -1
 
-        for lepton in looseLeptons+tightLeptons:
+        for lepton in tightLeptons:
             WCandidateLorentzVector += lepton.p4()
 
         if len(lepJets) > 0:
@@ -116,6 +116,8 @@ class TaggerMassReconstruction(Module):
                 deltaPhi_lj = deltaPhi(tightLeptons[0], resJets[0])
                 deltaR_lj = deltaR(tightLeptons[0], resJets[0])
             WCandidateLorentzVector += resJets[0].p4()
+            for lepton in looseLeptons:
+                WCandidateLorentzVector += lepton.p4()
             maxScore = resJets[0].llpdnnx_LLP_Q
 
         self.out.fillBranch(self.outputName+"_"+self.taggerName+"_m_llj", WCandidateLorentzVector.M())
