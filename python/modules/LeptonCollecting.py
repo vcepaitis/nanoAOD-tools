@@ -5,6 +5,9 @@ import json
 import ROOT
 import random
 
+from utils import deltaR
+
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
@@ -52,13 +55,35 @@ class LeptonCollecting(Module):
             self.out.branch("subleading"+self.outputName+"_"+variable, "F", lenVar="nsubleading"+self.outputName)
 
         #for variable in self.storeKinematics:
-            #self.out.branch(self.outputName+"_"+variable,"F",lenVar="n"+self.outputName)
+            #self.out.branch(self. outputName+"_"+variable,"F",lenVar="n"+self.outputName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
+    def triggerMatched(self, lepton, trigger_objects):
+        if lepton.isElectron:
+            trigger_objects = filter(lambda obj: abs(obj.id) == 11, trigger_objects)
+        elif lepton.isMuon:
+            trigger_objects = filter(lambda obj: abs(obj.id) == 13, trigger_objects)
+
+        min_delta_R = min(map(lambda obj: deltaR(lepton, obj), trigger_objects))
+
+        if lepton.isElectron:
+            if min_delta_R < 0.3:
+                return True
+            else:
+                return False
+
+        elif lepton.isMuon:
+            if min_delta_R < 0.1:
+                return True
+            else:
+                return False
+
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
+    
+        triggerObjects = Collection(event, "TrigObj")
 
         tightMuons = self.tightMuonsCollection(event)
         tightElectrons = self.tightElectronsCollection(event)
@@ -126,12 +151,12 @@ class LeptonCollecting(Module):
                 electronjets = 1
 
         if muonmuon or muonelectron or muonjets:
-            if event.IsoMuTrigger_flag:
+            if event.IsoMuTrigger_flag and self.triggerMatched(tightLeptons[0], triggerObjects):
                 setattr(event, "isTriggered", 1)
             else:
                 setattr(event, "isTriggered", 0)
         elif electronelectron or electronmuon or electronjets:
-            if event.IsoElectronTrigger_flag:
+            if event.IsoElectronTrigger_flag and self.triggerMatched(tightLeptons[0], triggerObjects):
                 setattr(event, "isTriggered", 1)
             else:
                 setattr(event, "isTriggered", 0)
