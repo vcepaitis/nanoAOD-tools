@@ -30,7 +30,7 @@ class JetSelection(Module):
          dRCleaning=0.4,
          dRP4Subtraction=0.4,
          flagDA=False,
-         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal'],
+         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptSubtracted'],
          globalOptions={"isData": False, "year": 2016},
          jetId=TIGHT
      ):
@@ -85,7 +85,11 @@ class JetSelection(Module):
         if self.flagDA:
             flagsDA = [0.]*event.nJet
 
-        for jet in jets:
+        for jet in jets:    
+            if jet.pt<self.jetMinPt:
+                unselectedJets.append(jet)
+                continue   
+
             if math.fabs(jet.eta) > self.jetMaxEta:
                 unselectedJets.append(jet)
                 continue
@@ -110,20 +114,12 @@ class JetSelection(Module):
                     minDeltaRSubtraction = min(minDeltaRSubtraction, deltaR(lepton, jet))
                     if deltaR(lepton,jet)<self.dRP4Subtraction:
                         leptonP4 += lepton.p4()
-
+         
             setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
-
             leptonPt = leptonP4.Pt()
             setattr(jet,"ptLepton", leptonPt)
-            setattr(jet,"p4Original", jet.p4())
-            setattr(jet,"ptOriginal", jet.pt)
-            jetP4LeptonSubtracted = jet.p4()-leptonP4
-
-            jet.pt = jetP4LeptonSubtracted.Pt()
-            
-            if jet.pt<self.jetMinPt:
-                unselectedJets.append(jet)
-                continue            
+            jetP4LeptonSubtracted = jet.p4()-leptonP4 
+            setattr(jet,"ptSubtracted", jetP4LeptonSubtracted.Pt())
 
             if len(leptonsForDRCleaning) > 0:
                 mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))
