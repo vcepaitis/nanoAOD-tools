@@ -30,7 +30,7 @@ class JetSelection(Module):
          dRCleaning=0.4,
          dRP4Subtraction=0.4,
          flagDA=False,
-         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptSubtracted'],
+         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptSubtracted', 'rawFactor', 'ptRaw'],
          globalOptions={"isData": False, "year": 2016},
          jetId=TIGHT
      ):
@@ -86,6 +86,8 @@ class JetSelection(Module):
             flagsDA = [0.]*event.nJet
 
         for jet in jets:    
+            jet.ptRaw = jet.pt*(1. - jet.rawFactor)
+        
             if jet.pt<self.jetMinPt:
                 unselectedJets.append(jet)
                 continue   

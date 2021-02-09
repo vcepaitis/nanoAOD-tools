@@ -261,7 +261,7 @@ if isMC:
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
             propagateJER = False,
-            jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
+            jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents', 'rawFactor'],
         )
     )
 
