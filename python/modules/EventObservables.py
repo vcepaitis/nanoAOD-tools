@@ -60,15 +60,15 @@ class EventObservables(Module):
         scalarPtSum = 0.0
 
         for jet in jets:
-            vectorSum += jet.p4()
-            scalarPtSum += jet.pt
+            vectorSum += jet.p4Subtracted
+            scalarPtSum += jet.ptSubtracted
             
         mht_met_dphi = math.fabs(deltaPhi(vectorSum.Phi(),met.phi))
 
         # minPhiStar
         minPhiStar = math.pi
         for jet in jets:
-            negSum = -(vectorSum-jet.p4())
+            negSum = -(vectorSum-jet.p4Subtracted)
             minPhiStar = min(minPhiStar, math.fabs(deltaPhi(negSum.Phi(), jet.phi)))
 
         self.out.fillBranch(self.outputName+"_minPhiStar", minPhiStar)

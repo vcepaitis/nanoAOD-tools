@@ -30,7 +30,7 @@ class JetSelection(Module):
          dRCleaning=0.4,
          dRP4Subtraction=0.4,
          flagDA=False,
-         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptSubtracted', 'rawFactor', 'ptRaw'],
+         storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
          globalOptions={"isData": False, "year": 2016},
          jetId=TIGHT
      ):
@@ -75,7 +75,6 @@ class JetSelection(Module):
         """process event, return True (go to next module) or False (fail, go to next event)"""
 
         jets = self.inputCollection(event)
-
         selectedJets = []
         unselectedJets = []
 
@@ -87,6 +86,7 @@ class JetSelection(Module):
 
         for jet in jets:    
             jet.ptRaw = jet.pt*(1. - jet.rawFactor)
+            jet.ptOriginal = jet.pt
         
             if jet.pt<self.jetMinPt:
                 unselectedJets.append(jet)
@@ -116,12 +116,20 @@ class JetSelection(Module):
                     minDeltaRSubtraction = min(minDeltaRSubtraction, deltaR(lepton, jet))
                     if deltaR(lepton,jet)<self.dRP4Subtraction:
                         leptonP4 += lepton.p4()
+
+            if minDeltaRSubtraction < 0.4:
+                jet.pt = jet.ptRaw
+                # Optionally pt(uncorr) > 15 GeV
+                #if jet.pt<self.jetMinPt:
+                    #unselectedJets.append(jet)
+                    #continue  
          
             setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
             leptonPt = leptonP4.Pt()
             setattr(jet,"ptLepton", leptonPt)
             jetP4LeptonSubtracted = jet.p4()-leptonP4 
-            setattr(jet,"ptSubtracted", jetP4LeptonSubtracted.Pt())
+            setattr(jet, "p4Subtracted", jetP4LeptonSubtracted)
+            setattr(jet, "ptSubtracted", jetP4LeptonSubtracted.Pt())
 
             if len(leptonsForDRCleaning) > 0:
                 mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))
