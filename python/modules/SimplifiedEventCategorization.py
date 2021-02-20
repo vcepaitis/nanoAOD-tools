@@ -121,7 +121,7 @@ class SimplifiedEventCategorization(Module):
             else:
                 category_index = -1
         else:
-            if nJets > 0:
+            if nJets == 0:
                 category_index = 3
             elif nJets > 1:
                 category_index = 4
