@@ -13,7 +13,7 @@ class SimplifiedEventCategorization(Module):
     def __init__(
         self,
         globalOptions={"isData":False, "isSignal":False},
-        outputName="category_simplified",
+        outputName="category",
         looseLeptons=None,
         jetsCollection=None,
         maxDeltaR=1.3,
@@ -121,7 +121,7 @@ class SimplifiedEventCategorization(Module):
             else:
                 category_index = -1
         else:
-            if nJets == 1:
+            if nJets > 0:
                 category_index = 3
             elif nJets > 1:
                 category_index = 4
