@@ -21,7 +21,6 @@ from PileupWeight import PileupWeight
 from TaggerWorkingpoints import TaggerWorkingpoints
 from EventInfo import EventInfo
 from ElectronSelection import ElectronSelection
-from DataFlag import DataFlag
 from EventDump import EventDump
 from InvariantSystem import InvariantSystem
 from JetTruthFlags import JetTruthFlags
@@ -36,7 +35,7 @@ from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
 from EventCategorization import EventCategorization
 from SimplifiedEventCategorization import SimplifiedEventCategorization
-from TaggerMassReconstruction import TaggerMassReconstruction
+from MassReconstruction import MassReconstruction
 from LHEWeights import LHEWeights
 from LeptonGenEfficiency import LeptonGenEfficiency
 from TaggerEvaluationCache import TaggerEvaluationCache

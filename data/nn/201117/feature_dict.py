@@ -150,8 +150,7 @@ featureDict = {
         "max":25,
         "length":"length_cpf"
     },
-    
-    
+
         
 
     "npf": {
@@ -179,9 +178,6 @@ featureDict = {
     },
     
     
-    
-      
-
     "sv" : {
         "branches":[
             "sv_ptrel",
@@ -214,6 +210,7 @@ featureDict = {
         "max":4,
         "length":"length_sv"
     },
+
 
     "muon" : {
         "branches":[
@@ -308,7 +305,7 @@ featureDict = {
         "length":"length_mu"
     },
     
-   
+      
 
     "electron" : {
         "branches":[
@@ -444,46 +441,6 @@ featureDict = {
             "electron_hcalDepth1OverEcal":lambda x: tf.log(tf.nn.relu(x)+1e-6),
             "electron_hcalDepth2OverEcal":lambda x: tf.log(tf.nn.relu(x)+1e-6),
         },
-        "max":2,
-        "length":"length_ele"
-    },
-    
-    "cpf_p4": {
-        "branches": [
-            'cpf_px',
-            'cpf_py',
-            'cpf_pz'
-        ],
-        "max":25,
-        "length":"length_cpf"
-    },
-    
-    "npf_p4": {
-        "branches": [
-            'npf_px',
-            'npf_py',
-            'npf_pz'
-        ],
-        "max":25,
-        "length":"length_npf"
-    },
-    
-    "muon_p4": {
-        "branches": [
-            'muon_px',
-            'muon_py',
-            'muon_pz'
-        ],
-        "max":2,
-        "length":"length_mu"
-    },
-    
-    "electron_p4": {
-        "branches": [
-            'electron_px',
-            'electron_py',
-            'electron_pz'
-        ],
         "max":2,
         "length":"length_ele"
     },

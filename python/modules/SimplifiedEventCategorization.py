@@ -13,7 +13,7 @@ class SimplifiedEventCategorization(Module):
     def __init__(
         self,
         globalOptions={"isData":False, "isSignal":False},
-        outputName="category_simplified",
+        outputName="category",
         looseLeptons=None,
         jetsCollection=None,
         maxDeltaR=1.3,
