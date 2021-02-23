@@ -429,6 +429,22 @@ if isMC:
         )
     )
 
+    for systName, jetCollection in [
+        ("nominal", lambda event: event.category_nominal_jets),
+        ("jerUp", lambda event: event.category_jesTotalUp_jets),
+        ("jerDown", lambda event: event.category_jesTotalDown_jets),
+        ("jesTotalUp", lambda event: event.category_jesTotalUp_jets),
+        ("jesTotalDown", lambda event: event.category_jesTotalDown_jets),
+    ]:
+        analyzerChain.append(
+            JetTaggerProfiledResult(
+            inputCollection=jetCollection,
+            taggerName="llpdnnx",
+            outputName="category_"+systName+"_jets",
+            profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU'],
+            globalOptions=globalOptions
+            )
+        )
 
 else:
     analyzerChain.append(
@@ -541,6 +557,17 @@ else:
             evalValues = np.linspace(-1.9,1.9,5*4),
         )
     )
+
+    analyzerChain.append(
+        JetTaggerProfiledResult(
+        inputCollection="category_nominal_jets",
+        taggerName="llpdnnx",
+        outputName="category_nominal_jets",
+        profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU'],
+        globalOptions=globalOptions
+        )
+    )
+
 
 analyzerChain.append(
     PileupWeight(
