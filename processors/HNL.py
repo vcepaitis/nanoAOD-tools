@@ -211,9 +211,9 @@ analyzerChain.append(
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetwork_ref_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_NominalNetwork_ref_201117.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_NominalNetwork_ref_201117.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"
 }
 
 jesUncertaintyFile = {
@@ -560,7 +560,7 @@ else:
 
     analyzerChain.append(
         JetTaggerProfiledResult(
-        inputCollection="category_nominal_jets",
+        inputCollection= lambda event: event.category_nominal_jets,
         taggerName="llpdnnx",
         outputName="category_nominal_jets",
         profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU'],

@@ -121,6 +121,7 @@ class PileupWeight(Module):
         self.out = wrappedOutputTree
         if not self.globalOptions["isData"]:
             self.mcHist = None
+            processName = None
             for process in self.mcHistPerProcess.keys():
                 processName = inputFile.GetName()
                 if self.processName!=None:
@@ -129,7 +130,7 @@ class PileupWeight(Module):
                     self.mcHist = self.mcHistPerProcess[process]
                     break
             if self.mcHist==None:
-                print "ERROR: Cannot find pileup profile for file: "+inputFile.GetName()
+                print "ERROR: Cannot find pileup profile for file: "+inputFile.GetName()+" and process "+str(processName)
                 sys.exit(1)
 
             self.normHist(self.mcHist)

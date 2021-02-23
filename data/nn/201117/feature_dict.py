@@ -150,8 +150,7 @@ featureDict = {
         "max":25,
         "length":"length_cpf"
     },
-    
-    
+
         
 
     "npf": {
@@ -179,9 +178,6 @@ featureDict = {
     },
     
     
-    
-      
-
     "sv" : {
         "branches":[
             "sv_ptrel",
@@ -214,6 +210,7 @@ featureDict = {
         "max":4,
         "length":"length_sv"
     },
+
 
     "muon" : {
         "branches":[
@@ -308,7 +305,7 @@ featureDict = {
         "length":"length_mu"
     },
     
-   
+      
 
     "electron" : {
         "branches":[

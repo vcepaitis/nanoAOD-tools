@@ -6,7 +6,7 @@ import ROOT
 import json
 
 
-file_path = "files_200311/nanoAOD_files_200311/2016"
+file_path = "../files_201117/2018"
 
 txtFiles = sorted(os.listdir(file_path))
 
@@ -15,7 +15,7 @@ pileupHists = {}
 
 for txtFile in txtFiles:
     process = txtFile.split(".")[0]
-    if process.find("SingleMu")>=0:
+    if process.find("HNL_")>=0 or process.find("SingleMuon")>=0 or process.find("SingleElectron")>=0 or process.find("EG")>=0:
         print "skip ",process
         continue
     processDict[process] = 0.
@@ -44,17 +44,17 @@ for txtFile in txtFiles:
             pileupHists[process].Add(h)
             processDict[process] += h.Integral()
             rootFile.Close()
-            break
+            #break
     print processDict[process]
      
-with open('eventyields.json', 'w') as outfile:
+with open('eventyields18.json', 'w') as outfile:
     json.dump(processDict, outfile,ensure_ascii=True,indent=2,sort_keys=True)    
-
+'''
 rootFile = ROOT.TFile("pileup.root","RECREATE")
 for process in pileupHists.keys():
     pileupHists[process].SetDirectory(rootFile)
     pileupHists[process].SetName(process)
     pileupHists[process].Write()
 rootFile.Close()
-
+'''
 
