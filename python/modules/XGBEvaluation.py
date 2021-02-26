@@ -11,7 +11,6 @@ class XGBEvaluation(Module):
     def __init__(
         self,
         modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt.model",
-        featurePath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt",
         systematics=["nominal"],
         jetCollections= lambda event: event.selectedJets_nominal,
         leadingLeptonCollection= lambda event: event.leadingLeptons,
@@ -19,7 +18,6 @@ class XGBEvaluation(Module):
         outputName ="bdt_score"
     ):
         self.modelPath = modelPath
-        self.featurePath = featurePath
         self.systematics = systematics
         self.jetCollections = jetCollections
         self.leadingLeptonCollection = leadingLeptonCollection
@@ -33,6 +31,7 @@ class XGBEvaluation(Module):
         pass
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.model = XGBClassifier()
+        # self.model.load_model(os.path.expandvars(self.modelPath))
         self.booster = Booster(model_file=os.path.expandvars(self.modelPath))
         self.model._Booster = self.booster
         self.out = wrappedOutputTree
@@ -46,17 +45,7 @@ class XGBEvaluation(Module):
         
         leadingLeptons = self.leadingLeptonCollection(event)
         subleadingLeptons = self.subleadingLeptonCollection(event)
-        '''
-        if len(jets) == 0 or len(leadingLeptons) == 0 or len(subleadingLeptons) == 0:
-            setattr(event, "bdt_score", "-999.")
-            self.out.fillBranch(self.outputName,-999.)
-            return True
-        '''
 
-        '''
-        with open(os.path.expandvars(self.featurePath)) as f:
-            array_list = [line.rstrip() for line in f]
-        '''
         i = 0
         for jetCollection, systematic in zip(self.jetCollections, self.systematics):
             jets = jetCollection(event)

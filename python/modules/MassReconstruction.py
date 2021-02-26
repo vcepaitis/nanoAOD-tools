@@ -36,12 +36,11 @@ class MassReconstruction(Module):
         self.out = wrappedOutputTree
 
         self.out.branch(self.outputName+"_m_llj", "F")
-        self.out.branch(self.outputName+"_deltaPhil1j", "F")
-        self.out.branch(self.outputName+"_deltaRl2j", "F")
+        self.out.branch(self.outputName+"_minDeltaPhi_l1j", "F")
+        self.out.branch(self.outputName+"_minDeltaR_l2j", "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-
 
     def analyze(self, event):
 
@@ -74,12 +73,12 @@ class MassReconstruction(Module):
         for jet in jetHNLCandidates:
             WCandidateLorentzVector += jet.p4()
             for lepton in looseLeptons:
-                if deltaR(jet, lepton) < 0.4:
+                if deltaR(jet, lepton) > 0.4:
                     WCandidateLorentzVector += lepton.p4()
 
         self.out.fillBranch(self.outputName+"_m_llj", WCandidateLorentzVector.M())
-        self.out.fillBranch(self.outputName+"_deltaPhil1j", deltaPhi_l1j)
-        self.out.fillBranch(self.outputName+"_deltaRl2j", deltaR_l2j)
+        self.out.fillBranch(self.outputName+"_minDeltaPhi_l1j", deltaPhi_l1j)
+        self.out.fillBranch(self.outputName+"_minDeltaR_l2j", deltaR_l2j)
         setattr(event, self.outputName+"_jets", jetHNLCandidates)
 
         return True
