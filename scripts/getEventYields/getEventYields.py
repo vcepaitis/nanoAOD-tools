@@ -6,7 +6,8 @@ import ROOT
 import json
 
 
-file_path = "../files_201117/2018"
+#file_path = "../files_201117/2018"
+file_path = "/vols/cms/LLP/files_201117/training/2016"
 
 txtFiles = sorted(os.listdir(file_path))
 
@@ -15,9 +16,10 @@ pileupHists = {}
 
 for txtFile in txtFiles:
     process = txtFile.split(".")[0]
-    if process.find("HNL_")>=0 or process.find("SingleMuon")>=0 or process.find("SingleElectron")>=0 or process.find("EG")>=0:
+    if process.find("LLPGun")>=0 or process.find("SingleMuon")>=0 or process.find("SingleElectron")>=0 or process.find("EG")>=0:
         print "skip ",process
         continue
+        
     processDict[process] = 0.
     pileupHists[process] = ROOT.TH1F(process,"",101,0,100)
     pileupHists[process].SetDirectory(0)
@@ -47,7 +49,7 @@ for txtFile in txtFiles:
             #break
     print processDict[process]
      
-with open('eventyields18.json', 'w') as outfile:
+with open('eventyields_singlelepton_train16.json', 'w') as outfile:
     json.dump(processDict, outfile,ensure_ascii=True,indent=2,sort_keys=True)    
 '''
 rootFile = ROOT.TFile("pileup.root","RECREATE")

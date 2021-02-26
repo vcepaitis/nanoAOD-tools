@@ -15,10 +15,12 @@ class InvariantSystem(Module):
     def __init__(
         self,
         inputCollection=lambda event: Collection(event, "Muon"),
+        recoilCollection = lambda event: [],
         outputName="sys",
         globalOptions={"isData": False}
     ):
         self.inputCollection = inputCollection
+        self.recoilCollection = recoilCollection
         self.outputName = outputName
         self.globalOptions = globalOptions
 
@@ -37,6 +39,10 @@ class InvariantSystem(Module):
         self.out.branch(self.outputName+"_deltaPhi", "F")
         self.out.branch(self.outputName+"_maxDeltaR", "F")
         self.out.branch(self.outputName+"_maxDeltaPhi", "F")
+        self.out.branch(self.outputName+"_minRecoilL","F")
+        self.out.branch(self.outputName+"_minRecoilT","F")
+        self.out.branch(self.outputName+"_maxRecoilL","F")
+        self.out.branch(self.outputName+"_maxRecoilT","F")
         self.out.branch(self.outputName+"_charge", "I")
 
 
@@ -64,6 +70,20 @@ class InvariantSystem(Module):
                 maxDeltaR = max(maxDeltaR,deltaR(obj,obj2))
                 minDeltaPhi = min(minDeltaPhi,deltaPhi(obj,obj2))
                 maxDeltaPhi = max(maxDeltaPhi,deltaPhi(obj,obj2))
+                
+        minRecoilL = 10000.
+        minRecoilT = 10000.
+        maxRecoilL = 0.
+        maxRecoilT = 0.
+        for i,obj in enumerate(self.recoilCollection(event)): 
+            recoilL = vec.Vect().Dot(obj.p4().Vect())/vec.Vect().Mag()
+            if recoilL<minRecoilL:
+                minRecoilL = recoilL
+                minRecoilT = math.sqrt(obj.p4().Vect().Mag2()-recoilL**2)
+            if recoilL>maxRecoilL:
+                maxRecoilL = recoilL
+                maxRecoilT = math.sqrt(obj.p4().Vect().Mag2()-recoilL**2)
+                
     
         self.out.fillBranch(self.outputName+"_mass", vec.M())
         self.out.fillBranch(self.outputName+"_pt", vec.Pt())
@@ -72,6 +92,10 @@ class InvariantSystem(Module):
         self.out.fillBranch(self.outputName+"_deltaPhi",  minDeltaPhi)
         self.out.fillBranch(self.outputName+"_maxDeltaR",  maxDeltaR)
         self.out.fillBranch(self.outputName+"_maxDeltaPhi",  maxDeltaPhi)
+        self.out.fillBranch(self.outputName+"_minRecoilL",minRecoilL)
+        self.out.fillBranch(self.outputName+"_minRecoilT",minRecoilT)
+        self.out.fillBranch(self.outputName+"_maxRecoilL",maxRecoilL)
+        self.out.fillBranch(self.outputName+"_maxRecoilT",maxRecoilT)
         self.out.fillBranch(self.outputName+"_charge", charge)
 
         return True

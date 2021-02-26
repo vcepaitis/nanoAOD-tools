@@ -85,53 +85,61 @@ if args.isData:
 
 
 leptonSelection = [
-    #EventSkim(selection=lambda event: event.nTrigObj > 0),
+    EventSkim(selection=lambda event: event.nTrigObj > 0),
     MuonSelection(
-        outputName="tightMuon",
+        outputName="tightMuons",
         storeKinematics=[],
         storeWeights=True,
         muonMinPt=minMuonPt[globalOptions["year"]],
-        triggerMatch=True,
+        muonMaxDxy=0.01,
+        muonMaxDz=0.05,
         muonID=MuonSelection.TIGHT,
-        muonIso=MuonSelection.INV if args.invertLeptons else MuonSelection.TIGHT,
-        selectLeadingOnly=True,
+        muonIso=MuonSelection.TIGHT,
         globalOptions=globalOptions
     ),
     ElectronSelection(
-        outputName="tightElectron",
+        outputName="tightElectrons",
         storeKinematics=[],
         electronMinPt=minElectronPt[globalOptions["year"]],
-        electronID="Inv" if args.invertLeptons else "Iso_WP90",
+        electronID="Iso_WP90",
         storeWeights=True,
-        triggerMatch=True,
-        selectLeadingOnly=True,
+        electronIPCuts=True,
         globalOptions=globalOptions
     ),
-    #EventSkim(selection=lambda event: (event.ntightMuon + event.ntightElectron) > 0),
+    EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0),
     SingleMuonTriggerSelection(
-        inputCollection=lambda event: event.tightMuon,
+        inputCollection=lambda event: event.tightMuons,
         outputName="IsoMuTrigger",
         storeWeights=True,
         globalOptions=globalOptions
     ),
     SingleElectronTriggerSelection(
-        inputCollection=lambda event: event.tightElectron,
+        inputCollection=lambda event: event.tightElectrons,
         outputName="IsoElectronTrigger",
         storeWeights=False,
         globalOptions=globalOptions
     ),
-    #EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0),
     MuonSelection(
-        inputCollection=lambda event: event.tightMuon_unselected,
+        inputCollection=lambda event: event.tightMuons_unselected,
         outputName="looseMuons",
         storeKinematics=[],
-        muonMinPt=5.,
+        muonMinPt=3.,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions
     ),
+    MuonSelection(
+        inputCollection=lambda event: event.looseMuons,
+        outputName="looseIsoMuons",
+        storeKinematics=[],
+        muonMinPt=3.,
+        storeWeights=False,
+        muonID=MuonSelection.LOOSE,
+        muonIso=MuonSelection.TIGHT,
+        globalOptions=globalOptions
+    ),
     ElectronSelection(
-        inputCollection=lambda event: event.tightElectron_unselected,
+        inputCollection=lambda event: event.tightElectrons_unselected,
         outputName="looseElectrons",
         storeKinematics=[],
 
@@ -139,14 +147,24 @@ leptonSelection = [
         electronID="Custom",
         globalOptions=globalOptions
     ),
-
-    #EventSkim(selection=lambda event: (event.ntightMuon + event.ntightElectron + event.nlooseMuons + event.nlooseElectrons ) <= 2),
+    ElectronSelection(
+        inputCollection=lambda event: event.looseElectrons,
+        outputName="looseIsoElectrons",
+        storeKinematics=[],
+        electronMinPt=5.,
+        storeWeights=False,
+        electronID="CustomIso",
+        globalOptions=globalOptions
+    ),
     LeptonCollecting(
-        tightMuonCollection=lambda event:event.tightMuon,
-        tightElectronCollection=lambda event:event.tightElectron,
+        tightMuonsCollection=lambda event:event.tightMuons,
+        tightElectronsCollection=lambda event:event.tightElectrons,
         looseMuonCollection=lambda event:event.looseMuons,
-        looseElectronCollection=lambda event:event.looseElectrons
-    )
+        looseElectronCollection=lambda event:event.looseElectrons,
+        outputName = "Leptons"
+    ),
+    EventSkim(selection=lambda event: event.isTriggered),
+    EventSkim(selection=lambda event: event.nsubleadingLeptons==1),
 ]
 
 analyzerChain = []
@@ -157,26 +175,27 @@ analyzerChain.extend(leptonSelection)
 analyzerChain.append(
     InvariantSystem(
         inputCollection= lambda event:
-            sorted(event.tightMuon+event.looseMuons+event.tightElectron+event.looseElectrons,key=lambda x: -x.pt)[:2],
+            sorted(event.tightMuons+event.looseMuons+event.tightElectrons+event.looseElectrons,key=lambda x: -x.pt)[:2],
         outputName="dilepton"
     )
 )
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 taggers = [
-    {"name":"nominal_ref", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_NominalNetwork_ref_201117.pb"%year},
+    {"name":"nominal_ref_DA", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"%year},
+    {"name":"nominal_ref", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_lr01_201117.pb"%year},
 ]
-
+'''
 if year==2016:
     taggers.extend([
-        {"name":"nominal", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetwork_201117.pb"},
+        #{"name":"nominal", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetwork_201117.pb"},
         #{"name":"attention", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_AttentionNetwork_201117.pb"},
         #{"name":"deepset", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_DeepSetNetwork_201117.pb"},
         #{"name":"onlyglobal", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkOnlyGlobal_201117.pb"},
         #{"name":"p4attention", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_P4AttentionNetwork_201117.pb"},
         #{"name":"p4attentionv2", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_P4AttentionNetworkv2_201117.pb"},    
     ])
-
+'''
 jesUncertaintyFile = {
     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt",
     2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Fall17_17Nov2017_V32_MC_Uncertainty_AK4PFchs.txt",
@@ -242,20 +261,14 @@ for systName, jetCollection in [
     analyzerChain.append(
         JetSelection(
             inputCollection=jetCollection,
-            leptonCollectionDRCleaning=lambda event: event.leadingLeptons,
-            leptonCollectionP4Subraction=lambda event: event.subleadingLeptons,
+            leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+            leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
             jetMinPt=15.,
-            jetMaxEta=2.395,
-            jetMinNConstituents=2,
-            jetId=JetSelection.LOOSE,
-            storeKinematics=[
-                'pt', 'eta', 'phi',
-                'nConstituents',
-                'minDPhiClean','minDRClean'
-            ],
-            #dRCleaning = -1. if args.invertLeptons else 0.4,
-            outputName="selectedJets_nominal",
+            jetMaxEta=2.4,
+            jetId=JetSelection.TIGHT,
+            outputName="selectedJets_"+systName,
             globalOptions=globalOptions
+        
         )
     )
 
@@ -330,7 +343,10 @@ for tagger in taggers:
                 'LLP_QMU': ['LLP_QMU'],
                 'LLP_QTAU_H': ['LLP_QTAU_H'],
                 'LLP_QTAU_3H': ['LLP_QTAU_3H'],
-                'TAUANY':['TAU','LLP_QTAU_H','LLP_QTAU_3H']
+                'LLP_QANY': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
+                'LLP_ANY': ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_H','LLP_QTAU_3H'],
+                'TAUANY':['TAU','LLP_QTAU_H','LLP_QTAU_3H'],
+                
             },
             globalOptions=globalOptions,
             evalValues = np.linspace(-1.9,1.9,5*4)#np.linspace(-2,2,5*4+1),
@@ -364,7 +380,7 @@ for systName, jetCollection, metObject in [
                 inputCollection=jetCollection,
                 taggerName=tagger["name"],
                 outputName="selectedJets_"+systName,
-                profiledLabels = ['E','MU','TAU','UDS','G','PU','B','C','TAUANY','LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_H','LLP_QTAU_3H'],
+                profiledLabels = ['E','MU','TAU','UDS','G','PU','B','C','TAUANY','LLP_QANY','LLP_ANY','LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_H','LLP_QTAU_3H'],
                 globalOptions=globalOptions
             )
         )

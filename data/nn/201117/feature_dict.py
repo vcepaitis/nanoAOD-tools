@@ -1,7 +1,6 @@
-predictionLabels=[
-    "E","MU","TAU","B","C","UDS","G","PU","LLP_Q","LLP_QE","LLP_QMU","LLP_QTAU_H","LLP_QTAU_3H"
-]
+predictionLabels = ["E","MU","TAU","B","C","UDS","G","PU","LLP_Q","LLP_QE","LLP_QMU","LLP_QTAU_H","LLP_QTAU_3H"]
 featureDict = {
+    
 
     "globalvars": {
         "branches": [
@@ -444,5 +443,4 @@ featureDict = {
         "max":2,
         "length":"length_ele"
     },
-   
 }

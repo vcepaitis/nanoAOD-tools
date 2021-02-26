@@ -26,6 +26,7 @@ class TaggerEvaluationProfiled(Module):
                             'LLP_QE': [ 'LLP_QE'],
                             'LLP_QMU': [ 'LLP_QMU']
                             },
+        smLabels = ["E","MU","TAU","B","C","UDS","G","PU"],
         globalOptions = {"isData":False},
     ):
         self.globalOptions = globalOptions
@@ -34,7 +35,7 @@ class TaggerEvaluationProfiled(Module):
         self.evalValues = list(evalValues)
         self.nEvalValues = len(evalValues)
         self.profiledLabelDict = profiledLabelDict
-        self.allProfiledSubLabels = []
+        self.smLabels = smLabels
 
         self.modelPath = os.path.expandvars(modelPath)
 
@@ -47,7 +48,6 @@ class TaggerEvaluationProfiled(Module):
         self.predictionLabels = feature_dict_module.predictionLabels
         for _, profiledLabels in self.profiledLabelDict.iteritems():
             for profiledSubLabel in profiledLabels:
-                self.allProfiledSubLabels.append(profiledSubLabel)
                 if profiledSubLabel not in self.predictionLabels:
                     print "ERROR (TaggerEvaluationProfiled) - label for profiling '%s' not in predicted label list: %s"%(
                         profiledSubLabel,
@@ -135,13 +135,17 @@ class TaggerEvaluationProfiled(Module):
                 try:
                     global_jet_index = jetglobal_indices.index(jet._index)
                 except ValueError:
-                    print "WARNING: jet (pt: %s, eta: %s) does not have a matching global jet --> tagger cannot be evaluated!" % (jet.pt, jet.eta)
+                    print "WARNING: jet (pt: %.2f, eta: %.2f) does not have a matching global jet --> tagger cannot be evaluated!" % (jet.pt, jet.eta)
                     continue
                 else:
                     global_jet = jetglobal[global_jet_index]
-                    if abs(jet.eta - global_jet.eta) > 0.01 or \
-                       abs(jet.phi - global_jet.phi) > 0.01:
-                           print "Warning ->> jet might be mismatched!"
+                    jetp4 = jet.p4()
+                    #note: p4 can change in jet selection if subtracted pT<15 GeV
+                    if hasattr(jet,"unselectedP4"):
+                        jetp4 = jet.unselectedP4
+                    if abs(jetp4.Eta() - global_jet.eta) > 0.01 or \
+                       abs(jetp4.Phi() - global_jet.phi) > 0.01:
+                           print "Warning ->> jet might be mismatched! (phi: %.2f, eta: %.2f) != (phi: %.2f, eta: %.2f)"%(jet.phi, jet.eta, global_jet.phi, global_jet.eta)
                     jetOriginIndices.add(global_jet_index)
                     setattr(jet, "globalIdx", global_jet_index)
 
@@ -200,17 +204,18 @@ class TaggerEvaluationProfiled(Module):
                 predictionIndex = ijet*len(self.evalValues)+ivalue
                 predictions = result.get("prediction",predictionIndex)
                 
-                sumSubPrediction = 0.
-                for profiledSubLabel in self.allProfiledSubLabels:
-                    labelIdx = self.predictionLabels.index(profiledSubLabel)
-                    sumSubPrediction+=max(0.,predictions[labelIdx])
+                sumSMLabels = 0.
+                for smLabel in self.smLabels:
+                    labelIdx = self.predictionLabels.index(smLabel)
+                    sumSMLabels+=max(0.,predictions[labelIdx])
+                sumSMLabels = min(1.,sumSMLabels)
                 
                 for profiledLabelKey, profiledSubLabels in self.profiledLabelDict.iteritems(): 
                     singlePrediction = 0.
                     for profiledSubLabel in profiledSubLabels:
                         labelIdx = self.predictionLabels.index(profiledSubLabel)
                         singlePrediction += max(0.,predictions[labelIdx])
-                    ratioPrediction = singlePrediction/max(1e-3,1.-sumSubPrediction)  # about the numerical precision             
+                    ratioPrediction = singlePrediction/max(1e-4,sumSMLabels)  # about the numerical precision             
                         
                     if singlePrediction>maxSinglePrediction[profiledLabelKey]:
                         maxSinglePrediction[profiledLabelKey] = singlePrediction
@@ -221,7 +226,13 @@ class TaggerEvaluationProfiled(Module):
                         valueMaxRatioPrediction[profiledLabelKey] = value
                         
                     avgPrediction[profiledLabelKey] += singlePrediction
-                    valueAvgPrediction[profiledLabelKey] += singlePrediction*value
+                    valueAvgPrediction[profiledLabelKey] += singlePrediction*value #weighted avg
+                   
+            for profiledLabelKey, profiledSubLabels in self.profiledLabelDict.iteritems(): 
+                valueAvgPrediction[profiledLabelKey]*=1./avgPrediction[profiledLabelKey]
+                avgPrediction[profiledLabelKey]*=1./len(self.evalValues)
+            
+                    
             
             
             outputPerIndex[jetIndex] = {'single': {}, 'ratio': {}, 'avg': {}}
@@ -234,7 +245,7 @@ class TaggerEvaluationProfiled(Module):
                     'output': maxSinglePrediction[profiledLabelKey], 'parameter': valueMaxSinglePrediction[profiledLabelKey]
                 }
                 outputPerIndex[jetIndex]['ratio'][profiledLabelKey] = {
-                    'output': maxRatioPrediction[profiledLabelKey], 'parameter': valueMaxSinglePrediction[profiledLabelKey]
+                    'output': maxRatioPrediction[profiledLabelKey], 'parameter': valueMaxRatioPrediction[profiledLabelKey]
                 }
                 outputPerIndex[jetIndex]['avg'][profiledLabelKey] = {
                     'output': avgPrediction[profiledLabelKey], 'parameter': valueAvgPrediction[profiledLabelKey]
