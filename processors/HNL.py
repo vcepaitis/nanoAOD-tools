@@ -547,26 +547,6 @@ else:
     )
 
     analyzerChain.append(
-        XGBEvaluation(
-            systematics=["nominal"],
-            jetCollections=[lambda event: event.selectedJets_nominal],
-            modelPath=BDTmodelPath[year],
-            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_inputs.txt",
-            outputName="bdt_score"
-        )
-    )
-
-    analyzerChain.append(
-        XGBEvaluation(
-            systematics=["nominal"],
-            jetCollections=[lambda event: event.selectedJets_nominal],
-            modelPath=BDTmodelPath[year],
-            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_inputs.txt",
-            outputName="bdt_score_uncorr"
-        )
-    )
-
-    analyzerChain.append(
        SimplifiedEventCategorization(
             maxDeltaR=1.3,
             looseLeptons=lambda event: event.subleadingLeptons,
@@ -583,6 +563,26 @@ else:
             tightLeptons=lambda event: event.leadingLeptons,
             looseLeptons=lambda event: event.subleadingLeptons,
             jets=lambda event: event.selectedJets_nominal,
+        )
+    )
+
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal"],
+            jetCollections=[lambda event: event.selectedJets_nominal],
+            modelPath=BDTmodelPath[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_inputs.txt",
+            outputName="bdt_score"
+        )
+    )
+
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal"],
+            jetCollections=[lambda event: event.selectedJets_nominal],
+            modelPath=BDTmodelPath[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_inputs.txt",
+            outputName="bdt_score_uncorr"
         )
     )
 
