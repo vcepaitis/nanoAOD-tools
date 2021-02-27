@@ -216,6 +216,18 @@ modelPath = {
     2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"
 }
 
+BDTmodelPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2018.model"
+}
+
+BDTmodelPathUncorr = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2018.model"
+}
+
 jesUncertaintyFile = {
     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt",
     2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Fall17_17Nov2017_V32_MC_Uncertainty_AK4PFchs.txt",
@@ -404,6 +416,27 @@ if isMC:
             lambda event: event.selectedJets_nominal,
             lambda event: event.selectedJets_nominal
         ],
+            modelPath=BDTmodelPath[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_inputs.txt",
+            outputName="bdt_score"
+        )
+    )
+
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal", "jerUp", "jerDown", "jesTotalUp", "jesTotalDown", "unclEnUp", "unclEnDown"],
+            jetCollections=[
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.selectedJets_jerUp,
+            lambda event: event.selectedJets_jerDown,
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_nominal
+        ],
+            modelPath=BDTmodelPathUncorr[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_inputs.txt",
+            outputName="bdt_score_uncorr"
         )
     )
 
@@ -516,7 +549,20 @@ else:
     analyzerChain.append(
         XGBEvaluation(
             systematics=["nominal"],
-            jetCollections=[lambda event: event.selectedJets_nominal]
+            jetCollections=[lambda event: event.selectedJets_nominal],
+            modelPath=BDTmodelPath[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_inputs.txt",
+            outputName="bdt_score"
+        )
+    )
+
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal"],
+            jetCollections=[lambda event: event.selectedJets_nominal],
+            modelPath=BDTmodelPath[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_inputs.txt",
+            outputName="bdt_score_uncorr"
         )
     )
 
