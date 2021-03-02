@@ -69,14 +69,14 @@ class HNLReconstruction(Module):
                 self.out.branch(self.outputName+"_deltaPhi_l1j", math.fabs(deltaPhi(lepton1, hnlJet)))
                 self.out.branch(self.outputName+"_deltaR_l1j", deltaR(lepton1, hnlJet))
                 self.out.branch(self.outputName+"_deltaEta_l1j", math.fabs(lepton1.eta-hnlJet.eta))
-                setattr(event, self.outputName+"_hnlJet", hnlJet)
+                setattr(event, self.outputName+"_hnlJets", [hnlJet])
             else:
                 self.out.branch(self.outputName+"_m_lj", 0)
                 self.out.branch(self.outputName+"_deltaPt_lj", 0)
                 self.out.branch(self.outputName+"_deltaPhi_l1j", 0)
                 self.out.branch(self.outputName+"_deltaR_l1j", 0)
                 self.out.branch(self.outputName+"_deltaEta_l1j", 0)
-                setattr(event, self.outputName+"_hnlJet", None)
+                setattr(event, self.outputName+"_hnlJets", [])
         else:
             if len(jets) > 0:
                 #take jet closest to l2
@@ -86,7 +86,7 @@ class HNLReconstruction(Module):
                 self.out.branch(self.outputName+"_deltaPhi_l1j", math.fabs(deltaPhi(lepton1,hnlJet)))
                 self.out.branch(self.outputName+"_deltaEta_l1j", math.fabs(lepton1.eta-hnlJet.eta))
                 self.out.branch(self.outputName+"_deltaR_l2j", deltaR(lepton2,hnlJet))
-                setattr(event, self.outputName+"_hnlJet", hnlJet)
+                setattr(event, self.outputName+"_hnlJets", [hnlJet])
                 
             else:
                 self.out.branch(self.outputName+"_m_llj", 0)
@@ -94,6 +94,6 @@ class HNLReconstruction(Module):
                 self.out.branch(self.outputName+"_deltaPhi_l1j", 0)
                 self.out.branch(self.outputName+"_deltaEta_l1j", 0)
                 self.out.branch(self.outputName+"_deltaR_l2j", 0)
-                setattr(event, self.outputName+"_hnlJet", None)
+                setattr(event, self.outputName+"_hnlJets", [])
         
         return True
