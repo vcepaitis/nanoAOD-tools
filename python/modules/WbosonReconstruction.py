@@ -13,12 +13,12 @@ from utils import deltaPhi
 
 class WbosonReconstruction(Module):
     def __init__(self,
-        leptonCollectionName = None,
+        leptonObject = lambda event: Collection(event, "Muon")[0],
         metObject =lambda event: Object(event, "MET"),
         globalOptions={"isData":False}, 
         outputName='nominal'
     ):
-        self.leptonCollectionName = leptonCollectionName
+        self.leptonObject = leptonObject
         self.metObject = metObject
         self.globalOptions=globalOptions
         self.outputName=outputName
@@ -31,26 +31,21 @@ class WbosonReconstruction(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch(self.leptonCollectionName+"_"+self.outputName+"_mtw", "F",lenVar='n'+self.leptonCollectionName)
-        self.out.branch(self.leptonCollectionName+"_"+self.outputName+"_deltaPhi", "F",lenVar='n'+self.leptonCollectionName)
+        self.out.branch(self.outputName+"_mtw", "F")
+        self.out.branch(self.outputName+"_deltaPhi", "F")
             
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
         
     def analyze(self, event):
-        leptons = getattr(event,self.leptonCollectionName)
+        lepton = self.leptonObject(event)
         met = self.metObject(event)
         
-        mtw = np.zeros(len(leptons))
-        dPhi = np.zeros(len(leptons))
-        
-        for i,lepton in enumerate(leptons):
-            dPhi[i] = deltaPhi(lepton,met)
-            mtw[i] = math.sqrt(2*lepton.pt*met.pt*(1-math.cos(dPhi[i])))
+        dPhi = deltaPhi(lepton,met)
+        mtw = math.sqrt(2*lepton.pt*met.pt*(1-math.cos(dPhi)))
 
-        self.out.fillBranch(self.leptonCollectionName+"_"+self.outputName+"_mtw", mtw)
-        self.out.fillBranch(self.leptonCollectionName+"_"+self.outputName+"_deltaPhi", dPhi)
-        
+        self.out.fillBranch(self.outputName+"_mtw", mtw)
+        self.out.fillBranch(self.outputName+"_deltaPhi", dPhi)
         
         return True
             

@@ -52,6 +52,14 @@ def deltaR(j1, j2):
         deltaPhi(j1.phi, j2.phi)**2
     )
 
+def splitNameType(name):
+    if name.find('/')<0:
+        return name,'F' #use float as default type
+    var = name.split('/')
+    if len(var)!=2:
+        print "ERROR - cannot split var %s into name and type"%name
+        sys.exit(1)
+    return var[0],var[1]
 
 def getCtauLabel(logctau):
     if logctau == 0:

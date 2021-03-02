@@ -5,7 +5,7 @@ import json
 import ROOT
 import random
 
-from utils import deltaR, deltaPhi
+from utils import deltaR, deltaPhi, splitNameType
 
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
@@ -50,7 +50,8 @@ class LeptonCollecting(Module):
         looseElectronCollection = lambda event: Collection(event, "Electron"),
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
-        storeKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
+        storeLeadingKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig', 'isTriggerMatched'],
+        storeSubleadingKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ):
 
         self.globalOptions = globalOptions
@@ -59,7 +60,8 @@ class LeptonCollecting(Module):
         self.looseMuonCollection = looseMuonCollection
         self.looseElectronCollection = looseElectronCollection
         self.outputName = outputName
-        self.storeKinematics = storeKinematics
+        self.storeLeadingKinematics = storeLeadingKinematics
+        self.storeSubleadingKinematics = storeSubleadingKinematics
 
     def beginJob(self):
         pass
@@ -79,9 +81,16 @@ class LeptonCollecting(Module):
         self.out.branch(self.outputName+"_muonjets", "I")
         self.out.branch(self.outputName+"_electronjets", "I")
 
-        for variable in self.storeKinematics:
-            self.out.branch("leading"+self.outputName+"_"+variable, "F", lenVar="nleading"+self.outputName)
-            self.out.branch("subleading"+self.outputName+"_"+variable, "F", lenVar="nsubleading"+self.outputName)
+        
+        for i,variable in enumerate(self.storeLeadingKinematics):
+            name,dtype = splitNameType(variable)
+            self.storeLeadingKinematics[i] = name
+            self.out.branch("leading"+self.outputName+"_"+name, dtype, lenVar="nleading"+self.outputName)
+        
+        for i,variable in enumerate(self.storeSubleadingKinematics):
+            name,dtype = splitNameType(variable)
+            self.storeSubleadingKinematics[i] = name
+            self.out.branch("subleading"+self.outputName+"_"+name, dtype, lenVar="nsubleading"+self.outputName)
             
         '''
         self.out.branch("subleading"+self.outputName+"_cpfMatch", "I", lenVar="nsubleading"+self.outputName)
@@ -94,11 +103,16 @@ class LeptonCollecting(Module):
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
+
+        
     def triggerMatched(self, lepton, trigger_objects):
         if lepton.isElectron:
             trigger_objects = filter(lambda obj: abs(obj.id) == 11, trigger_objects)
         elif lepton.isMuon:
             trigger_objects = filter(lambda obj: abs(obj.id) == 13, trigger_objects)
+
+        if len(trigger_objects) == 0:
+            return False
 
         min_delta_R = min(map(lambda obj: deltaR(lepton, obj), trigger_objects))
 
@@ -113,6 +127,7 @@ class LeptonCollecting(Module):
                 return True
             else:
                 return False
+
 
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
@@ -170,13 +185,10 @@ class LeptonCollecting(Module):
         looseLeptons = looseMuons+looseElectrons
 
         tightLeptons = sorted(tightLeptons, key=lambda x: x.pt, reverse=True)
+        
         # select leading only, move subleading to "loose"
         looseLeptons.extend(tightLeptons[1:])
-
-        if len(tightLeptons) > 0:
-            tightLeptons = [tightLeptons[0]]
-        else:
-            tightLeptons = []
+        tightLeptons = tightLeptons[:1]
         looseLeptons = sorted(looseLeptons, key=lambda x: x.pt, reverse=True)
 
         muonmuon = 0
@@ -185,7 +197,6 @@ class LeptonCollecting(Module):
         electronmuon = 0
         muonjets = 0
         electronjets = 0
-
 
         ## flavour categorisation :
         if len(tightLeptons) > 0 and len(looseLeptons) > 0:
@@ -211,18 +222,11 @@ class LeptonCollecting(Module):
             elif tightLeptons[0].isElectron:
                 electronjets = 1
 
-        if muonmuon or muonelectron or muonjets:
-            if event.IsoMuTrigger_flag and self.triggerMatched(tightLeptons[0], triggerObjects):
-                setattr(event, "isTriggered", 1)
+        for lepton in tightLeptons+looseLeptons:
+            if self.triggerMatched(lepton, triggerObjects):
+                setattr(lepton,"isTriggerMatched",1)
             else:
-                setattr(event, "isTriggered", 0)
-        elif electronelectron or electronmuon or electronjets:
-            if event.IsoElectronTrigger_flag and self.triggerMatched(tightLeptons[0], triggerObjects):
-                setattr(event, "isTriggered", 1)
-            else:
-                setattr(event, "isTriggered", 0)
-        else:
-            setattr(event, "isTriggered", 0)
+                setattr(lepton,"isTriggerMatched",0)
 
         for lepton in tightLeptons+looseLeptons:
             if lepton.dxyErr < 1e-6:
@@ -238,8 +242,9 @@ class LeptonCollecting(Module):
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
         self.out.fillBranch("nsubleading"+self.outputName, len(looseLeptons))
 
-        for variable in self.storeKinematics:
+        for variable in self.storeLeadingKinematics:
             self.out.fillBranch("leading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),tightLeptons))
+        for variable in self.storeSubleadingKinematics:
             self.out.fillBranch("subleading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),looseLeptons))
 
         '''
