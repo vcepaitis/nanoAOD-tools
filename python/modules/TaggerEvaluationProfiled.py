@@ -215,7 +215,7 @@ class TaggerEvaluationProfiled(Module):
                     for profiledSubLabel in profiledSubLabels:
                         labelIdx = self.predictionLabels.index(profiledSubLabel)
                         singlePrediction += max(0.,predictions[labelIdx])
-                    ratioPrediction = singlePrediction/max(1e-4,sumSMLabels)  # about the numerical precision             
+                    ratioPrediction = math.log10(singlePrediction/max(1e-4,sumSMLabels))/4.         
                         
                     if singlePrediction>maxSinglePrediction[profiledLabelKey]:
                         maxSinglePrediction[profiledLabelKey] = singlePrediction

@@ -58,11 +58,12 @@ for inputFile in args.inputFiles:
     print " - ", inputFile, ", events=", tree.GetEntries()
 
 print "year:", year
-print "output directory:", args.output[0]
 print "isSignal:",isSignal
 print "apply lepton iso: ","True (default)" if not args.noiso else "False"
 print "apply trigger selection: ","True (default)" if not args.notrigger else "False" 
 print "channel strategy: ","single lepton" if args.singlelepton else "dilepton"
+print "output directory:", args.output[0]
+
 globalOptions = {
     "isData": args.isData,
     "isSignal": isSignal,
@@ -199,7 +200,7 @@ else:
         EventSkim(selection=lambda event: event.nsubleadingLeptons==1),
         InvariantSystem(
             inputCollection= lambda event: [event.leadingLeptons[0],event.subleadingLeptons[0]],
-            outputName="dilepton_nominal"
+            outputName="dilepton"
         )
     ])
 
@@ -217,6 +218,18 @@ modelPath = {
     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb",
     2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weight2017_DA_10_lr001.pb",
     2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weight2018_DA_10_lr001.pb",
+}
+
+BDTmodelPath = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2018.model"
+}
+
+BDTmodelPathUncorr = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2018.model"
 }
 
 jesUncertaintyFile = {
@@ -259,6 +272,18 @@ def jetSelectionSequence(jetDict):
                 storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
+                globalOptions=globalOptions
+            ),
+            JetSelection(
+                inputCollection=jetCollection,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
+                jetMinPt=30.,
+                jetMaxEta=2.4,
+                globalFeatures = [],
+                storeKinematics=[],
+                jetId=JetSelection.TIGHT,
+                outputName="selectedPt30Jets_"+systName,
                 globalOptions=globalOptions
             ),
             JetSelection(
@@ -325,16 +350,91 @@ def eventReconstructionSequence(jetMetDict):
 
             HNLReconstruction(
                 globalOptions=globalOptions,
-                outputName="category_"+systName,
-                tightLeptons=lambda event: event.leadingLeptons,
-                looseLeptons=lambda event: event.subleadingLeptons,
-                jets=jetCollection,
+                outputName=systName,
+                lepton1Object=lambda event: event.leadingLeptons[0],
+                lepton2Object=None if args.singlelepton else (lambda event: event.subleadingLeptons[0]),
+                jetCollection=jetCollection,
             )
         ])
+        
     return sequence
     
+    
+def taggerSequence(jetDict, modelFile, taggerName):
+    sequence = []
+    sequence.append(
+        TaggerEvaluationProfiled(
+            modelPath=modelFile,
+            featureDictFile=featureDictFile,
+            inputCollections=jetDict.values(),
+            taggerName=taggerName,
+            profiledLabelDict = {
+                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
+                'LLP_QE': [ 'LLP_QE'],
+                'LLP_QMU': [ 'LLP_QMU'],
+                'LLP_QTAU_3H': ['LLP_QTAU_3H']
+            },
+            globalOptions=globalOptions,
+            evalValues = np.linspace(-1.9,1.9,5*4),
+        )
+    )
+   
+    for systName,jetCollection in jetDict.items():
+        sequence.append(
+            JetTaggerProfiledResult(
+                inputCollection=jetCollection,
+                taggerName=taggerName,
+                outputName="hnlJet_"+systName,
+                profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
+                kinds = ['ratio'],
+                globalOptions={"isData": False}
+            )
+        )
+    return sequence
+
+    
+'''
+def bdtSequence():
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal", "jerUp", "jerDown", "jesTotalUp", "jesTotalDown", "unclEnUp", "unclEnDown"],
+            jetCollections=[
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.selectedJets_jerUp,
+            lambda event: event.selectedJets_jerDown,
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_nominal
+        ],
+            modelPath=BDTmodelPath[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_inputs.txt",
+            outputName="bdt_score"
+        )
+    )
+
+    analyzerChain.append(
+        XGBEvaluation(
+            systematics=["nominal", "jerUp", "jerDown", "jesTotalUp", "jesTotalDown", "unclEnUp", "unclEnDown"],
+            jetCollections=[
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_jesTotalUp,
+            lambda event: event.selectedJets_jesTotalDown,
+            lambda event: event.selectedJets_jerUp,
+            lambda event: event.selectedJets_jerDown,
+            lambda event: event.selectedJets_nominal,
+            lambda event: event.selectedJets_nominal
+        ],
+            modelPath=BDTmodelPathUncorr[year],
+            inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_inputs.txt",
+            outputName="bdt_score_uncorr"
+        )
+    )
+'''
 
 if isMC:
+    
+
     analyzerChain.append(
         JetMetUncertainties(
             metInput=met_variable[year],
@@ -377,6 +477,22 @@ if isMC:
     )
     
     
+    analyzerChain.extend(
+        taggerSequence({
+            "nominal": lambda event: event.hnlJets_nominal,
+            #"jerUp": lambda event: event.hnlJets_jerUp,
+        },
+        modelFile=modelPathDA[year],
+        taggerName='llpdnnx'
+    ))
+    
+    analyzerChain.append(
+        PileupWeight(
+            outputName="puweight",
+            processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
+            globalOptions=globalOptions
+        )
+    )
 
     '''
     analyzerChain.append(
@@ -426,30 +542,7 @@ if isMC:
     )
     '''
     
-    for systName, jetCollection, metObject in [
-        ("nominal", lambda event: event.selectedJets_nominal,
-            lambda event: event.met_nominal),
-    ]:
-        '''
-        analyzerChain.append(
-            JetTaggerProfiledResult(
-                inputCollection=jetCollection,
-                taggerName="llpdnnx",
-                outputName="selectedJets_%s"%systName,
-                profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
-                globalOptions={"isData": False}
-            )
-        )
-        analyzerChain.append(
-            JetTaggerProfiledResult(
-                inputCollection=jetCollection,
-                taggerName="llpdnnx_DA",
-                outputName="selectedJets_%s"%systName,
-                profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
-                globalOptions={"isData": False}
-            )
-        )
-        '''
+    
 
     
 
@@ -466,73 +559,16 @@ else:
         })
     )
     
-    '''
-    analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
-            ],
-            taggerName="llpdnnx",
-            profiledLabelDict = {
-                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
-                'LLP_QE': [ 'LLP_QE'],
-                'LLP_QMU': [ 'LLP_QMU'],
-                'LLP_QTAU_3H': ['LLP_QTAU_3H']
-            },
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-1.9,1.9,5*4),
-        )
-    )
+    analyzerChain.extend(
+        taggerSequence({
+            "nominal": lambda event: event.hnlJets_nominal,
+        },
+        modelFile=modelPathDA[year],
+        taggerName='llpdnnx'
+    ))
     
-    analyzerChain.append(
-        TaggerEvaluationProfiled(
-            modelPath=modelPathDA[year],
-            featureDictFile=featureDictFile,
-            inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
-            ],
-            taggerName="llpdnnx_DA",
-            profiledLabelDict = {
-                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
-                'LLP_QE': [ 'LLP_QE'],
-                'LLP_QMU': [ 'LLP_QMU'],
-                'LLP_QTAU_3H': ['LLP_QTAU_3H']
-            },
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-1.9,1.9,5*4),
-        )
-    )
-    
-    analyzerChain.append(
-        JetTaggerProfiledResult(
-            inputCollection=lambda event: event.selectedJets_nominal,
-            taggerName="llpdnnx",
-            outputName="selectedJets_nominal",
-            profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
-            globalOptions={"isData": False}
-        )
-    )
-    
-    analyzerChain.append(
-        JetTaggerProfiledResult(
-            inputCollection=lambda event: event.selectedJets_nominal,
-            taggerName="llpdnnx_DA",
-            outputName="selectedJets_nominal",
-            profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
-            globalOptions={"isData": False}
-        )
-    )
-    '''
 
-analyzerChain.append(
-    PileupWeight(
-        outputName="puweight",
-        processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
-        globalOptions=globalOptions
-    )
-)
+
 
 storeVariables = [
     [lambda tree: tree.branch("PV_npvs", "I"), lambda tree,

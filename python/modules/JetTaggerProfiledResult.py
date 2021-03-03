@@ -20,6 +20,8 @@ class JetTaggerProfiledResult(Module):
         taggerName="llpdnnx",
         outputName="selectedJets",
         profiledLabels = ['LLP_Q','LLP_E','LLP_MU','LLP_TAU','LLP_QE','LLP_QMU','LLP_QTAU'],
+        kinds = ['single','ratio','avg'],
+        maxOnly = True,
         globalOptions={"isData": False}
     ):
         self.globalOptions = globalOptions
@@ -27,7 +29,8 @@ class JetTaggerProfiledResult(Module):
         self.outputName = outputName
         self.inputCollection = inputCollection
         self.profiledLabels = profiledLabels
-
+        self.kinds = kinds
+        self.maxOnly = maxOnly
 
     def beginJob(self):
         pass
@@ -37,10 +40,17 @@ class JetTaggerProfiledResult(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
+        if not self.maxOnly:
+            self.out.branch("n"+self.outputName+"_"+self.taggerName,"I")
         for label in self.profiledLabels:
-            for k in ['single','ratio','avg']:
-                self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,"F",lenVar="n"+self.outputName)
-                self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param","F",lenVar="n"+self.outputName)
+            for k in self.kinds:
+                if self.maxOnly:
+                    self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,"F")
+                    self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param","F")
+
+                else:
+                    self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,"F",lenVar="n"+self.outputName+"_"+self.taggerName)
+                    self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param","F",lenVar="n"+self.outputName+"_"+self.taggerNamee)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -52,7 +62,7 @@ class JetTaggerProfiledResult(Module):
 
         taggerResults = {}
         taggerParameters = {}
-        for k in ['single','ratio','avg']:
+        for k in self.kinds:
             taggerResults[k] = {label: [-1.]*len(jets) for label in self.profiledLabels}
             taggerParameters[k] = {label: [-1.]*len(jets) for label in self.profiledLabels}
         
@@ -63,17 +73,32 @@ class JetTaggerProfiledResult(Module):
             hasTagger = True
             predictions = getattr(jet,self.taggerName)
             for label in self.profiledLabels:
-                for k in ['single','ratio','avg']:
+                for k in self.kinds:
                     taggerResults[k][label][ijet] = predictions[k][label]['output']
                     taggerParameters[k][label][ijet] = predictions[k][label]['parameter']
 
         if not hasTagger:
             print "WARNING - no jet in the event has the ", self.taggerName, " result stored"
 
-        #print len(jets)
-        for label in self.profiledLabels:
-            for k in ['single','ratio','avg']:
-                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,taggerResults[k][label])
-                self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param",taggerParameters[k][label])
-        #print
+        
+        if self.maxOnly:
+            #save only the maximum over all jets
+            for label in self.profiledLabels:
+                for k in self.kinds:
+                    pMax = -1
+                    paramMax = -10
+                    for i in range(len(taggerResults[k][label])):
+                        if pMax<taggerResults[k][label][i]:
+                            pMax = taggerResults[k][label][i]
+                            paramMax = taggerParameters[k][label][i]
+                    self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,pMax)
+                    self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param",paramMax)
+        else:
+            #save all jets
+            self.out.fillBranch("n"+self.outputName+"_"+self.taggerName,len(jets))
+            for label in self.profiledLabels:
+                for k in self.kinds:
+                    self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,taggerResults[k][label])
+                    self.out.fillBranch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param",taggerParameters[k][label])
+            
         return True
