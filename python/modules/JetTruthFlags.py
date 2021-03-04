@@ -38,6 +38,7 @@ class JetTruthFlags(Module):
             'isLLP_QTAU': ['isLLP_QTAU','isLLP_QQTAU'],  
             'isUndefined': ['isUndefined'] , 
         },
+        genVariables = ['displacement','displacement_xy','displacement_z'],
 
         globalOptions={"isData": False, "isSignal": False}
     ):
@@ -46,6 +47,7 @@ class JetTruthFlags(Module):
         self.inputCollection = inputCollection
         self.originVariables = originVariables
         self.globalVariables = globalVariables
+        self.genVariables = genVariables
         self.outputName = outputName
 
     def beginJob(self):
@@ -99,6 +101,12 @@ class JetTruthFlags(Module):
                 for originVariable in self.originVariables:
                     extraVariableDict[originVariable][ijet] = getattr(
                         jetOrigin[jet._index], originVariable)
+                for genVariable in self.genVariables:
+                    setattr(
+                        jet,
+                        genVariable,
+                        getattr(jetOrigin[jet._index], genVariable)
+                    )
                     
             if jet._index<len(jetGlobal):
                 for globalVariable in self.globalVariables:

@@ -25,8 +25,7 @@ parser.add_argument('--noiso', dest='noiso',
                     action='store_true', default=False)
 parser.add_argument('--notrigger', dest='notrigger',
                     action='store_true', default=False)  
-parser.add_argument('--singlelepton', dest='singlelepton',
-                    action='store_true', default=False)                     
+parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
 
@@ -61,7 +60,7 @@ print "year:", year
 print "isSignal:",isSignal
 print "apply lepton iso: ","True (default)" if not args.noiso else "False"
 print "apply trigger selection: ","True (default)" if not args.notrigger else "False" 
-print "channel strategy: ","single lepton" if args.singlelepton else "dilepton"
+print "channel: ","single lepton" if args.leptons==1 else "dilepton"
 print "output directory:", args.output[0]
 
 globalOptions = {
@@ -191,7 +190,7 @@ if not args.notrigger:
         EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0),
     ])
     
-if args.singlelepton:
+if args.leptons==1:
     analyzerChain.append(
         EventSkim(selection=lambda event: event.nsubleadingLeptons==0)
     )
@@ -315,6 +314,7 @@ def jetSelectionSequence(jetDict):
             sequence.append(
                 JetTruthFlags(
                     inputCollection=lambda event, systName=systName: getattr(event, "selectedJets_"+systName),
+                    originVariables = ['displacement_xy'],
                     outputName="selectedJets_"+systName,
                     globalOptions=globalOptions
                 )
@@ -334,26 +334,21 @@ def eventReconstructionSequence(jetMetDict):
     sequence = []
     for systName,(jetCollection,metObject) in jetMetDict.items():
         sequence.extend([
-            WbosonReconstruction(
-                leptonObject=lambda event: event.leadingLeptons[0],
-                metObject=metObject,
-                globalOptions=globalOptions,
-                outputName="leadingLepton_"+systName
-            ),
-
             EventObservables(
+                lepton1Object=lambda event: event.leadingLeptons[0],
+                lepton2Object=None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
                 jetCollection=jetCollection,
                 metInput=metObject,
                 globalOptions=globalOptions,
-                outputName="EventObservables_"+systName
+                outputName=systName
             ),
 
             HNLReconstruction(
+                lepton1Object=lambda event: event.leadingLeptons[0],
+                lepton2Object=None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
+                jetCollection=jetCollection,
                 globalOptions=globalOptions,
                 outputName=systName,
-                lepton1Object=lambda event: event.leadingLeptons[0],
-                lepton2Object=None if args.singlelepton else (lambda event: event.subleadingLeptons[0]),
-                jetCollection=jetCollection,
             )
         ])
         
