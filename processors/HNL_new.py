@@ -272,7 +272,7 @@ def jetSelectionSequence(jetDict):
                 jetMinPt=15.,
                 jetMaxEta=2.4,
                 globalFeatures = [],
-                storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
+                storeKinematics=[],#'pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -313,6 +313,7 @@ def jetSelectionSequence(jetDict):
                 globalOptions=globalOptions
             )
         ])
+        
     
         if isMC:
             sequence.append(
@@ -385,7 +386,7 @@ def taggerSequence(jetDict, modelFile, taggerName):
                 taggerName=taggerName,
                 outputName="hnlJet_"+systName,
                 profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
-                kinds = ['ratio'],
+                kinds = ['single','ratio'],
                 globalOptions={"isData": False}
             )
         )
@@ -431,7 +432,7 @@ if isMC:
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
             propagateJER = False,
-            jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents', 'rawFactor'],
+            jetKeys = ['jetId', 'nConstituents', 'rawFactor'],
         )
     )
 
@@ -439,10 +440,10 @@ if isMC:
     analyzerChain.extend(
         jetSelectionSequence({
             "nominal": lambda event: event.jets_nominal,
-            "jerUp": lambda event: event.jets_jerUp,
-            "jerDown": lambda event: event.jets_jerDown,
-            "jesTotalUp": lambda event: event.jets_jesTotalUp,
-            "jesTotalDown": lambda event: event.jets_jesTotalDown,
+            #"jerUp": lambda event: event.jets_jerUp,
+            #"jerDown": lambda event: event.jets_jerDown,
+            #"jesTotalUp": lambda event: event.jets_jesTotalUp,
+            #"jesTotalDown": lambda event: event.jets_jesTotalDown,
         })
     )
         
@@ -450,12 +451,12 @@ if isMC:
     analyzerChain.extend(
         eventReconstructionSequence({
             "nominal": (lambda event: event.selectedJets_nominal, lambda event: event.met_nominal),
-            "jerUp": (lambda event: event.selectedJets_jerUp, lambda event: event.met_jerUp),
-            "jerDown": (lambda event: event.selectedJets_jerDown, lambda event: event.met_jerDown),
-            "jesTotalUp": (lambda event: event.selectedJets_jesTotalUp, lambda event: event.met_jesTotalUp),
-            "jesTotalDown": (lambda event: event.selectedJets_jesTotalDown, lambda event: event.met_jesTotalDown),
-            "unclEnUp": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnUp),
-            "unclEnDown": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnDown),
+            #"jerUp": (lambda event: event.selectedJets_jerUp, lambda event: event.met_jerUp),
+            #"jerDown": (lambda event: event.selectedJets_jerDown, lambda event: event.met_jerDown),
+            #"jesTotalUp": (lambda event: event.selectedJets_jesTotalUp, lambda event: event.met_jesTotalUp),
+            #"jesTotalDown": (lambda event: event.selectedJets_jesTotalDown, lambda event: event.met_jesTotalDown),
+            #"unclEnUp": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnUp),
+            #"unclEnDown": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnDown),
         })
     )
     
@@ -463,23 +464,51 @@ if isMC:
     analyzerChain.extend(
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
-            "jerUp": lambda event: event.hnlJets_jerUp,
-            "jerDown": lambda event: event.hnlJets_jerDown,
-            "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-            "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-            "unclEnUp": lambda event: event.hnlJets_nominal,
-            "unclEnDown": lambda event: event.hnlJets_nominal,
+            #"jerUp": lambda event: event.hnlJets_jerUp,
+            #"jerDown": lambda event: event.hnlJets_jerDown,
+            #"jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+            #"jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
+            #"unclEnUp": lambda event: event.hnlJets_nominal,
+            #"unclEnDown": lambda event: event.hnlJets_nominal,
         },
-        modelFile=modelPathDA[year],
+        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb",
         taggerName='llpdnnx'
+    ))
+    
+    analyzerChain.extend(
+        taggerSequence({
+            "nominal": lambda event: event.hnlJets_nominal,
+            #"jerUp": lambda event: event.hnlJets_jerUp,
+            #"jerDown": lambda event: event.hnlJets_jerDown,
+            #"jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+            #"jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
+            #"unclEnUp": lambda event: event.hnlJets_nominal,
+            #"unclEnDown": lambda event: event.hnlJets_nominal,
+        },
+        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_4_lr001_201117.pb",
+        taggerName='llpdnnx_DA'
+    ))
+    
+    analyzerChain.extend(
+        taggerSequence({
+            "nominal": lambda event: event.hnlJets_nominal,
+            #"jerUp": lambda event: event.hnlJets_jerUp,
+            #"jerDown": lambda event: event.hnlJets_jerDown,
+            #"jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+            #"jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
+            #"unclEnUp": lambda event: event.hnlJets_nominal,
+            #"unclEnDown": lambda event: event.hnlJets_nominal,
+        },
+        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_wasserstein4_lr001_201117.pb",
+        taggerName='llpdnnx_DAW'
     ))
     
     analyzerChain.extend(
         bdtSequence([
             "nominal", 
-            "jerUp", "jerDown", 
-            "jesTotalUp", "jesTotalDown", 
-            "unclEnUp", "unclEnDown"
+            #"jerUp", "jerDown", 
+            #"jesTotalUp", "jesTotalDown", 
+            #"unclEnUp", "unclEnDown"
         ])
     )
     
@@ -509,8 +538,24 @@ else:
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
         },
-        modelFile=modelPathDA[year],
+        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb",
         taggerName='llpdnnx'
+    ))
+    
+    analyzerChain.extend(
+        taggerSequence({
+            "nominal": lambda event: event.hnlJets_nominal,
+        },
+        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_4_lr001_201117.pb",
+        taggerName='llpdnnx_DA'
+    ))
+    
+    analyzerChain.extend(
+        taggerSequence({
+            "nominal": lambda event: event.hnlJets_nominal,
+        },
+        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_wasserstein4_lr001_201117.pb",
+        taggerName='llpdnnx_DAW'
     ))
     
     analyzerChain.extend(

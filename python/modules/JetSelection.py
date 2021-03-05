@@ -78,7 +78,6 @@ class JetSelection(Module):
 
         jets = self.inputCollection(event)
         
-        
         jetglobal = Collection(event, "global")
         jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
         
@@ -144,18 +143,18 @@ class JetSelection(Module):
                     minDeltaRSubtraction = min(minDeltaRSubtraction, deltaR(lepton, jet))
                     if deltaR(lepton,jet)<self.dRP4Subtraction:
                         leptonP4 += lepton.p4()
-
-            if minDeltaRSubtraction < 0.4:
-                jet.pt = jet.ptRaw
-                # Optionally pt(uncorr) > 15 GeV
-                #if jet.pt<self.jetMinPt:
-                    #unselectedJets.append(jet)
-                    #continue  
-         
+                        
+            jetP4LeptonSubtracted = jet.p4()-leptonP4 
+            '''
+            if leptonP4.Pt()>1e-3 and jetP4LeptonSubtracted.Pt()<20.:
+                #reset jet pt & recaculate ptsubtracted
+                jet.pt = jet.ptRaw 
+                jetP4LeptonSubtracted = jet.p4()-leptonP4
+            '''
             setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
             leptonPt = leptonP4.Pt()
             setattr(jet,"ptLepton", leptonPt)
-            jetP4LeptonSubtracted = jet.p4()-leptonP4 
+            
             setattr(jet, "p4Subtracted", jetP4LeptonSubtracted)
             setattr(jet, "ptSubtracted", jetP4LeptonSubtracted.Pt())
 
@@ -163,12 +162,13 @@ class JetSelection(Module):
                 mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))
                 mindr = min(map(lambda lepton: deltaR(lepton, jet), leptonsForDRCleaning))
                 
+                setattr(jet,"minDPhiClean",mindphi)
+                setattr(jet,"minDRClean",mindr)
+                
                 if mindr < self.dRCleaning:
                     unselectedJets.append(jet)
                     continue
                     
-                setattr(jet,"minDPhiClean",mindphi)
-                setattr(jet,"minDRClean",mindr)
             else:
                 setattr(jet,"minDPhiClean",100)
                 setattr(jet,"minDRClean",100)

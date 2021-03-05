@@ -1,7 +1,7 @@
 import os
 import imp
 import numpy as np
-from xgboost import XGBClassifier, Booster
+from xgboost import XGBClassifier, Booster, DMatrix
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
@@ -53,6 +53,7 @@ class XGBEvaluation(Module):
             for j, (featureName, featureFct) in enumerate(self.features):
                 featureArr[i,j] = featureFct(event,syst)
         
+
 
         bdt_score = self.model.predict_proba(featureArr)
 

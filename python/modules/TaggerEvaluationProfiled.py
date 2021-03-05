@@ -151,11 +151,10 @@ class TaggerEvaluationProfiled(Module):
 
         jetOriginIndices = list(jetOriginIndices)
 
-
         evaluationIndices = []
         for index in jetOriginIndices:
             evaluationIndices.extend([index]*len(self.evalValues))
-
+        
 
         if event._tree._ttreereaderversion > self._ttreereaderversion:
             self.setup(event._tree)
@@ -163,15 +162,16 @@ class TaggerEvaluationProfiled(Module):
         self.nJets = len(jetglobal)
 
         if len(jetOriginIndices)==0:
+            print("No jet to evaluate tagger on")
             for jetCollection in self.inputCollections:
                 jets = jetCollection(event)
                 for ijet, jet in enumerate(jets):
                     taggerOutput = {}
                     for ilabel, label in enumerate(self.predictionLabels):
-                        print("Jet output set to -1!")
+                        
                         taggerOutput[label] = {
                             'output': -1.0,
-                            'parameter': min(self.evalValues)
+                            'parameter': -10.
                         }
                     setattr(jet, self.taggerName, taggerOutput)
             return True

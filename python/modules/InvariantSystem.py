@@ -35,8 +35,8 @@ class InvariantSystem(Module):
         self.out.branch(self.outputName+"_eta", "F")
         self.out.branch(self.outputName+"_charge", "I")
         
-        self.out.branch(self.outputName+"_dR", "F")
-        self.out.branch(self.outputName+"_dphi", "F")
+        self.out.branch(self.outputName+"_dRmin", "F")
+        self.out.branch(self.outputName+"_dPhimin", "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -62,8 +62,8 @@ class InvariantSystem(Module):
         self.out.fillBranch(self.outputName+"_eta", vec.Eta())
         self.out.fillBranch(self.outputName+"_charge", charge)
         
-        self.out.fillBranch(self.outputName+"_dR", dRmin)
-        self.out.fillBranch(self.outputName+"_dphi", dPhimin)
+        self.out.fillBranch(self.outputName+"_dRmin", dRmin)
+        self.out.fillBranch(self.outputName+"_dPhimin", dPhimin)
 
         return True
         

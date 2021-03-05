@@ -239,6 +239,7 @@ class JetMetUncertainties(Module):
                 keys = self.jetKeys
             ))
         newJets = sorted(newJets,key=lambda x: x.pt, reverse=True)
+        #print 'jet',variation,newJets[0].pt
         return newJets
         
     def makeNewMetObject(self,met,variation):
@@ -250,6 +251,7 @@ class JetMetUncertainties(Module):
             mass = 0,
             keys = self.metKeys
         )
+        #print 'met',variation,newMet.pt
         return newMet
     
     def analyze(self, event):

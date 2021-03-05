@@ -59,6 +59,10 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_mht_l1_dphi", "F")
         self.out.branch(self.outputName+"_mht_l1_ptRatio", "F")
         
+        self.out.branch(self.outputName+"_leptonic_recoil", "F")
+        self.out.branch(self.outputName+"_longitudinal_recoil", "F")
+        self.out.branch(self.outputName+"_transverse_recoil", "F")
+        
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -73,19 +77,23 @@ class EventObservables(Module):
         self.out.fillBranch(self.outputName+"_met", met.pt)
         self.out.fillBranch(self.outputName+"_met_phi", met.phi)
         
+        
         dPhi = deltaPhi(lepton1,met)
         mtw = math.sqrt(2*lepton1.pt*met.pt*(1-math.cos(dPhi)))
 
         self.out.fillBranch(self.outputName+"_mtw", mtw)
         self.out.fillBranch(self.outputName+"_met_l1_dphi", dPhi)
         
+        leptonSystem = lepton1.p4()
+        
         eventShapes = ROOT.EventShapes()
         eventShapes.addObject(lepton1.pt, lepton1.eta, lepton1.phi, 0.0)
         if lepton2!=None:
+            leptonSystem+=lepton2.p4()
             eventShapes.addObject(lepton2.pt, lepton2.eta, lepton2.phi, 0.0)
 
         # ht and mht
-        vectorSum = ROOT.TLorentzVector()
+        vectorSum = ROOT.TLorentzVector(0,0,0,0)
         scalarPtSum = 0.0
 
         for jet in jets:
@@ -120,5 +128,12 @@ class EventObservables(Module):
         self.out.fillBranch(self.outputName+"_mht_l1_dphi", math.fabs(deltaPhi(lepton1.phi,vectorSum.Phi())))
         self.out.fillBranch(self.outputName+"_mht_l1_ptRatio", vectorSum.Pt()/lepton1.pt)
 
+        leptonSystemNormVect = leptonSystem.Vect().Unit()
+        longitudinal_recoil = -(vectorSum.Px()*leptonSystemNormVect.Px()+vectorSum.Py()*leptonSystemNormVect.Py())
+        transverse_recoil = math.sqrt((vectorSum.Px()-longitudinal_recoil*leptonSystemNormVect.Px())**2+(vectorSum.Py()-longitudinal_recoil*leptonSystemNormVect.Py())**2)
 
+        self.out.fillBranch(self.outputName+"_leptonic_recoil", leptonSystem.Pt())
+        self.out.fillBranch(self.outputName+"_longitudinal_recoil", longitudinal_recoil)
+        self.out.fillBranch(self.outputName+"_transverse_recoil", transverse_recoil)
+        
         return True

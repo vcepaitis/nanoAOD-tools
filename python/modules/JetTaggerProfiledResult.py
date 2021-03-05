@@ -69,6 +69,7 @@ class JetTaggerProfiledResult(Module):
         hasTagger = False
         for ijet, jet in enumerate(jets):
             if not hasattr(jet, self.taggerName):
+                print jet.pt,jet.ptOriginal,jet.eta
                 continue
             hasTagger = True
             predictions = getattr(jet,self.taggerName)
@@ -77,7 +78,7 @@ class JetTaggerProfiledResult(Module):
                     taggerResults[k][label][ijet] = predictions[k][label]['output']
                     taggerParameters[k][label][ijet] = predictions[k][label]['parameter']
 
-        if not hasTagger:
+        if len(jets)>0 and not hasTagger:
             print "WARNING - no jet in the event has the ", self.taggerName, " result stored"
 
         
