@@ -34,6 +34,9 @@ class InvariantSystem(Module):
         self.out.branch(self.outputName+"_pt", "F")
         self.out.branch(self.outputName+"_eta", "F")
         self.out.branch(self.outputName+"_charge", "I")
+        
+        self.out.branch(self.outputName+"_dR", "F")
+        self.out.branch(self.outputName+"_dphi", "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -43,14 +46,24 @@ class InvariantSystem(Module):
         vec = ROOT.TLorentzVector()
         charge = 1
         
+        dRmin = 100.
+        dPhimin = 100.
         for i,obj in enumerate(collection):
             vec += obj.p4()
             charge *= obj.charge
+            for j,obj2 in enumerate(collection):
+                if i>=j:
+                    continue
+                dRmin = min(dRmin,deltaR(obj,obj2))
+                dPhimin = min(dPhimin,math.fabs(deltaPhi(obj,obj2)))
             
         self.out.fillBranch(self.outputName+"_mass", vec.M())
         self.out.fillBranch(self.outputName+"_pt", vec.Pt())
         self.out.fillBranch(self.outputName+"_eta", vec.Eta())
         self.out.fillBranch(self.outputName+"_charge", charge)
+        
+        self.out.fillBranch(self.outputName+"_dR", dRmin)
+        self.out.fillBranch(self.outputName+"_dphi", dPhimin)
 
         return True
         

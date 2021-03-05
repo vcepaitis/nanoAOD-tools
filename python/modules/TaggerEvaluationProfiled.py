@@ -78,7 +78,7 @@ class TaggerEvaluationProfiled(Module):
         if (not tfEval.loadGraph(modelFile)):
             sys.exit(1)
         tfEval.addOutputNodeName("prediction")
-        print "--- Model: ",modelFile," ---"
+        print "--- Tagger model: ",modelFile," ---"
         for groupName,featureCfg in self.featureDict.iteritems():
             if featureCfg.has_key("max"):
                 print "building group ... %s, shape=[%i,%i], length=%s"%(groupName,featureCfg["max"],len(featureCfg["branches"]),featureCfg["length"])
