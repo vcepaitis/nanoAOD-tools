@@ -145,12 +145,12 @@ class JetSelection(Module):
                         leptonP4 += lepton.p4()
                         
             jetP4LeptonSubtracted = jet.p4()-leptonP4 
-            '''
+            
             if leptonP4.Pt()>1e-3 and jetP4LeptonSubtracted.Pt()<20.:
                 #reset jet pt & recaculate ptsubtracted
                 jet.pt = jet.ptRaw 
                 jetP4LeptonSubtracted = jet.p4()-leptonP4
-            '''
+            
             setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
             leptonPt = leptonP4.Pt()
             setattr(jet,"ptLepton", leptonPt)

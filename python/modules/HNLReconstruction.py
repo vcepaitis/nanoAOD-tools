@@ -37,6 +37,7 @@ class HNLReconstruction(Module):
         self.out = wrappedOutputTree
 
         self.out.branch("hnlJet_"+self.outputName+"_pt", "F")
+        self.out.branch("hnlJet_"+self.outputName+"_ptorig", "F")
         self.out.branch("hnlJet_"+self.outputName+"_ptsub", "F")
         self.out.branch("hnlJet_"+self.outputName+"_eta", "F")
 
@@ -101,6 +102,7 @@ class HNLReconstruction(Module):
                 hnlJet = sortedJets[0]
                 
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", hnlJet.pt)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.ptOriginal)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", hnlJet.p4Subtracted.Pt())
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", hnlJet.eta)
                 
@@ -116,6 +118,7 @@ class HNLReconstruction(Module):
                 
             else:
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", 0)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", 0)
             
@@ -135,6 +138,7 @@ class HNLReconstruction(Module):
                 hnlJet = sortedJets[0]
                 
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", hnlJet.pt)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.ptOriginal)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", hnlJet.p4Subtracted.Pt())
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", hnlJet.eta)
                 
@@ -150,6 +154,7 @@ class HNLReconstruction(Module):
                     
             else:
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", 0)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", 0)
             

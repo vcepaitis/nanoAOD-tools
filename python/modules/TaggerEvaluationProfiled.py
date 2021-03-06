@@ -215,7 +215,7 @@ class TaggerEvaluationProfiled(Module):
                     for profiledSubLabel in profiledSubLabels:
                         labelIdx = self.predictionLabels.index(profiledSubLabel)
                         singlePrediction += max(0.,predictions[labelIdx])
-                    ratioPrediction = math.log10(singlePrediction/max(1e-4,sumSMLabels))/4.         
+                    ratioPrediction = math.log10(1+singlePrediction/max(1e-4,sumSMLabels))/math.log10(1+1/1e-4)        
                         
                     if singlePrediction>maxSinglePrediction[profiledLabelKey]:
                         maxSinglePrediction[profiledLabelKey] = singlePrediction
@@ -232,7 +232,6 @@ class TaggerEvaluationProfiled(Module):
                 valueAvgPrediction[profiledLabelKey]*=1./avgPrediction[profiledLabelKey]
                 avgPrediction[profiledLabelKey]*=1./len(self.evalValues)
             
-                    
             
             
             outputPerIndex[jetIndex] = {'single': {}, 'ratio': {}, 'avg': {}}
