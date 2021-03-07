@@ -103,7 +103,6 @@ jerSFUncertaintyFile = {
 
 
 leptonSelection = [
-    EventSkim(selection=lambda event: event.nTrigObj > 0),
     MuonSelection(
         outputName="tightMuons",
         storeKinematics=['pt', 'eta', 'dxy', 'dxyErr', 'dz',
@@ -196,10 +195,9 @@ leptonSelection = [
         outputName = "Leptons"
     ),
 
-    EventSkim(selection=lambda event: event.isTriggered),
+    EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0),
+    EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0),
     EventSkim(selection=lambda event: event.nsubleadingLeptons==1),
-
-    EventSkim(selection=lambda event: (event.Leptons_muonelectron+event.Leptons_electronmuon)>0),
 ]
 
 analyzerChain = []
@@ -215,7 +213,7 @@ analyzerChain.append(
     )
 )
 
-analyzerChain.append(EventSkim(selection=lambda event: (event.dilepton_mass > 80.)))
+analyzerChain.append(EventSkim(selection=lambda event: (event.dilepton_mass > 80.) and (event.dilepton_pt > 50.)))
 
 
 analyzerChain.append(
@@ -240,7 +238,7 @@ if isMC:
             jerResolutionFileName=jerResolutionFile[year],
             jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
             propagateJER = False,
-            jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
+            jetKeys = ['rawFactor','jetId', 'nConstituents'],
         )
     )
 
@@ -251,12 +249,13 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons,#+event.looseIsoMuons+event.looseIsoElectrons,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=15.,
                 jetMaxEta=2.4,
                 jetId=JetSelection.TIGHT,
                 flagDA = True,
+                storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted'],
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             )

@@ -113,6 +113,8 @@ class JetSelection(Module):
   
         for jet in jets:    
             jet.ptRaw = jet.pt*(1. - jet.rawFactor)
+            jet.massRaw = jet.mass * (1 - jet.rawFactor)
+            jet.p4Original = jet.p4()
             jet.ptOriginal = jet.pt
         
             if jet.pt<self.jetMinPt:
@@ -143,20 +145,21 @@ class JetSelection(Module):
                     minDeltaRSubtraction = min(minDeltaRSubtraction, deltaR(lepton, jet))
                     if deltaR(lepton,jet)<self.dRP4Subtraction:
                         leptonP4 += lepton.p4()
-                        
-            jetP4LeptonSubtracted = jet.p4()-leptonP4 
+                      
+            jet.p4Lepton = leptonP4    
+            jet.p4Subtracted = jet.p4()-leptonP4 
+            jet.p4OriginalSubtracted = jet.p4Original-leptonP4 
             
-            if leptonP4.Pt()>1e-3 and jetP4LeptonSubtracted.Pt()<20.:
-                #reset jet pt & recaculate ptsubtracted
+            jet.minDeltaRSubtraction = minDeltaRSubtraction
+                      
+            if leptonP4.Pt()>1e-3 and jet.p4Subtracted.Pt()<20.:
+                #reset jet pt & recaculate p4Subtracted
                 jet.pt = jet.ptRaw 
-                jetP4LeptonSubtracted = jet.p4()-leptonP4
+                jet.p4Subtracted = jet.p4()-leptonP4
             
-            setattr(jet,"minDeltaRSubtraction", minDeltaRSubtraction)
-            leptonPt = leptonP4.Pt()
-            setattr(jet,"ptLepton", leptonPt)
-            
-            setattr(jet, "p4Subtracted", jetP4LeptonSubtracted)
-            setattr(jet, "ptSubtracted", jetP4LeptonSubtracted.Pt())
+            jet.ptLepton = jet.p4Lepton.Pt() 
+            jet.ptSubtracted = jet.p4Subtracted.Pt()
+            jet.ptOriginalSubtracted = jet.p4OriginalSubtracted.Pt()
 
             if len(leptonsForDRCleaning) > 0:
                 mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))

@@ -37,8 +37,10 @@ class HNLReconstruction(Module):
         self.out = wrappedOutputTree
 
         self.out.branch("hnlJet_"+self.outputName+"_pt", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptorig", "F")
         self.out.branch("hnlJet_"+self.outputName+"_ptsub", "F")
+        self.out.branch("hnlJet_"+self.outputName+"_ptorig", "F")
+        self.out.branch("hnlJet_"+self.outputName+"_ptorigsub", "F")
+        
         self.out.branch("hnlJet_"+self.outputName+"_eta", "F")
 
         if self.lepton2Object==None:
@@ -102,8 +104,9 @@ class HNLReconstruction(Module):
                 hnlJet = sortedJets[0]
                 
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", hnlJet.pt)
-                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.ptOriginal)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", hnlJet.p4Subtracted.Pt())
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.p4Original.Pt())
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", hnlJet.p4OriginalSubtracted.Pt())
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", hnlJet.eta)
                 
                 self.out.fillBranch(self.outputName+"_m_l1j", (lepton1.p4()+hnlJet.p4Subtracted).M())
@@ -118,8 +121,9 @@ class HNLReconstruction(Module):
                 
             else:
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", 0)
-                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", 0)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", 0)
             
                 self.out.fillBranch(self.outputName+"_m_lj", 0)
@@ -138,8 +142,9 @@ class HNLReconstruction(Module):
                 hnlJet = sortedJets[0]
                 
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", hnlJet.pt)
-                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.ptOriginal)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", hnlJet.p4Subtracted.Pt())
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.p4Original.Pt())
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", hnlJet.p4OriginalSubtracted.Pt())
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", hnlJet.eta)
                 
                 self.out.fillBranch(self.outputName+"_m_llj", (lepton1.p4()+lepton2.p4()+hnlJet.p4Subtracted).M())
@@ -154,8 +159,9 @@ class HNLReconstruction(Module):
                     
             else:
                 self.out.fillBranch("hnlJet_"+self.outputName+"_pt", 0)
-                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", 0)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
+                self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", 0)
                 self.out.fillBranch("hnlJet_"+self.outputName+"_eta", 0)
             
                 self.out.fillBranch(self.outputName+"_m_llj", 0)
