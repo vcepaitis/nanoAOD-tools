@@ -249,7 +249,7 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons,#+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=15.,
                 jetMaxEta=2.4,
