@@ -213,7 +213,7 @@ analyzerChain.append(
     )
 )
 
-analyzerChain.append(EventSkim(selection=lambda event: (event.dilepton_mass > 80.) and (event.dilepton_pt > 50.)))
+analyzerChain.append(EventSkim(selection=lambda event: (event.dilepton_mass > 85.) and (event.dilepton_pt > 40.)))
 
 
 analyzerChain.append(
@@ -278,6 +278,7 @@ else:
             jetMaxEta=2.4,
             jetId=JetSelection.TIGHT,
             flagDA = True,
+            storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted'],
             outputName="selectedJets_nominal",
             globalOptions=globalOptions
         )

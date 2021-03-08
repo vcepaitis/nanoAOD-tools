@@ -155,6 +155,7 @@ class JetSelection(Module):
             if leptonP4.Pt()>1e-3 and jet.p4Subtracted.Pt()<20.:
                 #reset jet pt & recaculate p4Subtracted
                 jet.pt = jet.ptRaw 
+                jet.mass = jet.massRaw 
                 jet.p4Subtracted = jet.p4()-leptonP4
             
             jet.ptLepton = jet.p4Lepton.Pt() 

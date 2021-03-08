@@ -25,6 +25,10 @@ parser.add_argument('--noiso', dest='noiso',
                     action='store_true', default=False)
 parser.add_argument('--notrigger', dest='notrigger',
                     action='store_true', default=False)  
+parser.add_argument('--notagger', dest='notagger',
+                    action='store_true', default=False)  
+parser.add_argument('--nobdt', dest='nobdt',
+                    action='store_true', default=False) 
 parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
@@ -60,6 +64,8 @@ print "year:", year
 print "isSignal:",isSignal
 print "apply lepton iso: ","True (default)" if not args.noiso else "False"
 print "apply trigger selection: ","True (default)" if not args.notrigger else "False" 
+print "run BDT: ","True (default)" if not args.nobdt else "False" 
+print "run tagger: ","True (default)" if not args.notagger else "False" 
 print "channel: ","single lepton" if args.leptons==1 else "dilepton"
 print "output directory:", args.output[0]
 
@@ -207,16 +213,10 @@ else:
 
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
-modelPathDA = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weight2017_DA_1_lr001.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weight2018_DA_1_lr001.pb",
-}
-
 modelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weight2017_DA_10_lr001.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weight2018_DA_10_lr001.pb",
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"
 }
 
 BDT2lmodelPath = {
@@ -362,6 +362,8 @@ def eventReconstructionSequence(jetMetDict):
     
 def taggerSequence(jetDict, modelFile, taggerName):
     sequence = []
+    if args.notagger:
+        return []
     sequence.append(
         TaggerEvaluationProfiled(
             modelPath=modelFile,
@@ -396,7 +398,8 @@ def taggerSequence(jetDict, modelFile, taggerName):
 
 def bdtSequence(systematics):
     sequence = []
-    
+    if args.nobdt:
+        return []
     if args.leptons==1:
         sequence.append(
             XGBEvaluation(
@@ -440,10 +443,10 @@ if isMC:
     analyzerChain.extend(
         jetSelectionSequence({
             "nominal": lambda event: event.jets_nominal,
-            #"jerUp": lambda event: event.jets_jerUp,
-            #"jerDown": lambda event: event.jets_jerDown,
-            #"jesTotalUp": lambda event: event.jets_jesTotalUp,
-            #"jesTotalDown": lambda event: event.jets_jesTotalDown,
+            "jerUp": lambda event: event.jets_jerUp,
+            "jerDown": lambda event: event.jets_jerDown,
+            "jesTotalUp": lambda event: event.jets_jesTotalUp,
+            "jesTotalDown": lambda event: event.jets_jesTotalDown,
         })
     )
         
@@ -451,12 +454,12 @@ if isMC:
     analyzerChain.extend(
         eventReconstructionSequence({
             "nominal": (lambda event: event.selectedJets_nominal, lambda event: event.met_nominal),
-            #"jerUp": (lambda event: event.selectedJets_jerUp, lambda event: event.met_jerUp),
-            #"jerDown": (lambda event: event.selectedJets_jerDown, lambda event: event.met_jerDown),
-            #"jesTotalUp": (lambda event: event.selectedJets_jesTotalUp, lambda event: event.met_jesTotalUp),
-            #"jesTotalDown": (lambda event: event.selectedJets_jesTotalDown, lambda event: event.met_jesTotalDown),
-            #"unclEnUp": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnUp),
-            #"unclEnDown": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnDown),
+            "jerUp": (lambda event: event.selectedJets_jerUp, lambda event: event.met_jerUp),
+            "jerDown": (lambda event: event.selectedJets_jerDown, lambda event: event.met_jerDown),
+            "jesTotalUp": (lambda event: event.selectedJets_jesTotalUp, lambda event: event.met_jesTotalUp),
+            "jesTotalDown": (lambda event: event.selectedJets_jesTotalDown, lambda event: event.met_jesTotalDown),
+            "unclEnUp": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnUp),
+            "unclEnDown": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnDown),
         })
     )
     
@@ -464,51 +467,23 @@ if isMC:
     analyzerChain.extend(
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
-            #"jerUp": lambda event: event.hnlJets_jerUp,
-            #"jerDown": lambda event: event.hnlJets_jerDown,
-            #"jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-            #"jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-            #"unclEnUp": lambda event: event.hnlJets_nominal,
-            #"unclEnDown": lambda event: event.hnlJets_nominal,
+            "jerUp": lambda event: event.hnlJets_jerUp,
+            "jerDown": lambda event: event.hnlJets_jerDown,
+            "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+            "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
+            "unclEnUp": lambda event: event.hnlJets_nominal,
+            "unclEnDown": lambda event: event.hnlJets_nominal,
         },
-        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb",
+        modelFile=modelPath[year],
         taggerName='llpdnnx'
-    ))
-    
-    analyzerChain.extend(
-        taggerSequence({
-            "nominal": lambda event: event.hnlJets_nominal,
-            #"jerUp": lambda event: event.hnlJets_jerUp,
-            #"jerDown": lambda event: event.hnlJets_jerDown,
-            #"jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-            #"jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-            #"unclEnUp": lambda event: event.hnlJets_nominal,
-            #"unclEnDown": lambda event: event.hnlJets_nominal,
-        },
-        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_4_lr001_201117.pb",
-        taggerName='llpdnnx_DA'
-    ))
-    
-    analyzerChain.extend(
-        taggerSequence({
-            "nominal": lambda event: event.hnlJets_nominal,
-            #"jerUp": lambda event: event.hnlJets_jerUp,
-            #"jerDown": lambda event: event.hnlJets_jerDown,
-            #"jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-            #"jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-            #"unclEnUp": lambda event: event.hnlJets_nominal,
-            #"unclEnDown": lambda event: event.hnlJets_nominal,
-        },
-        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_wasserstein4_lr001_201117.pb",
-        taggerName='llpdnnx_DAW'
     ))
     
     analyzerChain.extend(
         bdtSequence([
             "nominal", 
-            #"jerUp", "jerDown", 
-            #"jesTotalUp", "jesTotalDown", 
-            #"unclEnUp", "unclEnDown"
+            "jerUp", "jerDown", 
+            "jesTotalUp", "jesTotalDown", 
+            "unclEnUp", "unclEnDown"
         ])
     )
     
@@ -538,24 +513,8 @@ else:
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
         },
-        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb",
+        modelFile=modelPath[year],
         taggerName='llpdnnx'
-    ))
-    
-    analyzerChain.extend(
-        taggerSequence({
-            "nominal": lambda event: event.hnlJets_nominal,
-        },
-        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_4_lr001_201117.pb",
-        taggerName='llpdnnx_DA'
-    ))
-    
-    analyzerChain.extend(
-        taggerSequence({
-            "nominal": lambda event: event.hnlJets_nominal,
-        },
-        modelFile="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_full_origSV_DA_20_wasserstein4_lr001_201117.pb",
-        taggerName='llpdnnx_DAW'
     ))
     
     analyzerChain.extend(

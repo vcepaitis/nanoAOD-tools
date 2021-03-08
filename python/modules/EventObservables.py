@@ -43,7 +43,7 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_met_phi", "F")
         
         self.out.branch(self.outputName+"_mtw", "F")
-        self.out.branch(self.outputName+"_met_l1_dphi", "F")
+        self.out.branch(self.outputName+"_dPhi_met_l1", "F")
         
         self.out.branch(self.outputName+"_eventShape_isotropy", "F")
         self.out.branch(self.outputName+"_eventShape_circularity", "F")
@@ -54,10 +54,10 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_ht", "F")
         self.out.branch(self.outputName+"_hmass", "F")
         self.out.branch(self.outputName+"_mht", "F")
-        self.out.branch(self.outputName+"_mht_met_dphi", "F")
+        self.out.branch(self.outputName+"_dPhi_mht_met", "F")
         self.out.branch(self.outputName+"_minPhiStar", "F")
-        self.out.branch(self.outputName+"_mht_l1_dphi", "F")
-        self.out.branch(self.outputName+"_mht_l1_ptRatio", "F")
+        self.out.branch(self.outputName+"_dPhi_mht_l1", "F")
+        self.out.branch(self.outputName+"_ptR_mht_l1", "F")
         
         self.out.branch(self.outputName+"_leptonic_recoil", "F")
         self.out.branch(self.outputName+"_longitudinal_recoil", "F")
@@ -82,7 +82,7 @@ class EventObservables(Module):
         mtw = math.sqrt(2*lepton1.pt*met.pt*(1-math.cos(dPhi)))
 
         self.out.fillBranch(self.outputName+"_mtw", mtw)
-        self.out.fillBranch(self.outputName+"_met_l1_dphi", dPhi)
+        self.out.fillBranch(self.outputName+"_dPhi_met_l1", dPhi)
         
         leptonSystem = lepton1.p4()
         
@@ -123,10 +123,10 @@ class EventObservables(Module):
         self.out.fillBranch(self.outputName+"_ht", scalarPtSum)
         self.out.fillBranch(self.outputName+"_hmass", vectorSum.M())
         self.out.fillBranch(self.outputName+"_mht", vectorSum.Pt())
-        self.out.fillBranch(self.outputName+"_mht_met_dphi", mht_met_dphi)
+        self.out.fillBranch(self.outputName+"_dPhi_mht_met", mht_met_dphi)
         self.out.fillBranch(self.outputName+"_minPhiStar", minPhiStar)
-        self.out.fillBranch(self.outputName+"_mht_l1_dphi", math.fabs(deltaPhi(lepton1.phi,vectorSum.Phi())))
-        self.out.fillBranch(self.outputName+"_mht_l1_ptRatio", vectorSum.Pt()/lepton1.pt)
+        self.out.fillBranch(self.outputName+"_dPhi_mht_l1", math.fabs(deltaPhi(lepton1.phi,vectorSum.Phi())))
+        self.out.fillBranch(self.outputName+"_ptR_mht_l1", vectorSum.Pt()/lepton1.pt)
 
         leptonSystemNormVect = leptonSystem.Vect().Unit()
         longitudinal_recoil = -(vectorSum.Px()*leptonSystemNormVect.Px()+vectorSum.Py()*leptonSystemNormVect.Py())
