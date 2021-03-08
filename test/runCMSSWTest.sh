@@ -17,10 +17,10 @@ function run_test()
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --notagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --nobdt --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --notagger --notrigger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --notagger --noiso --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --notagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --nobdt --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --notagger --notrigger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --notagger --noiso --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
 }
 
 run_test
