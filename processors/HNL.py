@@ -272,7 +272,7 @@ def jetSelectionSequence(jetDict):
                 jetMinPt=15.,
                 jetMaxEta=2.4,
                 globalFeatures = [],
-                storeKinematics=[],#'pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
+                storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
@@ -490,7 +490,7 @@ if isMC:
     analyzerChain.append(
         PileupWeight(
             outputName="puweight",
-            processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
+            #processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
             globalOptions=globalOptions
         )
     )

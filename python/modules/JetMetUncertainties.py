@@ -230,14 +230,17 @@ class JetMetUncertainties(Module):
     def makeNewJetCollection(self,jets,variation):
         newJets = []
         for jet in jets:
-            newJets.append(PhysicsObject(
+            uncFactor = jet.uncertainty_p4[variation].Pt()/jet.pt
+            newJet = PhysicsObject(
                 jet,
                 pt = jet.uncertainty_p4[variation].Pt(), 
                 eta = jet.uncertainty_p4[variation].Eta(), 
                 phi = jet.uncertainty_p4[variation].Phi(),
                 mass = jet.mass,
                 keys = self.jetKeys
-            ))
+            )
+            newJet.uncFactor = uncFactor
+            newJets.append(newJet)
         newJets = sorted(newJets,key=lambda x: x.pt, reverse=True)
         #print 'jet',variation,newJets[0].pt
         return newJets
