@@ -90,6 +90,14 @@ class JetSelection(Module):
 
         if self.flagDA:
             flagsDA = [0.]*event.nJet
+            
+        #reset jet pt in case modules are chained
+        for jet in jets:
+            if hasattr(jet,"p4Original"):
+                jet.pt = jet.p4Original.Pt()
+                jet.eta = jet.p4Original.Eta()
+                jet.phi = jet.p4Original.Phi()
+                jet.mass = jet.p4Original.M()
 
         for jet in jets:            
             #find global jet to access more properties
@@ -112,8 +120,12 @@ class JetSelection(Module):
                     setattr(jet,feature,0.0)
   
         for jet in jets:    
-            jet.ptRaw = jet.pt*(1. - jet.rawFactor)
-            jet.massRaw = jet.mass * (1 - jet.rawFactor)
+            #undo jet uncertainty including nominal JER smearing
+            uncFactor = jet.uncFactor if hasattr(jet,"uncFactor") else 1.
+            jet.ptRaw = jet.pt*(1. - jet.rawFactor)/uncFactor
+            jet.massRaw = jet.mass * (1 - jet.rawFactor) #mass not modified through uncertainties
+            jet.p4Raw = ROOT.TLorentzVector()
+            jet.p4Raw.SetPtEtaPhiM(jet.ptRaw,jet.eta,jet.phi,jet.massRaw)
             jet.p4Original = jet.p4()
             jet.ptOriginal = jet.pt
         
@@ -149,9 +161,10 @@ class JetSelection(Module):
             jet.p4Lepton = leptonP4    
             jet.p4Subtracted = jet.p4()-leptonP4 
             jet.p4OriginalSubtracted = jet.p4Original-leptonP4 
+            jet.p4RawSubtracted = jet.p4Raw-leptonP4 
             
             jet.minDeltaRSubtraction = minDeltaRSubtraction
-                      
+            
             if leptonP4.Pt()>1e-3 and jet.p4Subtracted.Pt()<20.:
                 #reset jet pt & recaculate p4Subtracted
                 jet.pt = jet.ptRaw 
@@ -161,6 +174,7 @@ class JetSelection(Module):
             jet.ptLepton = jet.p4Lepton.Pt() 
             jet.ptSubtracted = jet.p4Subtracted.Pt()
             jet.ptOriginalSubtracted = jet.p4OriginalSubtracted.Pt()
+            jet.ptRawSubtracted = jet.p4RawSubtracted.Pt()
 
             if len(leptonsForDRCleaning) > 0:
                 mindphi = min(map(lambda lepton: math.fabs(deltaPhi(lepton, jet)), leptonsForDRCleaning))
@@ -192,6 +206,6 @@ class JetSelection(Module):
 
         setattr(event, self.outputName, selectedJets)
         setattr(event, self.outputName+"_unselected", unselectedJets)
-
+        
         return True
 

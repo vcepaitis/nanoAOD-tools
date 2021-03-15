@@ -40,8 +40,9 @@ class HNLReconstruction(Module):
         self.out = wrappedOutputTree
 
         self.out.branch("hnlJet_"+self.outputName+"_pt", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptraw", "F")
         self.out.branch("hnlJet_"+self.outputName+"_ptsub", "F")
+        self.out.branch("hnlJet_"+self.outputName+"_ptraw", "F")
+        self.out.branch("hnlJet_"+self.outputName+"_ptrawsub", "F")
         self.out.branch("hnlJet_"+self.outputName+"_ptorig", "F")
         self.out.branch("hnlJet_"+self.outputName+"_ptorigsub", "F")
         
@@ -96,15 +97,17 @@ class HNLReconstruction(Module):
     def fillHNLJetInfo(self,hnlJet):
         if hnlJet!=None:
             self.out.fillBranch("hnlJet_"+self.outputName+"_pt", hnlJet.pt)
-            self.out.fillBranch("hnlJet_"+self.outputName+"_ptraw", hnlJet.ptRaw)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", hnlJet.p4Subtracted.Pt())
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptraw", hnlJet.ptRaw)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptrawsub", hnlJet.ptRawSubtracted)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.p4Original.Pt())
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", hnlJet.p4OriginalSubtracted.Pt())
             self.out.fillBranch("hnlJet_"+self.outputName+"_eta", hnlJet.eta)
         else:
             self.out.fillBranch("hnlJet_"+self.outputName+"_pt", 0)
-            self.out.fillBranch("hnlJet_"+self.outputName+"_ptraw", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", 0)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptraw", 0)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptrawsub", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_eta", 0)
