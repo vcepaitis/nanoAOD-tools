@@ -232,7 +232,9 @@ BDT2lmodelPathUncorr = {
 }
 
 BDT1lmodelPathUncorr = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_2016.model",
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_lr0.100_min0.1000_depths4_bagging0.75_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_lr0.100_min0.1000_depths4_bagging0.75_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_lr0.100_min0.1000_depths4_bagging0.75_2018.model",
 }
 
 jesUncertaintyFile = {
