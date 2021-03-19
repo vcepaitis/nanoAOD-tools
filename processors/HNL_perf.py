@@ -85,7 +85,6 @@ if args.isData:
 
 
 leptonSelection = [
-    EventSkim(selection=lambda event: event.nTrigObj > 0),
     MuonSelection(
         outputName="tightMuons",
         storeKinematics=[],
@@ -161,10 +160,13 @@ leptonSelection = [
         tightElectronsCollection=lambda event:event.tightElectrons,
         looseMuonCollection=lambda event:event.looseMuons,
         looseElectronCollection=lambda event:event.looseElectrons,
-        outputName = "Leptons"
+        outputName = "Leptons",
+        storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
+        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ),
-    EventSkim(selection=lambda event: event.isTriggered),
-    EventSkim(selection=lambda event: event.nsubleadingLeptons==1),
+    EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0),
+    EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0),
+    
 ]
 
 analyzerChain = []
@@ -182,8 +184,15 @@ analyzerChain.append(
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 taggers = [
-    {"name":"nominal_ref_DA", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"%year},
-    {"name":"nominal_ref", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_lr01_201117.pb"%year},
+    {"name":"deepset","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_DeepSetNetwork_origSV_lr01_201117.pb"},
+    {"name":"nominal","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb"},
+    {"name":"onlyconstit","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkOnlyConstit_origSV_lr01_201117.pb"},
+    {"name":"nolept","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkNoLept_origSV_lr01_201117.pb"},
+    {"name":"da","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"},
+    {"name":"wda","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb"},
+    
+    #{"name":"nominal_ref_DA", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"%year},
+    #{"name":"nominal_ref", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_lr01_201117.pb"%year},
 ]
 '''
 if year==2016:
@@ -246,7 +255,7 @@ analyzerChain.append(
         jerResolutionFileName=jerResolutionFile[year],
         jerSFUncertaintyFileName=jerSFUncertaintyFile[year],
         propagateJER = False, # need to fix, poor modelling
-        jetKeys = ['pt', 'eta', 'phi' , 'jetId', 'nConstituents'],
+        jetKeys = ['jetId', 'nConstituents', 'rawFactor'],
     )
 )
 
@@ -322,11 +331,7 @@ for tagger in taggers:
             modelPath=tagger["modelfile"],
             featureDictFile=featureDictFile,
             inputCollections=[
-                lambda event: event.selectedJets_nominal[:4],
-                #lambda event: event.selectedJets_jesTotalUp[:4],
-                #lambda event: event.selectedJets_jesTotalDown[:4],
-                #lambda event: event.selectedJets_jerUp[:4],
-                #lambda event: event.selectedJets_jerDown[:4],
+                lambda event: event.selectedJets_nominal,
             ],
             taggerName=tagger["name"],
             profiledLabelDict = {
@@ -381,6 +386,7 @@ for systName, jetCollection, metObject in [
                 taggerName=tagger["name"],
                 outputName="selectedJets_"+systName,
                 profiledLabels = ['E','MU','TAU','UDS','G','PU','B','C','TAUANY','LLP_QANY','LLP_ANY','LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_H','LLP_QTAU_3H'],
+                maxOnly = False,
                 globalOptions=globalOptions
             )
         )

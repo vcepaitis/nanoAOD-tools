@@ -50,7 +50,7 @@ class JetTaggerProfiledResult(Module):
 
                 else:
                     self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label,"F",lenVar="n"+self.outputName+"_"+self.taggerName)
-                    self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param","F",lenVar="n"+self.outputName+"_"+self.taggerNamee)
+                    self.out.branch(self.outputName+"_"+self.taggerName+"_"+k+"_"+label+"_param","F",lenVar="n"+self.outputName+"_"+self.taggerName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -69,7 +69,6 @@ class JetTaggerProfiledResult(Module):
         hasTagger = False
         for ijet, jet in enumerate(jets):
             if not hasattr(jet, self.taggerName):
-                print jet.pt,jet.ptOriginal,jet.eta
                 continue
             hasTagger = True
             predictions = getattr(jet,self.taggerName)
