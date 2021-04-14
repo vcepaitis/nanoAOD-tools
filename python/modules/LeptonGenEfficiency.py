@@ -20,8 +20,8 @@ def getDisplacement(p1, p2):
     z2 = p2.vertex_z
 
     dy = math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2)
-    d3 = math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2 + (z1-z2) ** 2)
-    return d3, dy
+    dz = math.sqrt((z1-z2) ** 2)
+    return dz, dy
 
 def matchLepton(genLepton, recoLeptons, minDeltaRThreshold=0.4):
     if len(recoLeptons) > 0:
@@ -33,10 +33,8 @@ def matchLepton(genLepton, recoLeptons, minDeltaRThreshold=0.4):
                 minDeltaR = deltaR(recoLepton, genLepton) 
         if minDeltaR < minDeltaRThreshold:
             return matchedLepton
-        else:
-            return None
-    else:
         return None
+    return None
 
 class LeptonGenEfficiency(Module):
     def __init__(
@@ -45,19 +43,20 @@ class LeptonGenEfficiency(Module):
         electronCollection=lambda event: Collection(event, "Electron"),
         muonCollection=lambda event: Collection(event, "Muon"),
         jetCollection=lambda event: Collection(event, "Jet"),
-        photonCollection=lambda event: Collection(event, "Photon"),
         globalOptions={"isData": False}
     ):
         self.genInputCollection = genInputCollection
         self.electronCollection = electronCollection
-        self.photonCollection = photonCollection
         self.muonCollection = muonCollection
         self.jetCollection = jetCollection
         self.globalOptions = globalOptions
-        features = ["pt", "eta", "phi", "reco_pt", "reco_eta", "reco_phi", "reco_deltaR", "is_matched", "d3", "dxy"]
+        features = ["pt", "eta", "phi", "reco_pt", "reco_eta", "reco_phi", "reco_deltaR", "is_matched", "dz", "dxy"]
+        self.features = features
+
         self.electron_features = features + ["mvaFall17V2noIso_WPL", "customID"]
         self.muon_features = features + ["looseId", "mediumId", "tightId"]
-        self.tau_features = features + ["looseId"]
+        self.tau_features = features + ["jetId"]
+        self.HNL_features = ["pt", "eta", "phi", "mass", "boost", "dxy"]
 
     def beginJob(self):
         pass
@@ -69,15 +68,25 @@ class LeptonGenEfficiency(Module):
         self.out = wrappedOutputTree
         self.out.branch("nmuon", "I")
         self.out.branch("nelectron", "I")
-        self.out.branch("ntau", "I")
+        self.out.branch("nhadtau", "I")
+        self.out.branch("nlepton", "I")
+        self.out.branch("nGenLeptonsFromV", "I")
+        self.out.branch("nGenLeptonsFromTauFromV", "I")
 
         for feature in self.muon_features:
             self.out.branch("muon_"+feature, "F", lenVar="nmuon")
         for feature in self.electron_features:
             self.out.branch("electron_"+feature, "F", lenVar="nelectron")
         for feature in self.tau_features:
-            self.out.branch("tau_"+feature, "F", lenVar="ntau")
-
+            self.out.branch("hadtau_"+feature, "F", lenVar="nhadtau")
+        for feature in self.features:
+            self.out.branch("lepton_"+feature, "F", lenVar="nlepton")
+        for feature in self.HNL_features:
+            self.out.branch("HNL_"+feature, "F")
+    
+        self.out.branch("GenLeptonsFromV_pt", "F", lenVar="nGenLeptonsFromV")
+        self.out.branch("GenLeptonsFromV_eta", "F", lenVar="nGenLeptonsFromV")
+        self.out.branch("GenLeptonsFromV_pdgId", "F", lenVar="nGenLeptonsFromV")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -85,9 +94,49 @@ class LeptonGenEfficiency(Module):
     def analyze(self, event):
         genParticles = self.genInputCollection(event)
         electrons = self.electronCollection(event)
-        photons = self.photonCollection(event)
+        #photons = self.photonCollection(event)
         muons = self.muonCollection(event)
         jets = self.jetCollection(event)
+
+        genLeptonsFromV = []
+        for genParticle in genParticles:
+            if genParticle.genPartIdxMother == -1:
+                continue
+            if abs(genParticle.pdgId) in [9900012, 9990012]:
+                continue
+            if abs(genParticles[genParticle.genPartIdxMother].pdgId) in [9900012, 9990012]:
+                HNL = genParticles[genParticle.genPartIdxMother]
+                HNL_daughter = genParticle
+                break
+
+        HNL.boost = HNL.pt/HNL.mass
+
+        HNL.dxy, HNL.dz = getDisplacement(HNL, HNL_daughter)
+
+        for feature in self.HNL_features:
+            self.out.fillBranch("HNL_"+feature, getattr(HNL, feature))
+
+        for genParticle in genParticles:
+            # Proceed if particle has a mother and the particle is a muon or electron
+            if genParticle.genPartIdxMother != -1 and abs(genParticle.pdgId) in [11, 13]:
+                mother = genParticles[genParticle.genPartIdxMother]
+                # W or Z boson
+                if abs(mother.pdgId) in [23, 24]:
+                    genLeptonsFromV.append(genParticle)
+                # Special case: W/Z -> tau -> tau_l
+                elif abs(mother.pdgId) == 15:
+                    if mother.genPartIdxMother != -1:
+                        grandmother = genParticles[mother.genPartIdxMother]
+                        if abs(grandmother.pdgId) in [23, 24]:
+                            genLeptonsFromV.append(genParticle)
+
+        # Need to sort gen leptons
+        genLeptonsFromV = sorted(genLeptonsFromV, key=lambda x: x.pt, reverse=True)
+
+        self.out.fillBranch("nGenLeptonsFromV", len(genLeptonsFromV)) 
+        self.out.fillBranch("GenLeptonsFromV_pt", [getattr(lepton, "pt") for lepton in genLeptonsFromV])
+        self.out.fillBranch("GenLeptonsFromV_eta", [getattr(lepton, "eta") for lepton in genLeptonsFromV])
+        self.out.fillBranch("GenLeptonsFromV_pdgId", [getattr(lepton, "pdgId") for lepton in genLeptonsFromV])
 
         genElectrons = list(filter(lambda genParticle: abs(genParticle.pdgId) == 11 and genParticle.genPartIdxMother != -1, genParticles))
         genMuons = list(filter(lambda genParticle: abs(genParticle.pdgId) == 13 and genParticle.genPartIdxMother != -1, genParticles))
@@ -95,10 +144,10 @@ class LeptonGenEfficiency(Module):
 
         electronsFromHNL = []
         muonsFromHNL = []
-        tausFromHNL = []
+        hadTausFromHNL = []
 
         for lepton in genElectrons+genMuons+genTaus:
-            if abs(genParticles[lepton.genPartIdxMother].pdgId) == 9990012:
+            if abs(genParticles[lepton.genPartIdxMother].pdgId) in [9900012, 9990012]:
                 if abs(lepton.pdgId) == 11: 
                     electronsFromHNL.append(lepton)
                 elif abs(lepton.pdgId) == 13: 
@@ -117,36 +166,41 @@ class LeptonGenEfficiency(Module):
                                 muonsFromHNL.append(lep)
                                 break
                     if decaysToE+decaysToMu == 0:
-                        tausFromHNL.append(lepton)
-                    #print("bitmap: {0:b} ".format(lepton.statusFlags))
+                        hadTausFromHNL.append(lepton)
+
+        electronsFromHNL = sorted(electronsFromHNL, key=lambda x: x.pt, reverse=True)
+        muonsFromHNL = sorted(muonsFromHNL, key=lambda x: x.pt, reverse=True)
+        hadTausFromHNL = sorted(hadTausFromHNL, key=lambda x: x.pt, reverse=True)
 
         self.out.fillBranch("nelectron", len(electronsFromHNL)) 
         self.out.fillBranch("nmuon", len(muonsFromHNL))
-        self.out.fillBranch("ntau", len(tausFromHNL))
+        self.out.fillBranch("nhadtau", len(hadTausFromHNL))
 
         #for i, part in enumerate(genParticles):
             #print i, part.pdgId, part.genPartIdxMother
 
-        electronsAndPhotons = []
+        '''
+        electrons = []
         for electron in electrons:
             electron.isElectron = 1
             electron.isPhoton = 0
-            electronsAndPhotons.append(electron)
+            electrons.append(electron)
         for photon in photons:
             photon.isElectron = 0
             photon.isPhoton = 1
-            electronsAndPhotons.append(photon)
+            electrons.append(photon)
+        '''
 
-        for lepton in electronsFromHNL+muonsFromHNL+tausFromHNL:
+        for lepton in electronsFromHNL+muonsFromHNL+hadTausFromHNL:
             if abs(lepton.pdgId) == 11:
-                matchedLepton = matchLepton(lepton, electronsAndPhotons)        
+                matchedLepton = matchLepton(lepton, electrons)        
             elif abs(lepton.pdgId) == 13:
                 matchedLepton = matchLepton(lepton, muons)   
             elif abs(lepton.pdgId) == 15:
                 matchedLepton = matchLepton(lepton, jets)     
 
-            d3, dxy = getDisplacement(lepton, genParticles[lepton.genPartIdxMother])
-            lepton.d3 = d3
+            dz, dxy = getDisplacement(lepton, genParticles[lepton.genPartIdxMother])
+            lepton.dz = dz
             lepton.dxy = dxy
 
             if matchedLepton:
@@ -164,9 +218,9 @@ class LeptonGenEfficiency(Module):
                 lepton.is_matched = 0
 
         for electron in electronsFromHNL:
-            electron.d3 = d3
+            electron.dz = dz
             electron.dxy = dxy
-            if electron.is_matched and electron.matchedLepton.isElectron:
+            if electron.is_matched:
                 electron.mvaFall17V2noIso_WPL = electron.matchedLepton.mvaFall17V2noIso_WPL
                 bitmap = electron.matchedLepton.vidNestedWPBitmap
                 # decision for each cut represented by 3 bits (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
@@ -187,18 +241,18 @@ class LeptonGenEfficiency(Module):
                 electron.GsfEleConversionVetoCut = cuts[8]
                 electron.GsfEleMissingHitsCut = cuts[9]
 
-                electron.customID = electron.GsfEleSCEtaMultiRangeCut>0 and \
-                                    electron.GsfEleDEtaInSeedCut>0 and \
-                                    electron.GsfEleDPhiInCut>0 and \
-                                    electron.GsfEleFull5x5SigmaIEtaIEtaCut>0 and \
-                                    electron.GsfEleEInverseMinusPInverseCut>0 and \
-                                    electron.GsfEleConversionVetoCut>0
+                electron.customID = electron.GsfEleSCEtaMultiRangeCut>1 and \
+                                    electron.GsfEleDEtaInSeedCut>1 and \
+                                    electron.GsfEleDPhiInCut>1 and \
+                                    electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
+                                    electron.GsfEleEInverseMinusPInverseCut>1 and \
+                                    electron.GsfEleConversionVetoCut>1
             else:
                 electron.mvaFall17V2noIso_WPL = -1.
                 electron.customID = -1.
 
         for muon in muonsFromHNL:
-            muon.d3 = d3
+            muon.dz = dz
             muon.dxy = dxy
             if muon.is_matched:
                 muon.looseId = muon.matchedLepton.looseId
@@ -209,20 +263,27 @@ class LeptonGenEfficiency(Module):
                 muon.mediumId = -1.
                 muon.tightId = -1.
 
-        for tau in tausFromHNL:
-            tau.d3 = d3
+        for tau in hadTausFromHNL:
+            tau.dz = dz
             tau.dxy = dxy
             if tau.is_matched:
-                tau.looseId = tau.matchedLepton.jetId>0
+                tau.jetId = tau.matchedLepton.jetId
             else:
-                tau.looseId = -1.
+                tau.jetId = -1.
+
+        leptonsFromHNL = electronsFromHNL+muonsFromHNL
+        leptonsFromHNL = sorted(leptonsFromHNL, key=lambda x: x.pt, reverse=True)
+
+        self.out.fillBranch("nlepton", len(leptonsFromHNL))    
 
 
         for feature in self.electron_features:
             self.out.fillBranch("electron_"+feature, [getattr(lepton, feature) for lepton in electronsFromHNL])
         for feature in self.muon_features:
             self.out.fillBranch("muon_"+feature, [getattr(lepton, feature) for lepton in muonsFromHNL])
+        for feature in self.features:
+            self.out.fillBranch("lepton_"+feature, [getattr(lepton, feature) for lepton in leptonsFromHNL])
         for feature in self.tau_features:
-            self.out.fillBranch("tau_"+feature, [getattr(lepton, feature) for lepton in tausFromHNL])
+            self.out.fillBranch("hadtau_"+feature, [getattr(lepton, feature) for lepton in hadTausFromHNL])
 
         return True

@@ -1,92 +1,63 @@
 import os
-import pickle
-import pandas as pd
-import numpy
+import imp
+import numpy as np
 from xgboost import XGBClassifier, Booster, DMatrix
-from sklearn.preprocessing import LabelEncoder
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 class XGBEvaluation(Module):
     def __init__(
         self,
-        modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt.model",
-        featurePath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/bdt_inputs.txt",
-        systName="nominal",
-        jetCollection= lambda event: event.selectedJets_nominal,
-        leadingLeptonCollection= lambda event: event.leadingLeptons,
-        subleadingLeptonCollection= lambda event: event.subleadingLeptons,
+        modelPath="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2016.model",
+        inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_inputs.py",
+        systematics=["nominal"],
+        inputs=[],
         outputName ="bdt_score"
     ):
-        self.modelPath = modelPath
-        self.featurePath = featurePath
-        self.systName = systName
-        self.jetCollection = jetCollection
-        self.leadingLeptonCollection = leadingLeptonCollection
-        self.subleadingLeptonCollection = subleadingLeptonCollection
-        self.outputName = outputName+"_"+systName
+        self.modelPath = os.path.expandvars(modelPath)
+        print "---","BDT model: ",self.modelPath
+        self.systematics = systematics
+        self.outputName = outputName
+        
+        feature_dict_module = imp.load_source(
+            'features',
+            os.path.expandvars(inputFeatures)
+        )
+        self.features = feature_dict_module.features
+        print "[%i]"%len(self.features)," BDT features: ",map(lambda x: x[0],self.features)
+       
 
     def beginJob(self):
         pass
+        
     def endJob(self):
         pass
+        
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
+        self.model = XGBClassifier()
+        self.booster = Booster(model_file=self.modelPath)
+        self.model._Booster = self.booster
         self.out = wrappedOutputTree
-        self.out.branch(self.outputName,"F")
+        for systematic in self.systematics:
+            self.out.branch(self.outputName+"_"+systematic, "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
     def analyze(self, event):
+
+        #TODO: XGB does not notice if wrong number of inputs is given
+
+        featureArr = np.zeros((len(self.systematics),len(self.features)))
+        for i, syst in enumerate(self.systematics):
+            for j, (featureName, featureFct) in enumerate(self.features):
+                featureArr[i,j] = featureFct(event,syst)
         
-        jets = self.jetCollection(event)
-        leadingLeptons = self.leadingLeptonCollection(event)
-        subleadingLeptons = self.subleadingLeptonCollection(event)
-
-        if len(jets) == 0 or len(leadingLeptons) == 0 or len(subleadingLeptons) == 0:
-            setattr(event, "bdt_score", "-999.")
-            self.out.fillBranch(self.outputName,-999.)
-            return True
-
-        '''
-        with open(os.path.expandvars(self.featurePath)) as f:
-            array_list = [line.rstrip() for line in f]
-        '''
-
-        dict_list = {}
-        dict_list["EventObservables_nominal_met"] = getattr(event, "EventObservables_"+self.systName+"_met")
-        dict_list["EventObservables_nominal_ht"] = getattr(event, "EventObservables_"+self.systName+"_ht")
-        dict_list["dilepton_mass"] = event.dilepton_mass
-        dict_list["dilepton_deltaPhi"] = event.dilepton_deltaPhi
-        dict_list["dilepton_deltaR"] = event.dilepton_deltaR
-        dict_list["leadingLeptons_pt"] = leadingLeptons[0].pt
-        dict_list["leadingLeptons_eta"] = leadingLeptons[0].eta
-        dict_list["leadingLeptons_nominal_mtw"] = getattr(event, "leadingLeptons_"+self.systName+"_mtw")
-        dict_list["leadingLeptons_nominal_deltaPhi"] = getattr(event, "leadingLeptons_"+self.systName+"_deltaPhi")
-        dict_list["subleadingLeptons_pt"] = subleadingLeptons[0].pt
-        dict_list["subleadingLeptons_eta"] = subleadingLeptons[0].eta
-        dict_list["selectedJets_nominal_ptLeptonSubtracted"] = jets[0].ptLeptonSubtracted
-        dict_list["selectedJets_nominal_eta"] = jets[0].eta
 
 
-        '''
-        for feature in array_list:
-            feature = feature.replace("nominal", self.systName)
-            value = getattr(event, feature)
-            if isinstance(value, list):
-                if len(value) > 0:
-                    dict_list[feature] = value[0]
-            else:
-                dict_list[feature] = value
-        '''
+        bdt_score = self.model.predict_proba(featureArr)
 
-        data = pd.DataFrame(data=dict_list, index=[0])
-        data = data.reindex(sorted(data.columns), axis=1)
-        model = XGBClassifier()
-        booster = Booster(model_file=os.path.expandvars(self.modelPath))
-        model._Booster = booster
-        bdt_score = model.predict_proba(data)
-        setattr(event, "bdt_score", bdt_score[:, 1])
-        self.out.fillBranch(self.outputName,bdt_score[:, 1])
+        for i, syst in enumerate(self.systematics):
+            self.out.fillBranch(self.outputName+"_"+syst,bdt_score[i, 1])
 
         return True

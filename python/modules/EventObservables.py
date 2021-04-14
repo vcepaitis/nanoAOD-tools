@@ -16,15 +16,17 @@ class EventObservables(Module):
 
     def __init__(
         self,
+        lepton1Object = lambda event: event.leadingLeptons[0],
+        lepton2Object = None,
         jetCollection=lambda event: Collection(event, "Jet"),
         metInput=lambda event: Object(event, "MET"),
-        leptonCollection=lambda event: Collection(event, "Muon"),
         outputName="EventObservables",
         globalOptions={"isData": False}
     ):
+        self.lepton1Object = lepton1Object
+        self.lepton2Object = lepton2Object
         self.jetCollection = jetCollection
         self.metInput = metInput
-        self.leptonCollection = leptonCollection
         self.outputName = outputName
         self.globalOptions = globalOptions
 
@@ -39,68 +41,99 @@ class EventObservables(Module):
 
         self.out.branch(self.outputName+"_met", "F")
         self.out.branch(self.outputName+"_met_phi", "F")
+        
+        self.out.branch(self.outputName+"_mtw", "F")
+        self.out.branch(self.outputName+"_dPhi_met_l1", "F")
+        
+        self.out.branch(self.outputName+"_eventShape_isotropy", "F")
+        self.out.branch(self.outputName+"_eventShape_circularity", "F")
+        self.out.branch(self.outputName+"_eventShape_sphericity", "F")
+        self.out.branch(self.outputName+"_eventShape_aplanarity", "F")
+        self.out.branch(self.outputName+"_eventShape_C", "F")
+        
         self.out.branch(self.outputName+"_ht", "F")
+        self.out.branch(self.outputName+"_hmass", "F")
         self.out.branch(self.outputName+"_mht", "F")
-        self.out.branch(self.outputName+"_mht_phi", "F")
-        self.out.branch(self.outputName+"_minPhi", "F")
-
-        if self.leptonCollection is not None:
-            self.out.branch(self.outputName+"_mT_met_lep", "F")
-            self.out.branch(self.outputName+"_met_NoLep_pt", "F")
-            self.out.branch(self.outputName+"_met_NoLep_phi", "F")
-            self.out.branch(self.outputName+"_mht_NoLep", "F")
-            self.out.branch(self.outputName+"_mht_NoLep_phi", "F")
+        self.out.branch(self.outputName+"_dPhi_mht_met", "F")
+        self.out.branch(self.outputName+"_minPhiStar", "F")
+        self.out.branch(self.outputName+"_dPhi_mht_l1", "F")
+        self.out.branch(self.outputName+"_ptR_mht_l1", "F")
+        
+        self.out.branch(self.outputName+"_leptonic_recoil", "F")
+        self.out.branch(self.outputName+"_longitudinal_recoil", "F")
+        self.out.branch(self.outputName+"_transverse_recoil", "F")
+        
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
     def analyze(self, event):
+        lepton1 = self.lepton1Object(event)
+        lepton2 = None if self.lepton2Object==None else self.lepton2Object(event)
+    
         jets = self.jetCollection(event)
 
         met = self.metInput(event)
         self.out.fillBranch(self.outputName+"_met", met.pt)
         self.out.fillBranch(self.outputName+"_met_phi", met.phi)
+        
+        
+        dPhi = deltaPhi(lepton1,met)
+        mtw = math.sqrt(2*lepton1.pt*met.pt*(1-math.cos(dPhi)))
+
+        self.out.fillBranch(self.outputName+"_mtw", mtw)
+        self.out.fillBranch(self.outputName+"_dPhi_met_l1", dPhi)
+        
+        leptonSystem = lepton1.p4()
+        
+        eventShapes = ROOT.EventShapes()
+        eventShapes.addObject(lepton1.pt, lepton1.eta, lepton1.phi, 0.0)
+        if lepton2!=None:
+            leptonSystem+=lepton2.p4()
+            eventShapes.addObject(lepton2.pt, lepton2.eta, lepton2.phi, 0.0)
 
         # ht and mht
-        vectorSum = ROOT.TLorentzVector()
+        vectorSum = ROOT.TLorentzVector(0,0,0,0)
         scalarPtSum = 0.0
 
         for jet in jets:
-            vectorSum += jet.p4()
-            scalarPtSum += jet.pt
+            eventShapes.addObject(
+                jet.p4Subtracted.Pt(), 
+                jet.p4Subtracted.Eta(), 
+                jet.p4Subtracted.Phi(), 
+                0.0
+            )
+            vectorSum += jet.p4Subtracted
+            scalarPtSum += jet.ptSubtracted
+            
+        self.out.fillBranch(self.outputName+"_eventShape_isotropy", eventShapes.isotropy())
+        self.out.fillBranch(self.outputName+"_eventShape_circularity", eventShapes.circularity())
+        self.out.fillBranch(self.outputName+"_eventShape_sphericity", eventShapes.sphericity())
+        self.out.fillBranch(self.outputName+"_eventShape_aplanarity", eventShapes.aplanarity())
+        self.out.fillBranch(self.outputName+"_eventShape_C", eventShapes.C())
+               
+        mht_met_dphi = math.fabs(deltaPhi(vectorSum.Phi(),met.phi))
 
-        # minPhi
-        minPhi = math.pi
+        # minPhiStar
+        minPhiStar = math.pi
         for jet in jets:
-            negSum = -(vectorSum-jet.p4())
-            minPhi = min(minPhi, math.fabs(deltaPhi(negSum.Phi(), jet.phi)))
+            negSum = -(vectorSum-jet.p4Subtracted)
+            minPhiStar = min(minPhiStar, math.fabs(deltaPhi(negSum.Phi(), jet.phi)))
 
-        self.out.fillBranch(self.outputName+"_minPhi", minPhi)
         self.out.fillBranch(self.outputName+"_ht", scalarPtSum)
+        self.out.fillBranch(self.outputName+"_hmass", vectorSum.M())
         self.out.fillBranch(self.outputName+"_mht", vectorSum.Pt())
-        self.out.fillBranch(self.outputName+"_mht_phi", vectorSum.Phi())
-        setattr(event, self.outputName+"_minPhi", minPhi)
-        setattr(event, self.outputName+"_ht", scalarPtSum)
-        setattr(event, self.outputName+"_mht", vectorSum.Pt())
-        setattr(event, self.outputName+"_mht_phi", vectorSum.Phi())
+        self.out.fillBranch(self.outputName+"_dPhi_mht_met", mht_met_dphi)
+        self.out.fillBranch(self.outputName+"_minPhiStar", minPhiStar)
+        self.out.fillBranch(self.outputName+"_dPhi_mht_l1", math.fabs(deltaPhi(lepton1.phi,vectorSum.Phi())))
+        self.out.fillBranch(self.outputName+"_ptR_mht_l1", vectorSum.Pt()/lepton1.pt)
 
-        if self.leptonCollection is not None:
-            met_px = met.pt*math.sin(met.phi)
-            met_py = met.pt*math.cos(met.phi)
-            lepton = self.leptonCollection(event)
-            met_px_lc = met_px + lepton.p4().Px()
-            met_py_lc = met_py + lepton.p4().Py()
-            met_lc = math.sqrt(met_px_lc**2 +  met_py_lc**2)
-            met_l_mT = math.sqrt(2.*lepton.pt *
-                                 met.pt*(1. - math.cos(lepton.phi - met.phi)))
+        leptonSystemNormVect = leptonSystem.Vect().Unit()
+        longitudinal_recoil = -(vectorSum.Px()*leptonSystemNormVect.Px()+vectorSum.Py()*leptonSystemNormVect.Py())
+        transverse_recoil = math.sqrt((vectorSum.Px()-longitudinal_recoil*leptonSystemNormVect.Px())**2+(vectorSum.Py()-longitudinal_recoil*leptonSystemNormVect.Py())**2)
 
-            self.out.fillBranch(self.outputName+"_met_NoLep_pt", met_lc)
-            self.out.fillBranch(self.outputName+"_mT_met_lep", met_l_mT)
-            self.out.fillBranch(self.outputName+"_mht_NoLep",
-                                (vectorSum + lepton.p4()).Pt())
-            setattr(event, self.outputName+"_met_NoLep_pt", met_lc)
-            setattr(event, self.outputName+"_mT_met_lep", met_l_mT)
-            setattr(event, self.outputName+"_mht_NoLep",
-                    (vectorSum + lepton.p4()).Pt())
-
+        self.out.fillBranch(self.outputName+"_leptonic_recoil", leptonSystem.Pt())
+        self.out.fillBranch(self.outputName+"_longitudinal_recoil", longitudinal_recoil)
+        self.out.fillBranch(self.outputName+"_transverse_recoil", transverse_recoil)
+        
         return True

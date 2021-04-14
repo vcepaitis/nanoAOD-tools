@@ -27,11 +27,11 @@ class SingleMuonTriggerSelection(Module):
             if self.globalOptions["year"] == 2016:
 
                 triggerSFBToF = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2016/EfficienciesAndSF_RunBtoF.root",
+                    "PhysicsTools/NanoAODTools/data/muon/2016_trigger/EfficienciesAndSF_RunBtoF.root",
                     "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio"
                 )
                 triggerSFGToH = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2016/EfficienciesAndSF_RunGtoH.root",
+                    "PhysicsTools/NanoAODTools/data/muon/2016_trigger/EfficienciesAndSF_RunGtoH.root",
                     "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio"
                 )
                 self.triggerSFHist = combineHist2D(
@@ -44,14 +44,14 @@ class SingleMuonTriggerSelection(Module):
             elif self.globalOptions["year"] == 2017:
 
                 self.triggerSFHist = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2017/EfficienciesStudies_2017_trigger_EfficienciesAndSF_RunBtoF_Nov17Nov2017.root",
+                    "PhysicsTools/NanoAODTools/data/muon/2017_trigger/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root",
                     "IsoMu27_PtEtaBins/pt_abseta_ratio"
                 )
    
             elif self.globalOptions["year"] == 2018:
 
                 self.triggerSFHist = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2018/EfficienciesStudies_2018_trigger_EfficienciesAndSF_2018Data_AfterMuonHLTUpdate.root",
+                    "PhysicsTools/NanoAODTools/data/muon/2018_trigger/EfficienciesAndSF_2018Data_AfterMuonHLTUpdate.root",
                     "IsoMu24_PtEtaBins/pt_abseta_ratio"
                 )
             else: 
@@ -93,6 +93,11 @@ class SingleMuonTriggerSelection(Module):
             weight_trigger_nominal*=weight_trigger
             weight_trigger_up*=(weight_trigger+weight_trigger_err)
             weight_trigger_down*=(weight_trigger-weight_trigger_err)
+            # additional 0.5% syst
+            #https://twiki.cern.ch/twiki/bin/view/CMS/TWikiEXO-MUODocumentationRun2
+            if self.globalOptions["year"] == 2016:
+                weight_trigger_up+=weight_trigger_nominal*0.5*0.01
+                weight_trigger_down-=weight_trigger_nominal*0.5*0.01
 
         trigger_flag = 0
 

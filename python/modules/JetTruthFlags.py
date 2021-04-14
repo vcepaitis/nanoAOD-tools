@@ -17,10 +17,15 @@ class JetTruthFlags(Module):
         self,
         inputCollection=lambda event: Collection(event, "Jet"),
         outputName="selectedJets_nominal",
-        latentVariables=[],
+        originVariables = [],
+        globalVariables = [],
         flags={
-            'isB': ['isB', 'isBB', 'isGBB', 'isLeptonic_B', 'isLeptonic_C'],
-            'isC': ['isC', 'isCC', 'isGCC'],
+            'isPrompt_MU': ['isPrompt_MU'],
+            'isPrompt_E': ['isPrompt_E'],
+            'isPrompt_TAU': ['isPrompt_TAU'],
+            'isPrompt_PHOTON': ['isPrompt_PHOTON'],
+            'isB': ['isB', 'isBB', 'isLeptonic_B', 'isLeptonic_C'],
+            'isC': ['isC', 'isCC'],
             'isUDS': ['isS', 'isUD'],
             'isG': ['isG'],
             'isPU': ['isPU'],
@@ -33,19 +38,16 @@ class JetTruthFlags(Module):
             'isLLP_QTAU': ['isLLP_QTAU','isLLP_QQTAU'],  
             'isUndefined': ['isUndefined'] , 
         },
+        genVariables = ['displacement','displacement_xy','displacement_z'],
 
         globalOptions={"isData": False, "isSignal": False}
     ):
         self.globalOptions = globalOptions
         self.flags = flags
-        # ugly
-        if globalOptions["isSignal"]:
-            self.flags['isPrompt_MU'] = ['isPrompt_MU']
-            self.flags['isPrompt_E'] = ['isPrompt_E']
-            self.flags['isPrompt_TAU'] = ['isPrompt_TAU']
-
         self.inputCollection = inputCollection
-        self.latentVariables = latentVariables
+        self.originVariables = originVariables
+        self.globalVariables = globalVariables
+        self.genVariables = genVariables
         self.outputName = outputName
 
     def beginJob(self):
@@ -57,8 +59,8 @@ class JetTruthFlags(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         if not self.globalOptions['isData']:
-            for latentVariable in self.latentVariables:
-                self.out.branch(self.outputName+"_"+latentVariable, "F",
+            for originVariable in self.originVariables+self.globalVariables:
+                self.out.branch(self.outputName+"_"+originVariable, "F",
                                 lenVar="n"+self.outputName)
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -70,11 +72,12 @@ class JetTruthFlags(Module):
 
         jets = self.inputCollection(event)
         jetOrigin = Collection(event, "jetorigin")
+        jetGlobal = Collection(event, "global")
 
-        latentVariableDict = {}
+        extraVariableDict = {}
 
-        for latentVariable in self.latentVariables:
-            latentVariableDict[latentVariable] = [-1.]*len(jets)
+        for extraVariable in self.originVariables+self.globalVariables:
+            extraVariableDict[extraVariable] = [-1.]*len(jets)
 
         flavors = {}
 
@@ -93,16 +96,28 @@ class JetTruthFlags(Module):
                         break
                 flavors[k][ijet] = flavorFlag
                 setattr(jet, k, flavorFlag > 0.5)
-            for latentVariable in self.latentVariables:
-                latentVariableDict[latentVariable][ijet] = getattr(
-                    jetOrigin[jet._index], latentVariable)
+                
+            if jet._index<len(jetOrigin):
+                for originVariable in self.originVariables:
+                    extraVariableDict[originVariable][ijet] = getattr(
+                        jetOrigin[jet._index], originVariable)
+                for genVariable in self.genVariables:
+                    setattr(
+                        jet,
+                        genVariable,
+                        getattr(jetOrigin[jet._index], genVariable)
+                    )
+                    
+            if jet._index<len(jetGlobal):
+                for globalVariable in self.globalVariables:
+                    extraVariableDict[globalVariable][ijet] = getattr(
+                        jetGlobal[jet._index], globalVariable)
 
         for k in sorted(self.flags.keys()):
             self.out.fillBranch(self.outputName+"_"+k, flavors[k])
 
-        if not self.globalOptions['isData']:
-            for latentVariable in self.latentVariables:
-                self.out.fillBranch(self.outputName+"_"+latentVariable,
-                                    latentVariableDict[latentVariable])
+        for extraVariable in self.originVariables+self.globalVariables:
+            self.out.fillBranch(self.outputName+"_"+extraVariable,
+                                extraVariableDict[extraVariable])
 
         return True

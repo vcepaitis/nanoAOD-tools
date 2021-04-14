@@ -14,19 +14,20 @@ git clone -b HNL https://github.com/LLPDNNX/nanoAOD-tools.git PhysicsTools/NanoA
 scram b
 ```
 
-Example use: make ntuples for applying the HNL preselection
+Example use: make a single ntuple with the HNL framework
 ```
-python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/LLP/NANOX_200124/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/HeavyNeutrino_lljj_M-5_V-0_000920326029187_mu_Dirac_Moriond17_aug2018_miniAODv3-2016/200124_012623/0000/nano_3.root --year 2016 .
+python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/HNL/NANOX_201117/HNL_dirac_all_ctau1p0e00_massHNL10p0_Vall1p664e-03-2016/HNL_dirac_all_ctau1p0e00_massHNL10p0_Vall1p664e-03/HNL_dirac_all_ctau1p0e00_massHNL10p0_Vall1p664e-03-2016/201118_145719/0000/nano_9.root .
 ```
 
 Running on data instead:
 ```
-python PhysicsTools/NanoAODTools/processors/HNL.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root --isData --year 2016 .
+python PhysicsTools/NanoAODTools/processors/HNL.py --isData --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/HNL/NANOX_201117/SingleMuon_Run2016H/SingleMuon/SingleMuon_Run2016H/201121_114955/0001/nano_1055.root .
 ```
 
-Skimming ntuples for DA:
+
+Example: check output of batch jobs for failed files:
 ```
-python PhysicsTools/NanoAODTools/processors/skimForDA.py --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/vcepaiti/LLP/NANOX_110320/SingleMuon_Run2016B_ver2/SingleMuon/SingleMuon_Run2016B_ver2/200313_083401/0000/nano_98.root --isData --year 2016 .
+python PhysicsTools/NanoAODTools/scripts/check_output.py --input batch/years/2016_mc.txt --output /vols/cms/vc1117/LLP/nanoAOD_friends/HNL/28Oct20_noTagger --file 2016_mc.txt
 ```
 
 

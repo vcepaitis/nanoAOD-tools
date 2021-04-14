@@ -1,6 +1,5 @@
 import ROOT
 import sys
-
 #can only load this once
 if (ROOT.gSystem.Load("libPhysicsToolsNanoAODTools.so")!=0):
     print "Cannot load 'libPhysicsToolsNanoAODTools'"
@@ -13,27 +12,23 @@ from JetMetUncertainties import JetMetUncertainties
 from JetSelection import JetSelection
 from TaggerEvaluation import TaggerEvaluation
 from TaggerEvaluationProfiled import TaggerEvaluationProfiled
-from HNLJetSelection import HNLJetSelection
 from EventSkim import EventSkim
 from EventObservables import EventObservables
-from WbosonReconstruction import WbosonReconstruction
 from MetFilter import MetFilter
 from PileupWeight import PileupWeight
-from TaggerWorkingpoints import TaggerWorkingpoints
 from EventInfo import EventInfo
 from ElectronSelection import ElectronSelection
-from DataFlag import DataFlag
 from EventDump import EventDump
 from InvariantSystem import InvariantSystem
 from JetTruthFlags import JetTruthFlags
 from JetTaggerResult import JetTaggerResult
-from PDFWeights import PDFWeights
-from WNLOWeights import WNLOWeights
+from JetTaggerProfiledResult import JetTaggerProfiledResult
 from JetFeatures import JetFeatures
-from LepJetFinder import LepJetFinder
 from XGBEvaluation import XGBEvaluation
-from JetTaggerIntegral import JetTaggerIntegral
 from LeptonCollecting import LeptonCollecting
-from EventCategorization import EventCategorization
 from LHEWeights import LHEWeights
 from LeptonGenEfficiency import LeptonGenEfficiency
+#from TaggerEvaluationCache import TaggerEvaluationCache
+from HNLReconstruction import HNLReconstruction
+from XsecWeight import XsecWeight
+
