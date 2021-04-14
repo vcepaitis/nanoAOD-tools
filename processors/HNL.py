@@ -269,7 +269,7 @@ def jetSelectionSequence(jetDict):
         sequence.extend([
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons ,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=15.,
                 jetMaxEta=2.4,
@@ -281,7 +281,7 @@ def jetSelectionSequence(jetDict):
             ),
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=30.,
                 jetMaxEta=2.4,
@@ -368,7 +368,7 @@ def taggerSequence(jetDict, modelFile, taggerName):
         return []
     sequence.append(
         TaggerEvaluationProfiled(
-            modelPath=taggerModelPath,
+            modelPath=taggerModelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=jetDict.values(),
             taggerName=taggerName,
@@ -476,7 +476,7 @@ if isMC:
             "unclEnUp": lambda event: event.hnlJets_nominal,
             "unclEnDown": lambda event: event.hnlJets_nominal,
         },
-        modelFile=modelPath[year],
+        modelFile=BDT2lmodelPath[year],
         taggerName='llpdnnx'
     ))
     
@@ -515,7 +515,7 @@ else:
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
         },
-        modelFile=modelPath[year],
+        modelFile=BDT2lmodelPath[year],
         taggerName='llpdnnx'
     ))
     
