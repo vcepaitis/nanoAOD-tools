@@ -115,6 +115,7 @@ class TaggerEvaluation(Module):
         for jetCollection in self.inputCollections:
             jets = jetCollection(event)
             for ijet, jet in enumerate(jets):
+<<<<<<< HEAD
                 try:
                     global_jet_index = jetglobal_indices.index(jet._index)
                 except ValueError:
