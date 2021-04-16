@@ -368,7 +368,7 @@ def taggerSequence(jetDict, modelFile, taggerName):
         return []
     sequence.append(
         TaggerEvaluationProfiled(
-            modelPath=taggerModelPath,
+            modelPath=taggerModelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=jetDict.values(),
             taggerName=taggerName,
@@ -476,8 +476,7 @@ if isMC:
             "unclEnUp": lambda event: event.hnlJets_nominal,
             "unclEnDown": lambda event: event.hnlJets_nominal,
         },
-        modelPath=taggerModelPath,
-        modelFile=modelPath[year],
+        modelFile=taggerModelPath[year],
         taggerName='llpdnnx'
     ))
     
