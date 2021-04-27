@@ -29,7 +29,7 @@ parser.add_argument('--notagger', dest='notagger',
                     action='store_true', default=False)  
 parser.add_argument('--nobdt', dest='nobdt',
                     action='store_true', default=False) 
-parser.add_argument('--overwrite_pu', action='store', default='None')
+parser.add_argument('--overwrite_pu', action='store', default=None)
 parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
