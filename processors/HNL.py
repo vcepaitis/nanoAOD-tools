@@ -29,6 +29,7 @@ parser.add_argument('--notagger', dest='notagger',
                     action='store_true', default=False)  
 parser.add_argument('--nobdt', dest='nobdt',
                     action='store_true', default=False) 
+parser.add_argument('--overwrite_pu', action='store', default='None')
 parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
@@ -59,6 +60,8 @@ for inputFile in args.inputFiles:
         print "CRITICAL - 'Events' tree not found in file '"+inputFile+"'!"
         sys.exit(1)
     print " - ", inputFile, ", events=", tree.GetEntries()
+
+puProcessName = args.ovewrite_pu
 
 print "year:", year
 print "isSignal:",isSignal
@@ -516,7 +519,7 @@ if isMC:
     analyzerChain.append(
         PileupWeight(
             outputName="puweight",
-            #processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
+            processName=puProcessName,
             globalOptions=globalOptions
         )
     )
