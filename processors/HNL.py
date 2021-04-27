@@ -61,7 +61,7 @@ for inputFile in args.inputFiles:
         sys.exit(1)
     print " - ", inputFile, ", events=", tree.GetEntries()
 
-puProcessName = args.ovewrite_pu
+puProcessName = args.overwrite_pu
 
 print "year:", year
 print "isSignal:",isSignal
