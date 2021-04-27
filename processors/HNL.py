@@ -272,7 +272,6 @@ def jetSelectionSequence(jetDict):
                 globalFeatures = [],
                 storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
-                leadingConstituentSF=True,
                 outputName="selectedJets_"+systName,
                 globalOptions=globalOptions
             ),
