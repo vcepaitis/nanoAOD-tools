@@ -44,8 +44,9 @@ class TrackAndSVSelection(Module):
         self.out.branch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_pt", "F", lenVar="nhnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName)
         self.out.branch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_dxy", "F", lenVar="nhnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName)  
 
-        if self.storeWeights:           
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_"+self.outputName, "F")
+        if self.storeWeights:        
+            for n in range(1, 6)+[25]:   
+                self.out.branch("hnlJet_track_weight_"+self.svType+"_"+self.outputName, "F")
 
     def analyze(self, event):
           
@@ -64,23 +65,25 @@ class TrackAndSVSelection(Module):
         self.out.fillBranch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_pt", map(lambda cpf: cpf.pt, cpfsMatchedToJetsAndToSVs))
         self.out.fillBranch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_dxy", map(lambda cpf: cpf.trackSip2dVal, cpfsMatchedToJetsAndToSVs))
 
-        weightsPerJet = []
-        # Apply the corrections (also for jets with no SV)
-        for jet in jets:
-            matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
-            if len(matchedCpfs) > 0:
-                weights = np.asarray(map(lambda x: self.correctionFunction(self.correctionCoefficients, math.log10(abs(x.trackSip2dVal))), matchedCpfs))
-                #maxWeightIndex = np.argmax(np.abs(weights-1))
-                maxWeightIndex = 0
-                weightsPerJet.append(weights[maxWeightIndex])
-            else:
-                weightsPerJet.append(1.)
-        
-        weight = 1.
-        for w in weightsPerJet:
-            weight *= w
-
         if self.storeWeights:
+            weightsPerJet = []
+            for jet in jets:
+                matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
+                if len(matchedCpfs) > 0:
+                    # Apply the corrections based on leading three constituents
+                    matchedCpfs = matchedCpfs[:3]
+                    weightsPerTrack = np.asarray(map(lambda x: self.correctionFunction(self.correctionCoefficients, math.log10(max(1e-3, x.trackSip2dVal))), matchedCpfs))
+                    ptsPerTrack = np.asarray(map(lambda x: x.ptrel, matchedCpfs))
+                    averageWeight = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
+                    weightsPerJet.append(averageWeight)
+                else:
+                    weightsPerJet.append(1.)
+            
+            weight = 1.
+            for w in weightsPerJet:
+                weight *= w
+            #print(w)
+
             self.out.fillBranch("hnlJet_track_weight_"+self.svType+"_"+self.outputName, weight)
 
         return True
