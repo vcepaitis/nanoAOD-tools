@@ -22,8 +22,8 @@ class TrackAndSVSelection(Module):
         self.outputName = outputName
         self.globalOptions = globalOptions
         self.correctionCoefficients = {2016: [-1.54794802,  1.14272696,  0.18702605, -0.28109537],
-                                       2017: [-1.54794802,  1.14272696,  0.18702605, -0.28109537], 
-                                       2018: [-1.54794802,  1.14272696,  0.18702605, -0.28109537]
+                                       2017: [-1.84007013,  1.13222034,  0.25396792, -0.13395763], 
+                                       2018: [-1.85331292,  1.14988184,  0.2155245,  -0.19477323]
                                       }[self.globalOptions["year"]]
         self.correctionFunction = lambda p, x: np.piecewise(x, [x < p[0], x >= p[0]],
                      [lambda x:p[2]*x + p[1]-p[2]*p[0], lambda x:p[3]*x + p[1]-p[3]*p[0]])
