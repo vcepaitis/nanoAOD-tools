@@ -23,6 +23,7 @@ class JetSelection(Module):
          leptonCollectionDRCleaning=lambda event: [],
          leptonCollectionP4Subraction=lambda event: [],
          outputName="selectedJets",
+         jetMinPtMerged=15.,
          jetMinPt=15.,
          jetMinEta=-1.,
          jetMaxEta=2.4,
@@ -41,6 +42,7 @@ class JetSelection(Module):
         self.leptonCollectionDRCleaning = leptonCollectionDRCleaning
         self.leptonCollectionP4Subraction = leptonCollectionP4Subraction
         self.outputName = outputName
+        self.jetMinPtMerged = jetMinPtMerged
         self.jetMinPt = jetMinPt
         self.jetMinEta = jetMinEta
         self.jetMaxEta = jetMaxEta
@@ -81,7 +83,6 @@ class JetSelection(Module):
         jetglobal = Collection(event, "global")
         jetglobal_indices = [global_jet.jetIdx for global_jet in jetglobal]
         
-
         selectedJets = []
         unselectedJets = []
 
@@ -146,7 +147,7 @@ class JetSelection(Module):
                 continue
                 
             if self.jetMinNConstituents > 0 and jet.nConstituents < self.jetMinNConstituents:
-                unselectedJets.append(jet.nConstituents)
+                unselectedJets.append(jet)
                 continue
 
             minDeltaRSubtraction = 999.
@@ -164,12 +165,17 @@ class JetSelection(Module):
             jet.p4RawSubtracted = jet.p4Raw-leptonP4 
             
             jet.minDeltaRSubtraction = minDeltaRSubtraction
+
+            if jet.minDeltaRSubtraction < 0.4:
+                if jet.pt < self.jetMinPtMerged:
+                    unselectedJets.append(jet)
+                    continue    
             
-            if leptonP4.Pt()>1e-3 and jet.p4Subtracted.Pt()<20.:
-                #reset jet pt & recaculate p4Subtracted
-                jet.pt = jet.ptRaw 
-                jet.mass = jet.massRaw 
-                jet.p4Subtracted = jet.p4()-leptonP4
+            # if leptonP4.Pt()>1e-3 and jet.p4Subtracted.Pt()<20.:
+            #     #reset jet pt & recaculate p4Subtracted
+            #     jet.pt = jet.ptRaw 
+            #     jet.mass = jet.massRaw 
+            #     jet.p4Subtracted = jet.p4()-leptonP4
             
             jet.ptLepton = jet.p4Lepton.Pt() 
             jet.ptSubtracted = jet.p4Subtracted.Pt()
