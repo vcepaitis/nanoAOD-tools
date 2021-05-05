@@ -38,15 +38,15 @@ class HNLReconstruction(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-
-        self.out.branch("hnlJet_"+self.outputName+"_pt", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptsub", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptraw", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptrawsub", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptorig", "F")
-        self.out.branch("hnlJet_"+self.outputName+"_ptorigsub", "F")
+        self.out.branch("nhnlJet"+self.outputName, "I")
+        self.out.branch("hnlJet_"+self.outputName+"_pt", "F" , lenVar="nhnlJet"+self.outputName)
+        self.out.branch("hnlJet_"+self.outputName+"_ptsub", "F" , lenVar="nhnlJet"+self.outputName)
+        self.out.branch("hnlJet_"+self.outputName+"_ptraw", "F" , lenVar="nhnlJet"+self.outputName)
+        self.out.branch("hnlJet_"+self.outputName+"_ptrawsub", "F" , lenVar="nhnlJet"+self.outputName)
+        self.out.branch("hnlJet_"+self.outputName+"_ptorig", "F" , lenVar="nhnlJet"+self.outputName)
+        self.out.branch("hnlJet_"+self.outputName+"_ptorigsub", "F" , lenVar="nhnlJet"+self.outputName)
         
-        self.out.branch("hnlJet_"+self.outputName+"_eta", "F")
+        self.out.branch("hnlJet_"+self.outputName+"_eta", "F" , lenVar="nhnlJet"+self.outputName)
 
         if self.lepton2Object==None:
             self.out.branch(self.outputName+"_m_l1j", "F")
@@ -55,30 +55,42 @@ class HNLReconstruction(Module):
             self.out.branch(self.outputName+"_dR_l1j", "F")
             self.out.branch(self.outputName+"_dEta_l1j", "F")
         else:
-            self.out.branch(self.outputName+"_m_llj", "F")
-            self.out.branch(self.outputName+"_dPt_llj", "F")
-            self.out.branch(self.outputName+"_dPhi_l1j", "F")
-            self.out.branch(self.outputName+"_dEta_l1j", "F")
-            self.out.branch(self.outputName+"_dR_l2j", "F")
+            self.out.branch(self.outputName+"_m_llj", "F" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch(self.outputName+"_dPt_llj", "F" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch(self.outputName+"_dPhi_l1j", "F" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch(self.outputName+"_dEta_l1j", "F" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch(self.outputName+"_dR_l2j", "F", lenVar="nhnlJet"+self.outputName)
 
         if self.globalOptions["isSignal"]:
-            self.out.branch("hnlJet_"+self.outputName+"_isTrueQ", "I")
-            self.out.branch("hnlJet_"+self.outputName+"_isTrueQE", "I")
-            self.out.branch("hnlJet_"+self.outputName+"_isTrueQMU", "I")
-            self.out.branch("hnlJet_"+self.outputName+"_isTrueQTAU", "I")
-            self.out.branch("hnlJet_"+self.outputName+"_trueLxy", "F")
+            self.out.branch("hnlJet_"+self.outputName+"_isTrueQ", "I" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch("hnlJet_"+self.outputName+"_isTrueQE", "I" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch("hnlJet_"+self.outputName+"_isTrueQMU", "I", lenVar="nhnlJet"+self.outputName)
+            self.out.branch("hnlJet_"+self.outputName+"_isTrueQTAU", "I" , lenVar="nhnlJet"+self.outputName)
+            self.out.branch("hnlJet_"+self.outputName+"_trueLxy", "F", lenVar="nhnlJet"+self.outputName)
             
             #number of jets in event that are LLP but are not selected
-            self.out.branch(self.outputName+"_nTrueMissed", "I")
+            self.out.branch(self.outputName+"_nTrueMissed", "I" , lenVar="nhnlJet"+self.outputName)
 
 
     def fillTruthInfo(self,hnlJet,otherJets):
         if hnlJet!=None:
-            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQ", hnlJet.isLLP_Q)
-            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQE", hnlJet.isLLP_QE)
-            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQMU", hnlJet.isLLP_QMU)
-            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQTAU", hnlJet.isLLP_QTAU)
-            self.out.fillBranch("hnlJet_"+self.outputName+"_trueLxy", hnlJet.displacement_xy)
+            llpq = []
+            llpqmu = []
+            llpqe = []
+            llpqtau = []
+            llpxy = []
+            for jet in hnlJet :
+                llpq.append(jet.isLLP_Q)
+                llpqmu.append(jet.isLLP_QMU)
+                llpqe.append(jet.isLLP_QE)
+                llpqtau.append(jet.isLLP_QTAU)
+                llpxy.append(jet.displacement_xy)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQ", llpq)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQE", llpqe)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQMU", llpqmu)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQTAU", llpqtau)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_trueLxy", llpxy)
+
         else:
             self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQ", -1)
             self.out.fillBranch("hnlJet_"+self.outputName+"_isTrueQE", -1)
@@ -96,6 +108,25 @@ class HNLReconstruction(Module):
             
     def fillHNLJetInfo(self,hnlJet):
         if hnlJet!=None:
+        
+            pts = []
+            ptssub = []
+            ptraws = []
+            ptorigins = []
+            etas = []
+            for jet in hnlJet :
+              pts.append(jet.pt)
+              ptssub.append(jet.p4Subtracted.Pt())
+              ptraws.append(jet.ptRaw)
+              ptorigins.append(jet.p4Original.Pt())
+              etas.append(jet.eta)
+
+            self.out.fillBranch("hnlJet_"+self.outputName+"_pt", pts)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", ptssub)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptraw", ptraws)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", ptorigins)
+            self.out.fillBranch("hnlJet_"+self.outputName+"_eta", etas)
+            '''
             self.out.fillBranch("hnlJet_"+self.outputName+"_pt", hnlJet.pt)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", hnlJet.p4Subtracted.Pt())
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptraw", hnlJet.ptRaw)
@@ -103,6 +134,7 @@ class HNLReconstruction(Module):
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", hnlJet.p4Original.Pt())
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", hnlJet.p4OriginalSubtracted.Pt())
             self.out.fillBranch("hnlJet_"+self.outputName+"_eta", hnlJet.eta)
+        
         else:
             self.out.fillBranch("hnlJet_"+self.outputName+"_pt", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptsub", 0)
@@ -111,7 +143,7 @@ class HNLReconstruction(Module):
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorig", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_ptorigsub", 0)
             self.out.fillBranch("hnlJet_"+self.outputName+"_eta", 0)
-                
+        '''
 
     def analyze(self, event):
 
@@ -153,9 +185,30 @@ class HNLReconstruction(Module):
             if len(jets) > 0:
                 #take jet closest to l2
                 sortedJets = sorted(jets, key=lambda jet: deltaR(jet, lepton2), reverse=False)
-                hnlJet = sortedJets[0]
+                hnlJet = sortedJets[:2]
                 self.fillHNLJetInfo(hnlJet)
                 
+                dR_l2jet = []
+                dEta_l1j = []
+                dPhi_l1j = []
+                dPt_llj = []
+                m_llj = []
+                for jet in hnlJet :
+                   dR_l2jet.append(deltaR(lepton2,jet))
+                   dEta_l1j.append(math.fabs(lepton1.eta-jet.eta))
+                   dPhi_l1j.append(math.fabs(deltaPhi(lepton1,jet)))
+                   dPt_llj.append((lepton1.p4()-lepton2.p4()-jet.p4Subtracted).Pt())
+                   m_llj.append((lepton1.p4()+lepton2.p4()+jet.p4Subtracted).M())
+                   
+                self.out.fillBranch(self.outputName+"_m_llj", m_llj)
+                self.out.fillBranch(self.outputName+"_dPt_llj",dPt_llj )
+                self.out.fillBranch(self.outputName+"_dPhi_l1j", dPhi_l1j)
+                self.out.fillBranch(self.outputName+"_dEta_l1j", dEta_l1j)
+                self.out.fillBranch(self.outputName+"_dR_l2j", dR_l2jet)
+                setattr(event, "hnlJets_"+self.outputName, hnlJet)
+                
+
+                '''
                 self.out.fillBranch(self.outputName+"_m_llj", (lepton1.p4()+lepton2.p4()+hnlJet.p4Subtracted).M())
                 self.out.fillBranch(self.outputName+"_dPt_llj", (lepton1.p4()-lepton2.p4()-hnlJet.p4Subtracted).Pt())
                 self.out.fillBranch(self.outputName+"_dPhi_l1j", math.fabs(deltaPhi(lepton1,hnlJet)))
@@ -165,7 +218,7 @@ class HNLReconstruction(Module):
                 
                 if self.globalOptions["isSignal"]:
                     self.fillTruthInfo(hnlJet,sortedJets[1:])
-                    
+            
             else:
                 self.fillHNLJetInfo(None)
             
@@ -178,5 +231,5 @@ class HNLReconstruction(Module):
                 
                 if self.globalOptions["isSignal"]:
                     self.fillTruthInfo(None,[])
-        
+            '''
         return True
