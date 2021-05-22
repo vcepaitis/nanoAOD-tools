@@ -1,6 +1,6 @@
 predictionLabels = ["E","MU","TAU","B","C","UDS","G","PU","LLP_Q","LLP_QE","LLP_QMU","LLP_QTAU_H","LLP_QTAU_3H"]
+
 featureDict = {
-    
 
     "globalvars": {
         "branches": [
@@ -97,6 +97,7 @@ featureDict = {
             "cpf_fromPV",
             "cpf_puppi_weight",
             "cpf_track_chi2",
+            "cpf_track_ndof",
             "cpf_track_quality",
             "cpf_track_numberOfValidPixelHits",
             "cpf_track_pixelLayersWithMeasurement",
@@ -109,16 +110,16 @@ featureDict = {
             "cpf_trackSip3dValSV",
             "cpf_trackSip3dSigSV",
 
-            "cpf_trackSip2dValSV_adapted",
-            "cpf_trackSip2dSigSV_adapted",
-            "cpf_trackSip3dValSV_adapted",
-            "cpf_trackSip3dSigSV_adapted",
+            #"cpf_trackSip2dValSV_adapted",
+            #"cpf_trackSip2dSigSV_adapted",
+            #"cpf_trackSip3dValSV_adapted",
+            #"cpf_trackSip3dSigSV_adapted",
 
             "cpf_matchedMuon",
             "cpf_matchedElectron",
             "cpf_matchedSV",
             #"cpf_matchedSV_adapted",
-            "cpf_track_ndof",
+            
 
             "cpf_dZmin"
 
@@ -216,10 +217,6 @@ featureDict = {
             "muon_ptrel",
             "muon_deta",
             "muon_dphi",
-            "muon_px",
-            "muon_py",
-            "muon_pz",
-            "muon_charge",
             "muon_energy",
             "muon_et",
             "muon_deltaR",
@@ -312,10 +309,6 @@ featureDict = {
             "electron_deltaR",
             "electron_deta",
             "electron_dphi",
-            "electron_px",
-            "electron_py",
-            "electron_pz",
-            "electron_charge",
             "electron_energy",
             "electron_EtFromCaloEn",
             "electron_isEB",
@@ -337,7 +330,6 @@ featureDict = {
             "electron_elecSC_dphi",
             "electron_elecSC_et",
             "electron_elecSC_eSuperClusterOverP",
-            "electron_scPixCharge",
             "electron_superClusterFbrem",
 
             "electron_eSeedClusterOverP",
@@ -374,7 +366,6 @@ featureDict = {
             "electron_dzError",
             "electron_dzSig",
             "electron_nbOfMissingHits",
-            "electron_gsfCharge",
             "electron_ndof",
             "electron_chi2",
             "electron_numberOfBrems",
@@ -443,4 +434,6 @@ featureDict = {
         "max":2,
         "length":"length_ele"
     },
+    
+
 }
