@@ -13,14 +13,14 @@ function run_test()
     scram b || return 1
     echo "--- Test HNL script ---"
     # add data test
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --overwrite_pu TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016 --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --overwrite_pu TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016 --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
     python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --isData --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_data_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --notagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --nobdt --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --notagger --notrigger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
-    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --notagger --noiso --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 1 --overwrite_pu TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016 --notagger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --overwrite_pu TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016 --nobdt --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --overwrite_pu TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016 --notagger --notrigger --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
+    python PhysicsTools/NanoAODTools/processors/HNL.py --year 2016 --leptons 2 --overwrite_pu TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016 --notagger --noiso --input=https://github.com/LLPDNNX/test-files/raw/master/nanoaod/Moriond17_aug2018_miniAODv3_HNL_nanoAODv3.root . || return 1
 }
 
 run_test

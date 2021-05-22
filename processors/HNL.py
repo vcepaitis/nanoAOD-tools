@@ -29,6 +29,7 @@ parser.add_argument('--notagger', dest='notagger',
                     action='store_true', default=False)  
 parser.add_argument('--nobdt', dest='nobdt',
                     action='store_true', default=False) 
+parser.add_argument('--overwrite_pu', action='store', default=None)
 parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
@@ -59,6 +60,8 @@ for inputFile in args.inputFiles:
         print "CRITICAL - 'Events' tree not found in file '"+inputFile+"'!"
         sys.exit(1)
     print " - ", inputFile, ", events=", tree.GetEntries()
+
+puProcessName = args.overwrite_pu
 
 print "year:", year
 print "isSignal:",isSignal
@@ -183,7 +186,6 @@ leptonSelection = [
         storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
         storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ),
-    
 ]
 
 analyzerChain = []
@@ -206,11 +208,8 @@ else:
         InvariantSystem(
             inputCollection= lambda event: [event.leadingLeptons[0],event.subleadingLeptons[0]],
             outputName="dilepton"
-        )
+        ),
     ])
-
-
-
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 taggerModelPath = {
@@ -271,7 +270,8 @@ def jetSelectionSequence(jetDict):
                 inputCollection=jetCollection,
                 leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
-                jetMinPt=15.,
+                jetMinPt=20.,
+                jetMinPtMerged=30.,
                 jetMaxEta=2.4,
                 globalFeatures = [],
                 storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
@@ -349,13 +349,41 @@ def eventReconstructionSequence(jetMetDict):
                 globalOptions=globalOptions,
                 outputName=systName
             ),
-
             HNLReconstruction(
                 lepton1Object=lambda event: event.leadingLeptons[0],
                 lepton2Object=None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
                 jetCollection=jetCollection,
                 globalOptions=globalOptions,
                 outputName=systName,
+            ),
+            TrackAndSVSelection(
+                svType="adapted",
+                outputName=systName,
+                jetCollection = {
+                    "nominal": lambda event: event.hnlJets_nominal,
+                    "jerUp": lambda event: event.hnlJets_jerUp,
+                    "jerDown": lambda event: event.hnlJets_jerDown,
+                    "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+                    "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
+                    "unclEnUp": lambda event: event.hnlJets_nominal,
+                    "unclEnDown": lambda event: event.hnlJets_nominal,
+                }[systName],
+                globalOptions=globalOptions,
+                storeWeights=True
+            ),
+            TrackAndSVSelection(
+                svType="nominal",
+                outputName=systName,
+                jetCollection = {
+                    "nominal": lambda event: event.hnlJets_nominal,
+                    "jerUp": lambda event: event.hnlJets_jerUp,
+                    "jerDown": lambda event: event.hnlJets_jerDown,
+                    "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+                    "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
+                    "unclEnUp": lambda event: event.hnlJets_nominal,
+                    "unclEnDown": lambda event: event.hnlJets_nominal,
+                }[systName],
+                globalOptions=globalOptions
             )
         ])
         
@@ -368,7 +396,7 @@ def taggerSequence(jetDict, modelFile, taggerName):
         return []
     sequence.append(
         TaggerEvaluationProfiled(
-            modelPath=taggerModelPath,
+            modelPath=taggerModelPath[year],
             featureDictFile=featureDictFile,
             inputCollections=jetDict.values(),
             taggerName=taggerName,
@@ -476,7 +504,7 @@ if isMC:
             "unclEnUp": lambda event: event.hnlJets_nominal,
             "unclEnDown": lambda event: event.hnlJets_nominal,
         },
-        modelFile=modelPath[year],
+        modelFile=taggerModelPath[year],
         taggerName='llpdnnx'
     ))
     
@@ -492,7 +520,7 @@ if isMC:
     analyzerChain.append(
         PileupWeight(
             outputName="puweight",
-            #processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
+            processName=puProcessName,
             globalOptions=globalOptions
         )
     )
@@ -515,7 +543,7 @@ else:
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
         },
-        modelFile=modelPath[year],
+        modelFile=taggerModelPath[year],
         taggerName='llpdnnx'
     ))
     
