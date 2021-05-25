@@ -213,9 +213,9 @@ else:
 
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 taggerModelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb"
 }
 
 BDT2lmodelPath = {

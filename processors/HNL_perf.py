@@ -105,7 +105,7 @@ leptonSelection = [
         electronIPCuts=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0),
+    #EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0),
     SingleMuonTriggerSelection(
         inputCollection=lambda event: event.tightMuons,
         outputName="IsoMuTrigger",
@@ -164,8 +164,8 @@ leptonSelection = [
         storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
         storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ),
-    EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0),
-    EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0),
+    #EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0),
+    #EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0),
     
 ]
 
@@ -174,22 +174,23 @@ analyzerChain = []
 analyzerChain.extend(leptonSelection)
 
 
-analyzerChain.append(
-    InvariantSystem(
-        inputCollection= lambda event:
-            sorted(event.tightMuons+event.looseMuons+event.tightElectrons+event.looseElectrons,key=lambda x: -x.pt)[:2],
-        outputName="dilepton"
-    )
-)
-
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 taggers = [
-    {"name":"deepset","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_DeepSetNetwork_origSV_lr01_201117.pb"},
-    {"name":"nominal","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb"},
-    {"name":"onlyconstit","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkOnlyConstit_origSV_lr01_201117.pb"},
-    {"name":"nolept","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkNoLept_origSV_lr01_201117.pb"},
-    {"name":"da","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"},
-    {"name":"wda","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb"},
+    {"name":"DA100000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_100000_wasserstein4_lr001_201117.pb"},
+    {"name":"DA10000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_10000_wasserstein4_lr001_201117.pb"},
+    {"name":"DA1000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_1000_wasserstein4_lr001_201117.pb"},
+    {"name":"DA400","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_400_wasserstein4_lr001_201117.pb"},
+    {"name":"DA200","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_200_wasserstein4_lr001_201117.pb"},
+    {"name":"DA100","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_100_wasserstein4_lr001_201117.pb"},
+    {"name":"DA50","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_50_wasserstein4_lr001_201117.pb"},
+    {"name":"DA10","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_10_wasserstein4_lr001_201117.pb"}
+
+    #{"name":"deepset","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_DeepSetNetwork_origSV_lr01_201117.pb"},
+    #{"name":"nominal","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb"},
+    #{"name":"onlyconstit","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkOnlyConstit_origSV_lr01_201117.pb"},
+    #{"name":"nolept","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_NominalNetworkNoLept_origSV_lr01_201117.pb"},
+    #{"name":"da","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"},
+    #{"name":"wda","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb"},
     
     #{"name":"nominal_ref_DA", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"%year},
     #{"name":"nominal_ref", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_lr01_201117.pb"%year},
@@ -270,8 +271,8 @@ for systName, jetCollection in [
     analyzerChain.append(
         JetSelection(
             inputCollection=jetCollection,
-            leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
-            leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
+            leptonCollectionDRCleaning=lambda event: [],#lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
+            leptonCollectionP4Subraction=lambda event: [],#lambda event:event.looseMuons+event.looseElectrons,
             jetMinPt=15.,
             jetMaxEta=2.4,
             jetId=JetSelection.TIGHT,
