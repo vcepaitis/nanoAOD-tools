@@ -9,13 +9,13 @@ class TrackAndSVSelection(Module):
         jetCollection=lambda event: Collection(event, "Jet"),
         svType="adapted",
         cpfCollection=lambda event: Collection(event, "cpf"),
-        outputName="nominal",
+        outputName="hnlJet_track_weight",
         globalOptions={"isData":False, "isSignal":False, "year": 2016},
         storeWeights="False",
 
     ):
         self.jetCollection = jetCollection
-        if svType not in ["nominal", "adapted"]:
+        if svType not in ["regular", "adapted"]:
             raise ValueError("Wrong sv type")
         self.svType = svType
         self.cpfCollection = cpfCollection
@@ -40,13 +40,15 @@ class TrackAndSVSelection(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("nhnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName, "I")
-        self.out.branch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_pt", "F", lenVar="nhnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName)
-        self.out.branch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_dxy", "F", lenVar="nhnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName)  
+        self.out.branch("n"+self.outputName+"_"+self.svType, "I")
+        self.out.branch(self.outputName+"_"+self.svType+"_pt", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType)
+        self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)  
 
         if self.storeWeights:        
-            for n in range(1, 6)+[25]:   
-                self.out.branch("hnlJet_track_weight_"+self.svType+"_"+self.outputName, "F")
+            self.out.branch("hnlJet_track_weight_"+self.svType+"_nominal", "F")
+            self.out.branch("hnlJet_track_weight_"+self.svType+"_up", "F")
+            self.out.branch("hnlJet_track_weight_"+self.svType+"_down", "F")
+
 
     def analyze(self, event):
           
@@ -54,36 +56,37 @@ class TrackAndSVSelection(Module):
         cpfs = self.cpfCollection(event)
 
         # Iterate over all jets and find the matching tracks
-        cpfsMatchedToJetsAndToSVs = []
         matchingVariable = "matchedSV_adapted" if self.svType == "adapted" else "matchedSV"
-        for jet in jets:
+        cpfsMatchedToJetAndSV = []
+        if len(jets) == 0:
+            averageWeightUp = 1.
+        else:
+            jet = jets[0]
             matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index and getattr(cpf, matchingVariable, True)]
             for cpf in matchedCpfs:
-                cpf.pt = jet.ptRaw*cpf.ptrel # Almost exactly the same as using global jet
-            cpfsMatchedToJetsAndToSVs.extend(matchedCpfs)
-        self.out.fillBranch("nhnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName, len(cpfsMatchedToJetsAndToSVs))
-        self.out.fillBranch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_pt", map(lambda cpf: cpf.pt, cpfsMatchedToJetsAndToSVs))
-        self.out.fillBranch("hnlJets_svMatchedTracks_"+self.svType+"_"+self.outputName+"_dxy", map(lambda cpf: cpf.trackSip2dVal, cpfsMatchedToJetsAndToSVs))
+                cpf.pt = jet.ptRaw*cpf.ptrel
+            cpfsMatchedToJetAndSV.extend(matchedCpfs)
+            
+            self.out.fillBranch("n"+self.outputName+"_"+self.svType, len(cpfsMatchedToJetAndSV))
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_pt", map(lambda cpf: cpf.pt, cpfsMatchedToJetAndSV))
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_dxy", map(lambda cpf: cpf.trackSip2dVal, cpfsMatchedToJetAndSV))
 
-        if self.storeWeights:
-            weightsPerJet = []
-            for jet in jets:
+            if self.storeWeights:
                 matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
                 if len(matchedCpfs) > 0:
                     # Apply the corrections based on leading three constituents
                     matchedCpfs = matchedCpfs[:3]
                     weightsPerTrack = np.asarray(map(lambda x: self.correctionFunction(self.correctionCoefficients, math.log10(max(1e-3, x.trackSip2dVal))), matchedCpfs))
                     ptsPerTrack = np.asarray(map(lambda x: x.ptrel, matchedCpfs))
-                    averageWeight = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
-                    weightsPerJet.append(averageWeight)
-                else:
-                    weightsPerJet.append(1.)
-            
-            weight = 1.
-            for w in weightsPerJet:
-                weight *= w
-            #print(w)
+                    averageWeightUp = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
 
-            self.out.fillBranch("hnlJet_track_weight_"+self.svType+"_"+self.outputName, weight)
+                else:
+                    averageWeightUp = 1.
+
+        if self.storeWeights:
+            averageWeightDown = 2. - averageWeightUp
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_nominal", 1.)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_up", averageWeightUp)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_down", averageWeightDown)
 
         return True

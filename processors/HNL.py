@@ -356,33 +356,19 @@ def eventReconstructionSequence(jetMetDict):
                 globalOptions=globalOptions,
                 outputName=systName,
             ),
-            TrackAndSVSelection(
+        ])
+    sequence.extend([
+        TrackAndSVSelection(
                 svType="adapted",
-                outputName=systName,
-                jetCollection = {
-                    "nominal": lambda event: event.hnlJets_nominal,
-                    "jerUp": lambda event: event.hnlJets_jerUp,
-                    "jerDown": lambda event: event.hnlJets_jerDown,
-                    "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-                    "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-                    "unclEnUp": lambda event: event.hnlJets_nominal,
-                    "unclEnDown": lambda event: event.hnlJets_nominal,
-                }[systName],
+                outputName="hnlJet_track_weight",
+                jetCollection = lambda event: event.hnlJets_nominal,
                 globalOptions=globalOptions,
                 storeWeights=True
             ),
             TrackAndSVSelection(
-                svType="nominal",
-                outputName=systName,
-                jetCollection = {
-                    "nominal": lambda event: event.hnlJets_nominal,
-                    "jerUp": lambda event: event.hnlJets_jerUp,
-                    "jerDown": lambda event: event.hnlJets_jerDown,
-                    "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-                    "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-                    "unclEnUp": lambda event: event.hnlJets_nominal,
-                    "unclEnDown": lambda event: event.hnlJets_nominal,
-                }[systName],
+                svType="regular",
+                outputName="hnlJet_track_weight",
+                jetCollection = lambda event: event.hnlJets_nominal,
                 globalOptions=globalOptions
             )
         ])
