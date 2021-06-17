@@ -74,10 +74,6 @@ class PileupWeight(Module):
             w.append(getattr(self, "dataHist"+var).GetBinContent(dataBin)/(self.mcHist.GetBinContent(mcBin)+self.mcHist.Integral()*0.0001))
             if w[-1]>5.:
                 w[-1] = 0
-
-        #w_up >= w >= w_down
-        w = numpy.sort(w)[::-1]
-
         return w
 
     def endJob(self):
