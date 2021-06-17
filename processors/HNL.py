@@ -558,14 +558,16 @@ if not globalOptions["isData"]:
                            event: tree.fillBranch("genweight",
                            event.Generator_weight)])
 
-    if isSignal:
-        analyzerChain.append(PDFUncertainty())
-        analyzerChain.append(
-            ScaleUncertainty(
-                xsecs = json.load(open('/vols/cms/LLP/gridpackLookupTable.json'))  
-            )
+    analyzerChain.append(
+        ScaleUncertainty(
+            xsecs = json.load(open('/vols/cms/LLP/gridpackLookupTable.json')),
+            isSignal = isSignal
         )
+    )
     
+
+    if isSignal:
+        analyzerChain.append(PDFUncertainty(isSignal = isSignal))
         for coupling in range(1,68):
             storeVariables.append([
                 lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
