@@ -32,4 +32,6 @@ from LeptonGenEfficiency import LeptonGenEfficiency
 #from TaggerEvaluationCache import TaggerEvaluationCache
 from HNLReconstruction import HNLReconstruction
 from XsecWeight import XsecWeight
+from PDFUncertainty import PDFUncertainty
+from ScaleUncertainty import ScaleUncertainty
 

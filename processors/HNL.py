@@ -4,6 +4,7 @@ import math
 import argparse
 import random
 import ROOT
+import json
 import numpy as np
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor \
@@ -557,7 +558,16 @@ if not globalOptions["isData"]:
                            event: tree.fillBranch("genweight",
                            event.Generator_weight)])
 
+    analyzerChain.append(
+        ScaleUncertainty(
+            xsecs = json.load(open('/vols/cms/LLP/gridpackLookupTable.json')),
+            isSignal = isSignal
+        )
+    )
+    
+
     if isSignal:
+        analyzerChain.append(PDFUncertainty(isSignal = isSignal))
         for coupling in range(1,68):
             storeVariables.append([
                 lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
