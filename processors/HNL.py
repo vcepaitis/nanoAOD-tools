@@ -273,7 +273,7 @@ def jetSelectionSequence(jetDict):
                 jetMinPt=20.,
                 jetMinPtMerged=30.,
                 jetMaxEta=2.4,
-                globalFeatures = [],
+                globalFeatures = ['numberCpf', 'numberMuon', 'numberElectron'],
                 storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
