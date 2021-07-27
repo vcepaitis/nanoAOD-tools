@@ -21,7 +21,7 @@ parser.add_argument('--isData', dest='isData',
 parser.add_argument('--isSignal', dest='isSignal',
                     action='store_true', default=False)
 parser.add_argument('--year', dest='year',
-                    action='store', type=int, default=-1)
+                    action='store', type=int, default=2016)
 parser.add_argument('--noiso', dest='noiso',
                     action='store_true', default=False)
 parser.add_argument('--notrigger', dest='notrigger',
@@ -178,6 +178,7 @@ leptonSelection = [
         electronID="CustomIso",
         globalOptions=globalOptions
     ),
+    PhotonVeto(),
     LeptonCollecting(
         tightMuonsCollection=lambda event:event.tightMuons,
         tightElectronsCollection=lambda event:event.tightElectrons,

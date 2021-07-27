@@ -56,6 +56,7 @@ class LeptonGenEfficiency(Module):
         self.electron_features = features + ["mvaFall17V2noIso_WPL", "customID"]
         self.muon_features = features + ["looseId", "mediumId", "tightId"]
         self.tau_features = features + ["jetId"]
+        self.jet_features = ["pt", "eta", "phi", "is_matched", "dxy", "dz", "reco_pt", "reco_eta", "reco_phi", "tightId"]
         self.HNL_features = ["pt", "eta", "phi", "mass", "boost", "dxy"]
 
     def beginJob(self):
@@ -70,6 +71,7 @@ class LeptonGenEfficiency(Module):
         self.out.branch("nelectron", "I")
         self.out.branch("nhadtau", "I")
         self.out.branch("nlepton", "I")
+        self.out.branch("njet", "I")
         self.out.branch("nGenLeptonsFromV", "I")
         self.out.branch("nGenLeptonsFromTauFromV", "I")
 
@@ -81,6 +83,8 @@ class LeptonGenEfficiency(Module):
             self.out.branch("hadtau_"+feature, "F", lenVar="nhadtau")
         for feature in self.features:
             self.out.branch("lepton_"+feature, "F", lenVar="nlepton")
+        for feature in self.jet_features:
+            self.out.branch("jet_"+feature, "F", lenVar="njet")
         for feature in self.HNL_features:
             self.out.branch("HNL_"+feature, "F")
     
@@ -97,8 +101,12 @@ class LeptonGenEfficiency(Module):
         #photons = self.photonCollection(event)
         muons = self.muonCollection(event)
         jets = self.jetCollection(event)
+        jetOrigin = Collection(event, "jetorigin")
+        genJets = Collection(event, "GenJet")
 
         genLeptonsFromV = []
+        HNLHadronicDaughters = []
+
         for genParticle in genParticles:
             if genParticle.genPartIdxMother == -1:
                 continue
@@ -107,7 +115,8 @@ class LeptonGenEfficiency(Module):
             if abs(genParticles[genParticle.genPartIdxMother].pdgId) in [9900012, 9990012]:
                 HNL = genParticles[genParticle.genPartIdxMother]
                 HNL_daughter = genParticle
-                break
+                if abs(HNL_daughter.pdgId) not in [11, 12, 13, 14, 15, 16]:
+                    HNLHadronicDaughters.append(HNL_daughter)
 
         HNL.boost = HNL.pt/HNL.mass
 
@@ -285,5 +294,35 @@ class LeptonGenEfficiency(Module):
             self.out.fillBranch("lepton_"+feature, [getattr(lepton, feature) for lepton in leptonsFromHNL])
         for feature in self.tau_features:
             self.out.fillBranch("hadtau_"+feature, [getattr(lepton, feature) for lepton in hadTausFromHNL])
+
+        selectedgenjets = []
+
+        for genjet in genJets:
+
+            genjet.is_matched = False
+            genjet.reco_pt = -1.
+            genjet.reco_eta = -1.
+            genjet.reco_phi = -1.
+            genjet.tightId = -1
+            for jet in jets:
+                if deltaR(jet, genjet) < 0.4:
+                    genjet.is_matched = True
+                    genjet.reco_pt = jet.pt
+                    genjet.reco_eta = jet.eta
+                    genjet.reco_phi = jet.phi
+                    genjet.tightId = jet.jetId > 1
+                    break
+            for quark in HNLHadronicDaughters:
+                if deltaR(quark, genjet) < 0.4:
+                    selectedgenjets.append(genjet)
+                    dxy, dz = getDisplacement(HNL, quark)
+                    genjet.dxy = dxy
+                    genjet.dz = dz
+                    break
+    
+        self.out.fillBranch("njet", len(selectedgenjets))   
+
+        for feature in self.jet_features:
+            self.out.fillBranch("jet_"+feature, [getattr(jet, feature) for jet in selectedgenjets]) 
 
         return True
