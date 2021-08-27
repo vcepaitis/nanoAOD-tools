@@ -41,6 +41,7 @@ print "isData:",args.isData
 print "inputs:",len(args.inputFiles)
 isSignal = False
 
+
 for inputFile in args.inputFiles:
     if args.isSignal or "dirac" in inputFile or "majorana" in inputFile or "LLPGun" in inputFile: 
         isSignal = True
@@ -178,6 +179,7 @@ leptonSelection = [
         electronID="CustomIso",
         globalOptions=globalOptions
     ),
+    PhotonVeto(),
     LeptonCollecting(
         tightMuonsCollection=lambda event:event.tightMuons,
         tightElectronsCollection=lambda event:event.tightElectrons,
@@ -212,17 +214,24 @@ else:
         ),
     ])
 
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
+#featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/experimental_feature_dict.py"
+
+#taggerModelPath = {
+#     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
+
+#}
+
 taggerModelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb"
 }
 
-BDT2lmodelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2016.model",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2017.model",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2018.model"
+BDT2lmodelPathExperimental = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2018.model"
 }
 
 BDT2lmodelPathUncorr = {
@@ -274,7 +283,7 @@ def jetSelectionSequence(jetDict):
                 jetMinPt=20.,
                 jetMinPtMerged=30.,
                 jetMaxEta=2.4,
-                globalFeatures = [],
+                globalFeatures = ['numberCpf', 'numberMuon', 'numberElectron'],
                 storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
@@ -430,8 +439,8 @@ def bdtSequence(systematics):
         sequence.append(
             XGBEvaluation(
                 systematics=systematics,
-                modelPath=BDT2lmodelPathUncorr[year],
-                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_inputs.py",
+                modelPath=BDT2lmodelPathExperimental[year],
+                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2l_inputs.py",
                 outputName="bdt_score"
             )
         )

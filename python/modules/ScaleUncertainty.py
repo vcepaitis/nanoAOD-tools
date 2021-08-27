@@ -30,14 +30,15 @@ class ScaleUncertainty(Module):
         
         if self.isSignal:
             for process in self.xsecs.keys():
-                if inputFile.GetName().find(process)>=0:
+                if inputFile.GetName().replace("pt20", "all").find(process)>=0:
                     if self.processName != None:
                         raise Exception("Process duplications: '%s' vs '%s' for file '%s'"%(self.processName,process,inputFile.GetName()))
                     self.processName = process
             if self.processName == None:
                 raise Exception("Process xsec not found for file '%s'"%(inputFile.GetName()))
+            processNameHack = self.processName.replace("pt20", "all")
 
-            xsec = self.xsecs[self.processName]['weights']['1']['xsec']
+            xsec = self.xsecs[processNameHack]['weights']['1']['xsec']
             self.inclUp = xsec['up']/xsec['nominal']
             self.inclDown = xsec['down']/xsec['nominal']
          
@@ -59,6 +60,10 @@ class ScaleUncertainty(Module):
         if self.isSignal:
             up = getattr(event,"LHEWeights_murUp_mufUp_1")
             down = getattr(event,"LHEWeights_murDown_mufDown_1")
+
+        elif not hasattr(event, "nLHEScaleWeight"):
+            down = 1
+            up = 1
             
         elif event.nLHEScaleWeight==9:
             down  = getattr(event,"LHEScaleWeight")[0]
