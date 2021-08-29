@@ -51,7 +51,7 @@ class LeptonCollecting(Module):
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
         storeLeadingKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig', 'isTriggerMatched'],
-        storeSubleadingKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
+        storeSubleadingKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig', 'looseId', 'tightId']
     ):
 
         self.globalOptions = globalOptions

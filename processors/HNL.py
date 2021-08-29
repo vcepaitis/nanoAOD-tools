@@ -4,6 +4,7 @@ import math
 import argparse
 import random
 import ROOT
+import json
 import numpy as np
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor \
@@ -29,6 +30,7 @@ parser.add_argument('--notagger', dest='notagger',
                     action='store_true', default=False)  
 parser.add_argument('--nobdt', dest='nobdt',
                     action='store_true', default=False) 
+parser.add_argument('--overwrite_pu', action='store', default=None)
 parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('output', nargs=1)
@@ -38,6 +40,7 @@ args = parser.parse_args()
 print "isData:",args.isData
 print "inputs:",len(args.inputFiles)
 isSignal = False
+
 
 for inputFile in args.inputFiles:
     if args.isSignal or "dirac" in inputFile or "majorana" in inputFile or "LLPGun" in inputFile: 
@@ -59,6 +62,8 @@ for inputFile in args.inputFiles:
         print "CRITICAL - 'Events' tree not found in file '"+inputFile+"'!"
         sys.exit(1)
     print " - ", inputFile, ", events=", tree.GetEntries()
+
+puProcessName = args.overwrite_pu
 
 print "year:", year
 print "isSignal:",isSignal
@@ -174,6 +179,7 @@ leptonSelection = [
         electronID="CustomIso",
         globalOptions=globalOptions
     ),
+    PhotonVeto(),
     LeptonCollecting(
         tightMuonsCollection=lambda event:event.tightMuons,
         tightElectronsCollection=lambda event:event.tightElectrons,
@@ -183,7 +189,6 @@ leptonSelection = [
         storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
         storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
     ),
-    
 ]
 
 analyzerChain = []
@@ -206,23 +211,27 @@ else:
         InvariantSystem(
             inputCollection= lambda event: [event.leadingLeptons[0],event.subleadingLeptons[0]],
             outputName="dilepton"
-        )
+        ),
     ])
 
+#featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/experimental_feature_dict.py"
 
+#taggerModelPath = {
+#     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
 
+#}
 
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 taggerModelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_allflavour_origSV_DA_30_wasserstein4_lr001_201117.pb"
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb"
 }
 
-BDT2lmodelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2016.model",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2017.model",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/nominal/bdt_2018.model"
+BDT2lmodelPathExperimental = {
+    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2016.model",
+    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2017.model",
+    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2018.model"
 }
 
 BDT2lmodelPathUncorr = {
@@ -271,9 +280,10 @@ def jetSelectionSequence(jetDict):
                 inputCollection=jetCollection,
                 leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons ,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
-                jetMinPt=15.,
+                jetMinPt=20.,
+                jetMinPtMerged=30.,
                 jetMaxEta=2.4,
-                globalFeatures = [],
+                globalFeatures = ['numberCpf', 'numberMuon', 'numberElectron'],
                 storeKinematics=['pt', 'eta', 'phi', 'minDeltaRSubtraction', 'ptLepton', 'ptOriginal', 'ptSubtracted', 'rawFactor', 'ptRaw'],
                 jetId=JetSelection.TIGHT,
                 outputName="selectedJets_"+systName,
@@ -349,13 +359,27 @@ def eventReconstructionSequence(jetMetDict):
                 globalOptions=globalOptions,
                 outputName=systName
             ),
-
             HNLReconstruction(
                 lepton1Object=lambda event: event.leadingLeptons[0],
                 lepton2Object=None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
                 jetCollection=jetCollection,
                 globalOptions=globalOptions,
                 outputName=systName,
+            ),
+        ])
+    sequence.extend([
+        TrackAndSVSelection(
+                svType="adapted",
+                outputName="hnlJet_track_weight",
+                jetCollection = lambda event: event.hnlJets_nominal,
+                globalOptions=globalOptions,
+                storeWeights=True
+            ),
+            TrackAndSVSelection(
+                svType="regular",
+                outputName="hnlJet_track_weight",
+                jetCollection = lambda event: event.hnlJets_nominal,
+                globalOptions=globalOptions
             )
         ])
         
@@ -415,8 +439,8 @@ def bdtSequence(systematics):
         sequence.append(
             XGBEvaluation(
                 systematics=systematics,
-                modelPath=BDT2lmodelPathUncorr[year],
-                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_inputs.py",
+                modelPath=BDT2lmodelPathExperimental[year],
+                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2l_inputs.py",
                 outputName="bdt_score"
             )
         )
@@ -492,7 +516,7 @@ if isMC:
     analyzerChain.append(
         PileupWeight(
             outputName="puweight",
-            #processName = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8-2016", #override pu profile
+            processName=puProcessName,
             globalOptions=globalOptions
         )
     )
@@ -515,8 +539,7 @@ else:
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
         },
-        modelPath=taggerModelPath,
-        modelFile=modelPath[year],
+        modelFile=taggerModelPath[year],
         taggerName='llpdnnx'
     ))
     
@@ -544,7 +567,16 @@ if not globalOptions["isData"]:
                            event: tree.fillBranch("genweight",
                            event.Generator_weight)])
 
+    analyzerChain.append(
+        ScaleUncertainty(
+            xsecs = json.load(open('/vols/cms/LLP/gridpackLookupTable.json')),
+            isSignal = isSignal
+        )
+    )
+    
+
     if isSignal:
+        analyzerChain.append(PDFUncertainty(isSignal = isSignal))
         for coupling in range(1,68):
             storeVariables.append([
                 lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),

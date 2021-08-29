@@ -8,6 +8,7 @@ if (ROOT.gSystem.Load("libPhysicsToolsNanoAODTools.so")!=0):
 from MuonSelection import MuonSelection
 from SingleMuonTriggerSelection import SingleMuonTriggerSelection
 from SingleElectronTriggerSelection import SingleElectronTriggerSelection
+from TrackAndSVSelection import TrackAndSVSelection
 from JetMetUncertainties import JetMetUncertainties
 from JetSelection import JetSelection
 from TaggerEvaluation import TaggerEvaluation
@@ -31,4 +32,6 @@ from LeptonGenEfficiency import LeptonGenEfficiency
 #from TaggerEvaluationCache import TaggerEvaluationCache
 from HNLReconstruction import HNLReconstruction
 from XsecWeight import XsecWeight
-
+from PDFUncertainty import PDFUncertainty
+from ScaleUncertainty import ScaleUncertainty
+from PhotonVeto import PhotonVeto

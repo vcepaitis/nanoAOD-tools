@@ -213,7 +213,7 @@ analyzerChain.append(
     )
 )
 
-analyzerChain.append(EventSkim(selection=lambda event: (event.dilepton_mass > 85.) and (event.dilepton_pt > 40.)))
+analyzerChain.append(EventSkim(selection=lambda event: (event.dilepton_mass > 80.) and (event.dilepton_pt > 40.)))
 
 
 analyzerChain.append(
@@ -249,8 +249,8 @@ if isMC:
         analyzerChain.append(
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
-                leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons,#+event.looseIsoMuons+event.looseIsoElectrons,
+                leptonCollectionP4Subraction=lambda event: [], #event.looseMuons+event.looseElectrons,
                 jetMinPt=15.,
                 jetMaxEta=2.4,
                 jetId=JetSelection.TIGHT,
@@ -272,8 +272,8 @@ else:
     analyzerChain.append(
         JetSelection(
             inputCollection=lambda event: Collection(event, "Jet"),
-            leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
-            leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
+            leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons,#+event.looseIsoMuons+event.looseIsoElectrons,
+            leptonCollectionP4Subraction=lambda event: [], #event.looseMuons+event.looseElectrons,
             jetMinPt=15.,
             jetMaxEta=2.4,
             jetId=JetSelection.TIGHT,
