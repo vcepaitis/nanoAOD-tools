@@ -107,9 +107,9 @@ class JetSelection(Module):
                 try:
                     global_jet_index = jetglobal_indices.index(jet._index)
                     global_jet = jetglobal[global_jet_index]
-                    if abs(jet.eta - global_jet.eta) > 0.01 or \
-                       abs(jet.phi - global_jet.phi) > 0.01:
-                           print "Warning ->> jet might be mismatched!"
+                    if math.fabs(jet.eta - global_jet.eta) > 0.01 or \
+                       math.fabs(deltaPhi(jet.phi,global_jet.phi)) > 0.01:
+                           print "Warning ->> jet might be mismatched! (phi: %.2f, eta: %.2f) != (phi: %.2f, eta: %.2f)"%(jet.phi, jet.eta, global_jet.phi, global_jet.eta)
                 except ValueError:
                     print "WARNING: jet (pt: %s, eta: %s) does not have a matching global jet" % (jet.pt, jet.eta)
                     

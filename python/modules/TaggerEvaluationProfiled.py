@@ -11,7 +11,7 @@ import imp
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getCtauLabel, getAbscissasAndWeights
+from utils import getCtauLabel, getAbscissasAndWeights, deltaPhi
 
 class TaggerEvaluationProfiled(Module):
     def __init__(
@@ -143,8 +143,8 @@ class TaggerEvaluationProfiled(Module):
                     #note: p4 can change in jet selection if subtracted pT<15 GeV
                     if hasattr(jet,"unselectedP4"):
                         jetp4 = jet.unselectedP4
-                    if abs(jetp4.Eta() - global_jet.eta) > 0.01 or \
-                       abs(jetp4.Phi() - global_jet.phi) > 0.01:
+                    if math.fabs(jetp4.Eta() - global_jet.eta) > 0.01 or \
+                       math.fabs(deltaPhi(jetp4.Phi(),global_jet.phi)) > 0.01:
                            print "Warning ->> jet might be mismatched! (phi: %.2f, eta: %.2f) != (phi: %.2f, eta: %.2f)"%(jet.phi, jet.eta, global_jet.phi, global_jet.eta)
                     jetOriginIndices.add(global_jet_index)
                     setattr(jet, "globalIdx", global_jet_index)
