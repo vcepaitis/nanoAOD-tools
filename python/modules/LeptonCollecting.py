@@ -80,6 +80,7 @@ class LeptonCollecting(Module):
         self.out.branch(self.outputName+"_electronmuon", "I")
         self.out.branch(self.outputName+"_muonjets", "I")
         self.out.branch(self.outputName+"_electronjets", "I")
+        self.out.branch(self.outputName+"_subLeptonTightId", "I")
 
         
         for i,variable in enumerate(self.storeLeadingKinematics):
@@ -239,6 +240,13 @@ class LeptonCollecting(Module):
             else:
                  setattr(lepton, "dzsig", math.fabs(lepton.dz)/math.fabs(lepton.dzErr))
 
+        lepton_id = -1 
+        if len(looseLeptons) > 0:
+          if looseLeptons[0].isMuon: 
+		lepton_id = looseLeptons[0].tightId
+          if looseLeptons[0].isElectron: 
+                lepton_id = looseLeptons[0].mvaFall17V1Iso_WP90
+
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
         self.out.fillBranch("nsubleading"+self.outputName, len(looseLeptons))
 
@@ -259,6 +267,8 @@ class LeptonCollecting(Module):
         self.out.fillBranch(self.outputName+"_electronmuon", electronmuon)
         self.out.fillBranch(self.outputName+"_muonjets", muonjets)
         self.out.fillBranch(self.outputName+"_electronjets", electronjets)
+        self.out.fillBranch(self.outputName+"_subLeptonTightId", lepton_id)
+   
 
         setattr(event, "leading"+self.outputName, tightLeptons)
         setattr(event, "subleading"+self.outputName, looseLeptons)

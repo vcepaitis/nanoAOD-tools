@@ -187,7 +187,7 @@ leptonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons",
         storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
-        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
+        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", "dxysig", "dzsig"]
     ),
 ]
 
@@ -440,7 +440,7 @@ def bdtSequence(systematics):
             XGBEvaluation(
                 systematics=systematics,
                 modelPath=BDT2lmodelPathExperimental[year],
-                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2l_inputs.py",
+                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_inputs.py",
                 outputName="bdt_score"
             )
         )
