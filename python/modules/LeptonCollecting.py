@@ -45,9 +45,12 @@ class LeptonCollecting(Module):
     def __init__(
         self,
         tightMuonsCollection = lambda event: Collection(event, "Muon"),
+
         tightElectronsCollection = lambda event: Collection(event, "Electron"),
+
         looseMuonCollection = lambda event: Collection(event, "Muon"),
         looseElectronCollection = lambda event: Collection(event, "Electron"),
+
         outputName = "Leptons",
         globalOptions={"isData": False, "year": 2016},
         storeLeadingKinematics=["pt", "eta", "phi", "charge", "isMuon", "isElectron", "relIso", "dxy", "dz", 'dxysig', 'dzsig', 'isTriggerMatched'],
@@ -141,8 +144,56 @@ class LeptonCollecting(Module):
         looseMuons = self.looseMuonCollection(event)
         looseElectrons = self.looseElectronCollection(event)
         
-        cpfCandidates = Collection(event,"cpf")
 
+        cpfCandidates = Collection(event,"cpf")
+        muonCandidates = Collection(event,"muon")
+
+        electronCandidates = Collection(event,"electron")
+
+
+
+        for lepton in tightMuons+looseMuons:
+            lepton.isMuon = 1
+            lepton.isElectron = 0
+            lepton.chi2 = -100.
+            lepton.muon_match = None
+            lepton.muon_match_dR = 100.
+            for muonCandidate in muonCandidates:
+               pt  = math.sqrt(muonCandidate.px**2+muonCandidate.py**2)
+               p   = math.sqrt(muonCandidate.px**2+muonCandidate.py**2+muonCandidate.pz**2)
+               eta = math.atanh(muonCandidate.pz/p)
+               phi = math.atan2(muonCandidate.py,muonCandidate.px)
+
+               dpt = pt - lepton.pt
+               dR =  math.sqrt((eta-lepton.eta)**2+ (phi - lepton.phi)**2)
+               if math.fabs(pt - lepton.pt)<0.1 and dR<0.02 :
+			print "lepton pt" , lepton.pt , "muon pt from miniAod " , pt 
+                        lepton.muon_match = muonCandidate
+                        lepton.muon_match_dR = dR
+			lepton.chi2 = muonCandidate.chi2 
+
+        for lepton in tightElectrons+looseElectrons:
+            lepton.isMuon = 0
+            lepton.isElectron = 1
+            lepton.relIso = lepton.pfRelIso03_all
+            lepton.chi2 = -100.
+            lepton.electron_match_dR = 100.
+            lepton.electron_match = None
+            for electronCandidate in electronCandidates:
+
+               pt  = math.sqrt(electronCandidate.px**2+electronCandidate.py**2)
+               p   = math.sqrt(electronCandidate.px**2+electronCandidate.py**2+electronCandidate.pz**2)
+               eta = math.atanh(electronCandidate.pz/p)
+               phi = math.atan2(electronCandidate.py,electronCandidate.px)
+
+               dpt = pt - lepton.pt
+               dR =  math.sqrt((eta-lepton.eta)**2 +(phi - lepton.phi)**2)
+               if math.fabs(pt - lepton.pt )<0.1 and dR<0.02 :
+                        lepton.electron_match = electronCandidate
+                        lepton.electron_match_dR = dR
+			lepton.chi2 = electronCandidate.chi2
+    
+	########
 
         for lepton in tightMuons+looseMuons:
             lepton.isMuon = 1
@@ -240,12 +291,18 @@ class LeptonCollecting(Module):
             else:
                  setattr(lepton, "dzsig", math.fabs(lepton.dz)/math.fabs(lepton.dzErr))
 
-        lepton_id = -1 
+        lepton_id = -1
+        lepton_chi2 = -1. 
         if len(looseLeptons) > 0:
           if looseLeptons[0].isMuon: 
 		lepton_id = looseLeptons[0].tightId
+		lepton_chi2 = looseLeptons[0].chi2
+		#print "it works it is " , lepton_chi2 , "   ", looseLeptons[0].muon_match
+		if lepton_chi2 == -100 : 
+			print " pt is " , looseLeptons[0].pt , "  eta " , looseLeptons[0].eta , "  phi " , looseLeptons[0].phi , "nb of cpf " , len(cpfCandidates)
           if looseLeptons[0].isElectron: 
                 lepton_id = looseLeptons[0].mvaFall17V1Iso_WP90
+		lepton_chi2 = looseLeptons[0].chi2
 
         self.out.fillBranch("nleading"+self.outputName, len(tightLeptons))
         self.out.fillBranch("nsubleading"+self.outputName, len(looseLeptons))
@@ -255,12 +312,14 @@ class LeptonCollecting(Module):
         for variable in self.storeSubleadingKinematics:
             self.out.fillBranch("subleading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),looseLeptons))
 
-        '''
+        ''' 
         self.out.fillBranch("subleading"+self.outputName+"_cpfMatch", [1 if lepton.cpf_match!=None else 0 for lepton in looseLeptons])
         for cpfFeature in cpfFeatures:
             arr = [getattr(lepton.cpf_match,cpfFeature) if lepton.cpf_match!=None else 0 for lepton in  looseLeptons]
             self.out.fillBranch("subleading"+self.outputName+"_"+cpfFeature,arr)
         '''
+                       
+          
         self.out.fillBranch(self.outputName+"_muonmuon", muonmuon)
         self.out.fillBranch(self.outputName+"_electronelectron", electronelectron)
         self.out.fillBranch(self.outputName+"_muonelectron", muonelectron)
