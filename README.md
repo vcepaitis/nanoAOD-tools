@@ -5,7 +5,7 @@ Tools for working with NanoAOD for the HNL legacy hadronic analysis
 
 ## Checkout instructions:
 
-Using the particular CMSSW release which is shipped with all the required software (especially tensorflow C++ API v1.6). To be run from the imperial cluster lx0[23].hep.ph.ic.ac.uk:
+Using the particular CMSSW release which is shipped with all the required software (especially tensorflow C++ API v1.6). To be run from the imperial cluster ```lx0[23].hep.ph.ic.ac.uk```:
 
 ```
 cmsrel CMSSW_10_2_18
@@ -33,5 +33,5 @@ Running on data instead:
 python PhysicsTools/NanoAODTools/processors/HNL.py --isData --input root://gfe02.grid.hep.ph.ic.ac.uk/pnfs/hep.ph.ic.ac.uk/data/cms/store/user/mkomm/HNL/NANOX_201117/SingleMuon_Run2016H/SingleMuon/SingleMuon_Run2016H/201121_114955/0001/nano_1055.root .
 ```
 
-For more instructions refer to the twiki.
+For more instructions refer to the [twiki](https://github.com/LLPDNNX/nanoAOD-tools/wiki).
 
