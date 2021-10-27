@@ -118,13 +118,17 @@ class TaggerEvaluation(Module):
                 try:
                     global_jet_index = jetglobal_indices.index(jet._index)
                 except ValueError:
-                    print "WARNING: jet (pt: %s, eta: %s) does not have a matching global jet --> tagger cannot be evaluated!" % (jet.pt, jet.eta)
+                    print "WARNING: jet (pt: %.2f, eta: %.2f) does not have a matching global jet --> tagger cannot be evaluated!" % (jet.pt, jet.eta)
                     continue
                 else:
                     global_jet = jetglobal[global_jet_index]
-                    if abs(jet.eta - global_jet.eta) > 0.01 or \
-                       abs(jet.phi - global_jet.phi) > 0.01:
-                           print "Warning ->> jet might be mismatched!"
+                    jetp4 = jet.p4()
+                    #note: p4 can change in jet selection if subtracted pT<15 GeV
+                    if hasattr(jet,"unselectedP4"):
+                        jetp4 = jet.unselectedP4
+                    if math.fabs(jetp4.Eta() - global_jet.eta) > 0.01 or \
+                       math.fabs(deltaPhi(jetp4.Phi(),global_jet.phi)) > 0.01:
+                           print "Warning ->> jet might be mismatched! (phi: %.2f, eta: %.2f) != (phi: %.2f, eta: %.2f)"%(jet.phi, jet.eta, global_jet.phi, global_jet.eta)
                     jetOriginIndices.add(global_jet_index)
                     setattr(jet, "globalIdx", global_jet_index)
 
