@@ -209,7 +209,8 @@ if args.leptons==1:
     )
 else:
     analyzerChain.extend([
-        EventSkim(selection=lambda event: event.nsubleadingLeptons==1, outputName="l2"),
+        EventSkim(selection=lambda event: event.nsubleadingLeptons>0, outputName="l2"),
+        EventSkim(selection=lambda event: event.nsubleadingLeptons==1, outputName="l3"),
         InvariantSystem(
             inputCollection= lambda event: [event.leadingLeptons[0],event.subleadingLeptons[0]],
             outputName="dilepton"
@@ -594,7 +595,7 @@ p = PostProcessor(
     modules=analyzerChain,
     maxEvents=-1,
     friend=True,
-    cut="((nElectron+nMuon)>0)", #remove if doing cutflow?
+    cut="((nElectron+nMuon)>0)", #remove if doing cutflow
     cutFlow=args.cutflow
 )
 
