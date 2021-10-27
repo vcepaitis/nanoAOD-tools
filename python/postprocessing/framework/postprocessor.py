@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.jobreport import JobRepo
 class PostProcessor :
     def __init__(self,outputDir,inputFiles,cut=None,branchsel=None,modules=[],compression="LZMA:9",friend=False,postfix=None,
 		 jsonInput=None,noOut=False,justcount=False,provenance=False,haddFileName=None,fwkJobReport=False,histFileName=None,histDirName=None, outputbranchsel=None,
-		 maxEvents=-1,treeName="Events"):
+		 maxEvents=-1,treeName="Events", cutFlow=False):
 	self.outputDir=outputDir
 	self.inputFiles=inputFiles
 	self.cut=cut
@@ -31,6 +31,7 @@ class PostProcessor :
 	self.histDirName = None
 	self.maxEvents = maxEvents
 	self.treeName = treeName
+	self.cutFlow = cutFlow
 	if self.jobReport and not self.haddFileName :
 		print "Because you requested a FJR we assume you want the final hadd. No name specified for the output file, will use tree.root"
 		self.haddFileName="tree.root"
@@ -77,7 +78,6 @@ class PostProcessor :
         else :
             self.histFile = None
 
-    
         for m in self.modules:
             if hasattr( m, 'writeHistFile') and m.writeHistFile :
                 m.beginJob(histFile=self.histFile,histDirName=self.histDirName)
@@ -140,7 +140,7 @@ class PostProcessor :
 
 	    # process events, if needed
 	    if not fullClone:
-		(nall, npass, timeLoop) = eventLoop(self.modules, inFile, outFile, inTree, outTree,maxEvents=self.maxEvents)
+		(nall, npass, timeLoop) = eventLoop(self.modules, inFile, outFile, inTree, outTree,maxEvents=self.maxEvents,cutFlow=self.cutFlow)
 		print 'Processed %d preselected entries from %s (%s entries). Finally selected %d entries' % (nall, fname, inTree.GetEntries(), npass)
 	    else:
                 nall = inTree.GetEntries()

@@ -2,6 +2,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Event
 from PhysicsTools.NanoAODTools.postprocessing.framework.treeReaderArrayTools import clearExtraBranches
 import sys, time
 import ROOT
+import random
 
 class Module(object):
     def __init__(self):
@@ -43,9 +44,19 @@ class Module(object):
             self.objs.append( getattr( self, obj.GetName() + '_' + name ) )
         setattr( self, obj.GetName(), objlist )
 
-def eventLoop(modules, inputFile, outputFile, inputTree, wrappedOutputTree, maxEvents=-1, eventRange=None, progress=(10000,sys.stdout), filterOutput=True): 
+def eventLoop(modules, inputFile, outputFile, inputTree, wrappedOutputTree, maxEvents=-1, eventRange=None, progress=(10000,sys.stdout), filterOutput=True, cutFlow=False): 
+    if cutFlow:
+        acceptedEventsPerModule = dict()
+
     for m in modules: 
+
         m.beginFile(inputFile, outputFile, inputTree, wrappedOutputTree)
+        if cutFlow:
+            m.__name__ = m.__class__.__name__
+            if hasattr(m, "outputName"):
+                if m.outputName is not None:
+                    m.__name__ += "_"+m.outputName
+            acceptedEventsPerModule[m.__name__] = 0
 
     t0 = time.time(); tlast = t0; doneEvents = 0; acceptedEvents = 0
     entries = inputTree.entries
@@ -60,6 +71,8 @@ def eventLoop(modules, inputFile, outputFile, inputTree, wrappedOutputTree, maxE
         ret = True
         for m in modules: 
             ret = m.analyze(e) 
+            if cutFlow and ret:
+                acceptedEventsPerModule[m.__name__] += 1 
             if not ret: break
         if ret:
             acceptedEvents += 1
@@ -73,5 +86,15 @@ def eventLoop(modules, inputFile, outputFile, inputTree, wrappedOutputTree, maxE
                 tlast = t1
     for m in modules: 
         m.endFile(inputFile, outputFile, inputTree, wrappedOutputTree)
+
+
+    if cutFlow:
+        sortedKeys = sorted(acceptedEventsPerModule, key=acceptedEventsPerModule.get, reverse=True)
+        sortedKeys = [key for key in sortedKeys if "Skim" in key]
+
+        print "--- Results of cutflow ---"
+        for key in sortedKeys:
+            print("%s accepted %i events out of %i: %2.2f%%") % (key, acceptedEventsPerModule[key], doneEvents, acceptedEventsPerModule[key]/float(0.01*doneEvents))
+        print "--- End of cutflow ---"
 
     return (doneEvents, acceptedEvents, time.time() - t0)

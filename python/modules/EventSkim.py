@@ -10,9 +10,10 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 
 class EventSkim(Module):
-    def __init__(self, selection=lambda event: True, outputName=None):
+    def __init__(self, selection=lambda event: True, outputName=None, store=False):
         self.selection = selection
         self.outputName = outputName
+        self.store = store
 
     def beginJob(self):
         pass
@@ -22,14 +23,14 @@ class EventSkim(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        if self.outputName is not None:
+        if self.outputName is not None and self.store:
             self.out.branch(self.outputName, "I")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
     def analyze(self, event):
-        if self.outputName is not None:
+        if self.outputName is not None and self.store:
             self.out.fillBranch(self.outputName, self.selection(event))
             return True
 

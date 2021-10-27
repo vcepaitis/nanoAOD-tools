@@ -33,6 +33,8 @@ parser.add_argument('--nobdt', dest='nobdt',
 parser.add_argument('--overwrite_pu', action='store', default=None)
 parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
+parser.add_argument('--cutflow', dest='cutflow', action='store_true', default=False)
+
 parser.add_argument('output', nargs=1)
 
 args = parser.parse_args()
@@ -129,7 +131,7 @@ leptonSelection = [
         electronIPCuts=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0),
+    EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0, outputName="l1"),
     SingleMuonTriggerSelection(
         inputCollection=lambda event: event.tightMuons,
         outputName="IsoMuTrigger",
@@ -197,17 +199,18 @@ analyzerChain.extend(leptonSelection)
 
 if not args.notrigger:
     analyzerChain.extend([
-        EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0),
-        EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0),
+        EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0,  outputName="l1_trigger"),
+        EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0, outputName="l1_triggermatch"),
     ])
     
 if args.leptons==1:
     analyzerChain.append(
-        EventSkim(selection=lambda event: event.nsubleadingLeptons==0)
+        EventSkim(selection=lambda event: event.nsubleadingLeptons==0, outputName="l2")
     )
 else:
     analyzerChain.extend([
-        EventSkim(selection=lambda event: event.nsubleadingLeptons==1),
+        EventSkim(selection=lambda event: event.nsubleadingLeptons>0, outputName="l2"),
+        EventSkim(selection=lambda event: event.nsubleadingLeptons==1, outputName="l3"),
         InvariantSystem(
             inputCollection= lambda event: [event.leadingLeptons[0],event.subleadingLeptons[0]],
             outputName="dilepton"
@@ -340,7 +343,8 @@ def jetSelectionSequence(jetDict):
     systNames = jetDict.keys()
     sequence.append(
         EventSkim(selection=lambda event, systNames=systNames: 
-            any([getattr(event, "nselectedJets_"+systName) > 0 for systName in systNames])
+            any([getattr(event, "nselectedJets_"+systName) > 0 for systName in systNames]),
+            outputName="jet",
         )
     )
             
@@ -588,10 +592,11 @@ analyzerChain.append(EventInfo(storeVariables=storeVariables))
 p = PostProcessor(
     args.output[0],
     [args.inputFiles],
-    cut="((nElectron+nMuon)>0)",
     modules=analyzerChain,
     maxEvents=-1,
-    friend=True
+    friend=True,
+    cut="((nElectron+nMuon)>0)", #remove if doing cutflow
+    cutFlow=args.cutflow
 )
 
 p.run()
