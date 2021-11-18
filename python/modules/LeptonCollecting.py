@@ -84,7 +84,7 @@ class LeptonCollecting(Module):
         self.out.branch(self.outputName+"_muonjets", "I")
         self.out.branch(self.outputName+"_electronjets", "I")
         self.out.branch(self.outputName+"_subLeptonTightId", "I")
-
+        self.out.branch(self.outputName+"_subLeptonChi2", "F")
         
         for i,variable in enumerate(self.storeLeadingKinematics):
             name,dtype = splitNameType(variable)
@@ -163,11 +163,11 @@ class LeptonCollecting(Module):
                p   = math.sqrt(muonCandidate.px**2+muonCandidate.py**2+muonCandidate.pz**2)
                eta = math.atanh(muonCandidate.pz/p)
                phi = math.atan2(muonCandidate.py,muonCandidate.px)
-
+	       dphi =math.fabs( phi - lepton.phi)
                dpt = pt - lepton.pt
                dR =  math.sqrt((eta-lepton.eta)**2+ (phi - lepton.phi)**2)
-               if math.fabs(pt - lepton.pt)<0.1 and dR<0.02 :
-			print "lepton pt" , lepton.pt , "muon pt from miniAod " , pt 
+               if  dphi < 0.1 and dR<0.1 :
+               #if  dR<0.1 :
                         lepton.muon_match = muonCandidate
                         lepton.muon_match_dR = dR
 			lepton.chi2 = muonCandidate.chi2 
@@ -187,8 +187,10 @@ class LeptonCollecting(Module):
                phi = math.atan2(electronCandidate.py,electronCandidate.px)
 
                dpt = pt - lepton.pt
+               dphi =math.fabs( phi - lepton.phi)
                dR =  math.sqrt((eta-lepton.eta)**2 +(phi - lepton.phi)**2)
-               if math.fabs(pt - lepton.pt )<0.1 and dR<0.02 :
+               if dR< 0.1 and dphi < 0.1:
+               #if  dR<0.1 :
                         lepton.electron_match = electronCandidate
                         lepton.electron_match_dR = dR
 			lepton.chi2 = electronCandidate.chi2
@@ -297,9 +299,6 @@ class LeptonCollecting(Module):
           if looseLeptons[0].isMuon: 
 		lepton_id = looseLeptons[0].tightId
 		lepton_chi2 = looseLeptons[0].chi2
-		#print "it works it is " , lepton_chi2 , "   ", looseLeptons[0].muon_match
-		if lepton_chi2 == -100 : 
-			print " pt is " , looseLeptons[0].pt , "  eta " , looseLeptons[0].eta , "  phi " , looseLeptons[0].phi , "nb of cpf " , len(cpfCandidates)
           if looseLeptons[0].isElectron: 
                 lepton_id = looseLeptons[0].mvaFall17V1Iso_WP90
 		lepton_chi2 = looseLeptons[0].chi2
@@ -327,6 +326,7 @@ class LeptonCollecting(Module):
         self.out.fillBranch(self.outputName+"_muonjets", muonjets)
         self.out.fillBranch(self.outputName+"_electronjets", electronjets)
         self.out.fillBranch(self.outputName+"_subLeptonTightId", lepton_id)
+        self.out.fillBranch(self.outputName+"_subLeptonChi2", lepton_chi2)
    
 
         setattr(event, "leading"+self.outputName, tightLeptons)
