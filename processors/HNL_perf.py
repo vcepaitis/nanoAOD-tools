@@ -174,16 +174,16 @@ analyzerChain = []
 analyzerChain.extend(leptonSelection)
 
 
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
+featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/experimental_feature_dict.py"
 taggers = [
-    {"name":"DA100000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_100000_wasserstein4_lr001_201117.pb"},
-    {"name":"DA10000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_10000_wasserstein4_lr001_201117.pb"},
-    {"name":"DA1000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_1000_wasserstein4_lr001_201117.pb"},
-    {"name":"DA400","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_400_wasserstein4_lr001_201117.pb"},
-    {"name":"DA200","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_200_wasserstein4_lr001_201117.pb"},
-    {"name":"DA100","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_100_wasserstein4_lr001_201117.pb"},
-    {"name":"DA50","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_50_wasserstein4_lr001_201117.pb"},
-    {"name":"DA10","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_10_wasserstein4_lr001_201117.pb"}
+    #{"name":"DA100000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_100000_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA10000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_10000_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA1000","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_1000_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA400","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_400_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA200","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_200_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA100","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_100_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA50","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_50_wasserstein4_lr001_201117.pb"},
+    #{"name":"DA10","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_noleptcleaning_origSV_DA_10_wasserstein4_lr001_201117.pb"}
 
     #{"name":"deepset","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_DeepSetNetwork_origSV_lr01_201117.pb"},
     #{"name":"nominal","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_origSV_lr01_201117.pb"},
@@ -194,7 +194,13 @@ taggers = [
     
     #{"name":"nominal_ref_DA", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_DA_20_lr001_201117.pb"%year},
     #{"name":"nominal_ref", "modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_origSV_lr01_201117.pb"%year},
+
+    {"name":"DA300","modelfile":"${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed%i_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb"%args.year},
 ]
+
+
+
+
 '''
 if year==2016:
     taggers.extend([
@@ -277,6 +283,7 @@ for systName, jetCollection in [
             jetMaxEta=2.4,
             jetId=JetSelection.TIGHT,
             outputName="selectedJets_"+systName,
+            globalFeatures=['numberCpf','numberNpf','numberSv','numberMuon','numberElectron'],
             globalOptions=globalOptions
         
         )
@@ -293,7 +300,7 @@ for systName, jetCollection in [
                 'isE': ['isPrompt_E'],
                 'isMU': ['isPrompt_MU'],
                 'isTAU': ['isPrompt_TAU'],
-
+                'isPH': ['isPrompt_PHOTON'],
                 'isB': ['isB', 'isBB', 'isLeptonic_B'],
                 'isC': ['isC', 'isCC', 'isLeptonic_C'],
                 'isUDS': ['isS', 'isUD'],
@@ -339,6 +346,7 @@ for tagger in taggers:
                 'E':['E'],
                 'MU':['MU'],
                 'TAU':['TAU'],
+                'PH':['PH'],
                 'UDS':['UDS'],
                 'G':['G'],
                 'B':['B'],
@@ -386,7 +394,7 @@ for systName, jetCollection, metObject in [
                 inputCollection=jetCollection,
                 taggerName=tagger["name"],
                 outputName="selectedJets_"+systName,
-                profiledLabels = ['E','MU','TAU','UDS','G','PU','B','C','TAUANY','LLP_QANY','LLP_ANY','LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_H','LLP_QTAU_3H'],
+                profiledLabels = ['E','MU','TAU','PH','UDS','G','PU','B','C','TAUANY','LLP_QANY','LLP_ANY','LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_H','LLP_QTAU_3H'],
                 maxOnly = False,
                 globalOptions=globalOptions
             )
