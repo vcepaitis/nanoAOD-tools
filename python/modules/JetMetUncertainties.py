@@ -360,7 +360,6 @@ class JetMetUncertainties(Module):
         met.uncertainty_p4['unclEnDown'] = met.uncertainty_p4['nominal']-unclMetDelta
         
         
-        
         setattr(event,self.outputJetPrefix+"nominal",self.makeNewJetCollection(jets,"nominal"))
         setattr(event,self.outputMetPrefix+"nominal",self.makeNewMetObject(met,"nominal"))
         

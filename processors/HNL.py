@@ -104,10 +104,11 @@ if args.isData:
                2018: 'Autumn18_V19_DATA'
                }
 
-met_variable = {2016: lambda event: Object(event, "MET"),
-                2017: lambda event: Object(event, "METFixEE2017"),
-                2018: lambda event: Object(event, "MET")
-                }
+met_variable = {
+        2016: "MET",
+        2017: "METFixEE2017",
+        2018: "MET",
+        }
 
 
 leptonSelection = [
@@ -220,10 +221,6 @@ else:
 #featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
 featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/experimental_feature_dict.py"
 
-#taggerModelPath = {
-#     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_allflavour_origSV_DA_300_wasserstein4_lr001_201117.pb",
-
-#}
 
 taggerModelPath = {
     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
@@ -454,7 +451,7 @@ def bdtSequence(systematics):
 if isMC:
     analyzerChain.append(
         JetMetUncertainties(
-            metInput=met_variable[year],
+            metInput= lambda event: Object(event, met_variable[year]),
             rhoInput = lambda event: event.fixedGridRhoFastjetAll,
             jetCollection = lambda event: Collection(event,"Jet"),
             lowPtJetCollection = lambda event: Collection(event,"CorrT1METJet"),
@@ -469,6 +466,19 @@ if isMC:
         )
     )
 
+    analyzerChain.append(
+        PhiXYCorrection(
+            era=str(year),
+            metInputDict={
+                "met_nominal": "met_nominal", 
+                "met_jerUp": "met_jerUp",
+                "met_jerDown": "met_jerDown",
+                "met_jesTotalUp": "met_jesTotalUp",
+                "met_unclEnUp": "met_unclEnUp",
+                "met_unclEnDown": "met_unclEnDown"},
+            isMC=isMC,
+            )
+        )
 
     analyzerChain.extend(
         jetSelectionSequence({
@@ -491,9 +501,22 @@ if isMC:
             "unclEnUp": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnUp),
             "unclEnDown": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnDown),
         })
-    )
-    
-    
+    )    
+
+    analyzerChain.append(
+        HEMFlag(
+            inputDict={
+            "nominal": lambda event: event.hnlJets_nominal,
+            "jerUp": lambda event: event.hnlJets_jerUp,
+            "jerDown": lambda event: event.hnlJets_jerDown,
+            "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
+            "jesTotalDown": lambda event: event.hnlJets_jesTotalDown
+        },
+            leadingLeptons=lambda event: event.leadingLeptons,
+            subleadingLeptons=lambda event: event.subleadingLeptons
+        )
+    )    
+        
     analyzerChain.extend(
         taggerSequence({
             "nominal": lambda event: event.hnlJets_nominal,
@@ -527,6 +550,15 @@ if isMC:
 
 
 else:
+    analyzerChain.append(
+        PhiXYCorrection(
+            era=str(year),
+            metInputDict={"met_nominal": met_variable[year]}, 
+            isMC=isMC,
+            metObject=True
+            )
+        )
+
     analyzerChain.extend(
         jetSelectionSequence({
             "nominal": lambda event: Collection(event,"Jet")
@@ -535,9 +567,18 @@ else:
     
     analyzerChain.extend(
         eventReconstructionSequence({
-            "nominal": (lambda event: event.selectedJets_nominal, met_variable[year]),
+            "nominal": (lambda event: event.selectedJets_nominal, lambda event: Object(event, met_variable[year])),
         })
     )
+    analyzerChain.append(
+        HEMFlag(
+            inputDict={
+            "nominal": lambda event: event.hnlJets_nominal,
+        },
+            leadingLeptons=lambda event: event.leadingLeptons,
+            subleadingLeptons=lambda event: event.subleadingLeptons
+        )
+    )    
     
     analyzerChain.extend(
         taggerSequence({
