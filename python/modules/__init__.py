@@ -35,3 +35,5 @@ from XsecWeight import XsecWeight
 from PDFUncertainty import PDFUncertainty
 from ScaleUncertainty import ScaleUncertainty
 from PhotonVeto import PhotonVeto
+
+from ElectronSF import ElectronSF
