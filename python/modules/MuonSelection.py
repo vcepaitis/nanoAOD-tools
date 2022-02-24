@@ -9,7 +9,7 @@ import numpy as np
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
-from utils import getGraph, getHist, combineHist2D, getSFXY, deltaR
+from utils import getGraph, getHist, getHistCanvas, combineHist2D, getSFXY, deltaR
 
 class MuonSelection(Module):
     TIGHT = 1
@@ -44,6 +44,7 @@ class MuonSelection(Module):
         self.storeKinematics = storeKinematics
         self.storeWeights = storeWeights
         self.selectLeadingOnly = selectLeadingOnly
+        self.muonID=muonID
 
         if muonID==MuonSelection.MEDIUM or muonIso==MuonSelection.MEDIUM:
             print("Unsupported ID or ISO")
@@ -103,19 +104,25 @@ class MuonSelection(Module):
                 )
                 
                 #loose iso and loose id efficiency
-                isoLooseLooseSFBToF = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunBCDEF_SF_ISO.root",
-                    "NUM_LooseRelIso_DEN_LooseID_eta_pt"
-                )
-                isoLooseLooseSFGToH = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunGH_SF_ISO.root",
-                    "NUM_LooseRelIso_DEN_LooseID_eta_pt"
-                )
-                self.isoLooseLooseSFHist = combineHist2D(
-                    isoLooseLooseSFBToF,
-                    isoLooseLooseSFGToH,
-                    1.-16226.5/35916.4,
-                    16226.5/35916.4
+                # isoLooseLooseSFBToF = getHist(
+                #     "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunBCDEF_SF_ISO.root",
+                #     "NUM_LooseRelIso_DEN_LooseID_eta_pt"
+                # )
+                # isoLooseLooseSFGToH = getHist(
+                #     "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/RunGH_SF_ISO.root",
+                #     "NUM_LooseRelIso_DEN_LooseID_eta_pt"
+                # )
+                
+                # self.isoLooseLooseSFHist = combineHist2D(
+                #     isoLooseLooseSFBToF,
+                #     isoLooseLooseSFGToH,
+                #     1.-16226.5/35916.4,
+                #     16226.5/35916.4
+                # )
+
+                self.isoLooseLooseSFHist = getHistCanvas(
+                    "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
+                    "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
                 )
 
             elif self.globalOptions["year"] == 2017:
@@ -138,9 +145,13 @@ class MuonSelection(Module):
                 )
                 
                 #loose iso and loose id efficiency
-                self.isoLooseLooseSFHist = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ISO.root",
-                    "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
+                # self.isoLooseLooseSFHist = getHist(
+                #     "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ISO.root",
+                #     "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
+                # )
+                self.isoLooseLooseSFHist = getHistCanvas(
+                    "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
+                    "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
                 )
 
             elif self.globalOptions["year"] == 2018:
@@ -164,9 +175,13 @@ class MuonSelection(Module):
                 )
                 
                 #loose iso and loose id efficiency
-                self.isoLooseLooseSFHist = getHist(
-                    "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ISO.root",
-                    "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
+                # self.isoLooseLooseSFHist = getHist(
+                #     "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ISO.root",
+                #     "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
+                # )
+                self.isoLooseLooseSFHist = getHistCanvas(
+                    "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
+                    "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
                 )
 
             else:
@@ -180,7 +195,7 @@ class MuonSelection(Module):
         elif muonID==MuonSelection.LOOSE:
             self.muonId = lambda muon: muon.looseId==1
             if self.storeWeights:
-                self.muonIdSF = self.idLooseSFHist
+                self.muonIdSF = self.isoLooseLooseSFHist
         elif muonID==MuonSelection.NONE:
             self.muonId = lambda muon: True
             if self.storeWeights:
@@ -285,13 +300,17 @@ class MuonSelection(Module):
 
             for muon in selectedMuons:
                 if self.globalOptions["year"] == 2016:
-                        weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.eta,muon.pt)
+                    weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.eta,muon.pt)
                 elif self.globalOptions["year"] == 2017 or self.globalOptions["year"] == 2018:
                     weight_id,weight_id_err = getSFXY(self.muonIdSF,muon.pt, abs(muon.eta))
 
+                if self.muonID==MuonSelection.LOOSE:
+                    weight_id,weight_id_err = getSFXY(self.muonIdSF,abs(muon.dxy)/(1e-5+abs(muon.dxyErr)),muon.pt)
+
                 weight_id_nominal.append(weight_id)
                 weight_id_up.append((weight_id+weight_id_err))
-                weight_id_down.append((weight_id-weight_id_err))
+                weight_id_down.append((weight_id-weight_id_err))                
+   
                     
                 if self.globalOptions["year"] == 2016:
                     weight_iso,weight_iso_err = getSFXY(self.muonIsoSF,muon.eta,muon.pt)

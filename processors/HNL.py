@@ -149,6 +149,7 @@ leptonSelection = [
         outputName="looseMuons",
         storeKinematics=[],
         muonMinPt=3.,
+        storeWeights=True,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions

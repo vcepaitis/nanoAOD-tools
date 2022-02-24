@@ -84,6 +84,18 @@ def getHist(relFileName, histName):
     rootFile.Close()
     return hist
 
+def getHistCanvas(relFileName, canvasName, histName):
+    rootFile = ROOT.TFile(os.path.expandvars("$CMSSW_BASE/src/"+relFileName))
+    canvas = rootFile.Get(canvasName)
+    hist = canvas.GetPrimitive(histName)
+    if not hist:
+        raise Exception("Hist file '"+histName +
+                        "' not found in file '"+relFileName+"'")
+    hist = hist.Clone(histName+str(random.random()))
+    hist.SetDirectory(0)
+    rootFile.Close()
+    return hist
+
 
 def getGraph(relFileName, graphName):
     rootFile = ROOT.TFile(os.path.expandvars("$CMSSW_BASE/src/"+relFileName))
