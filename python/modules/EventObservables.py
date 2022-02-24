@@ -17,7 +17,8 @@ class EventObservables(Module):
     def __init__(
         self,
         lepton1Object = lambda event: event.leadingLeptons[0],
-        lepton2Object = None,
+        lepton2Object = lambda event: event.subleadingLeptons[0],
+        lepton3Object = None,
         jetCollection=lambda event: Collection(event, "Jet"),
         metInput=lambda event: Object(event, "MET"),
         outputName="EventObservables",
@@ -25,6 +26,7 @@ class EventObservables(Module):
     ):
         self.lepton1Object = lepton1Object
         self.lepton2Object = lepton2Object
+        self.lepton3Object = lepton3Object
         self.jetCollection = jetCollection
         self.metInput = metInput
         self.outputName = outputName
@@ -62,6 +64,9 @@ class EventObservables(Module):
         self.out.branch(self.outputName+"_leptonic_recoil", "F")
         self.out.branch(self.outputName+"_longitudinal_recoil", "F")
         self.out.branch(self.outputName+"_transverse_recoil", "F")
+
+        #For displaced electron SF studies
+        self.out.branch(self.outputName+"_dR_l3j", "F")
         
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -69,7 +74,8 @@ class EventObservables(Module):
 
     def analyze(self, event):
         lepton1 = self.lepton1Object(event)
-        lepton2 = None if self.lepton2Object==None else self.lepton2Object(event)
+        lepton2 = self.lepton2Object(event)
+        lepton3 = None if self.lepton3Object==None else self.lepton3Object(event)
     
         jets = self.jetCollection(event)
 
@@ -105,6 +111,13 @@ class EventObservables(Module):
             )
             vectorSum += jet.p4Subtracted
             scalarPtSum += jet.ptSubtracted
+
+        if (len(jets) > 0) and (lepton3!=None):
+            sortedJets = sorted(jets, key=lambda jet: deltaR(lepton3, jet), reverse=False)
+            sortedJet = sortedJets[0]
+            self.out.fillBranch(self.outputName+"_dR_l3j", deltaR(lepton3,sortedJet))
+        else:
+            self.out.fillBranch(self.outputName+"_dR_l3j", -99)
             
         self.out.fillBranch(self.outputName+"_eventShape_isotropy", eventShapes.isotropy())
         self.out.fillBranch(self.outputName+"_eventShape_circularity", eventShapes.circularity())
