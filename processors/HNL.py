@@ -168,7 +168,7 @@ leptonSelection = [
         inputCollection=lambda event: event.tightElectrons_unselected,
         outputName="looseElectrons",
         storeKinematics=[],
-
+        storeWeights=True,
         electronMinPt=5.,
         electronID="Custom",
         globalOptions=globalOptions
