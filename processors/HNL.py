@@ -189,7 +189,7 @@ leptonSelection = [
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons",
         storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
-        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", "dxysig", "dzsig", "dxyErr"]
+        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig' , "dxyErr" , "dzErr"]
     ),
 ]
 
@@ -281,7 +281,7 @@ def jetSelectionSequence(jetDict):
         sequence.extend([
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons ,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=20.,
                 jetMinPtMerged=30.,
@@ -294,7 +294,7 @@ def jetSelectionSequence(jetDict):
             ),
             JetSelection(
                 inputCollection=jetCollection,
-                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons,
+                leptonCollectionDRCleaning=lambda event: event.tightMuons+event.tightElectrons+event.looseIsoMuons+event.looseIsoElectrons,
                 leptonCollectionP4Subraction=lambda event:event.looseMuons+event.looseElectrons,
                 jetMinPt=30.,
                 jetMaxEta=2.4,
@@ -443,8 +443,8 @@ def bdtSequence(systematics):
         sequence.append(
             XGBEvaluation(
                 systematics=systematics,
-                modelPath=BDT2lmodelPathUncorr[year],
-                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_inputs.py",
+                modelPath=BDT2lmodelPathExperimental[year],
+                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2l_inputs.py",
                 outputName="bdt_score"
             )
         )
