@@ -18,20 +18,13 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--isData', dest='isData',
                     action='store_true', default=False)
-parser.add_argument('--isSignal', dest='isSignal',
-                    action='store_true', default=False)
 parser.add_argument('--year', dest='year',
                     action='store', type=int, default=-1)
 parser.add_argument('--noiso', dest='noiso',
                     action='store_true', default=False)
 parser.add_argument('--notrigger', dest='notrigger',
-                    action='store_true', default=False)  
-parser.add_argument('--notagger', dest='notagger',
-                    action='store_true', default=False)  
-parser.add_argument('--nobdt', dest='nobdt',
-                    action='store_true', default=False) 
-parser.add_argument('--overwrite_pu', action='store', default=None)
-parser.add_argument('--leptons', dest='leptons', type=int, default=2, choices=[1,2])                     
+                    action='store_true', default=False)
+parser.add_argument('--overwrite_pu', action='store', default=None)                    
 parser.add_argument('--input', dest='inputFiles', action='append', default=[])
 parser.add_argument('--cutflow', dest='cutflow', action='store_true', default=False)
 
@@ -41,12 +34,9 @@ args = parser.parse_args()
 
 print "isData:",args.isData
 print "inputs:",len(args.inputFiles)
-isSignal = False
 
 
 for inputFile in args.inputFiles:
-    if args.isSignal or "dirac" in inputFile or "majorana" in inputFile or "LLPGun" in inputFile: 
-        isSignal = True
     if args.year<0 and ("-2016" in inputFile or "Run2016" in inputFile):
         year = 2016
     elif args.year<0 and ("-2017" in inputFile or "Run2017" in inputFile):
@@ -68,17 +58,12 @@ for inputFile in args.inputFiles:
 puProcessName = args.overwrite_pu
 
 print "year:", year
-print "isSignal:",isSignal
 print "apply lepton iso: ","True (default)" if not args.noiso else "False"
 print "apply trigger selection: ","True (default)" if not args.notrigger else "False" 
-print "run BDT: ","True (default)" if not args.nobdt else "False" 
-print "run tagger: ","True (default)" if not args.notagger else "False" 
-print "channel: ","single lepton" if args.leptons==1 else "dilepton"
 print "output directory:", args.output[0]
 
 globalOptions = {
     "isData": args.isData,
-    "isSignal": isSignal,
     "year": year
 }
 
@@ -104,11 +89,10 @@ if args.isData:
                2018: 'Autumn18_V19_DATA'
                }
 
-met_variable = {
-        2016: "MET",
-        2017: "METFixEE2017",
-        2018: "MET",
-        }
+met_variable = {2016: lambda event: Object(event, "MET"),
+                2017: lambda event: Object(event, "METFixEE2017"),
+                2018: lambda event: Object(event, "MET")
+                }
 
 
 leptonSelection = [
@@ -132,7 +116,8 @@ leptonSelection = [
         electronIPCuts=True,
         globalOptions=globalOptions
     ),
-    EventSkim(selection=lambda event: event.ntightMuons + event.ntightElectrons > 0, outputName="l1"),
+    #EventSkim(selection=lambda event: event.ntightMuons > 1 or event.ntightElectrons > 1, outputName="l1"),
+    EventSkim(selection=lambda event: event.ntightMuons > 1, outputName="l1l2"),
     SingleMuonTriggerSelection(
         inputCollection=lambda event: event.tightMuons,
         outputName="IsoMuTrigger",
@@ -150,7 +135,6 @@ leptonSelection = [
         outputName="looseMuons",
         storeKinematics=[],
         muonMinPt=3.,
-        storeWeights=True,
         muonID=MuonSelection.LOOSE,
         muonIso=MuonSelection.NONE,
         globalOptions=globalOptions
@@ -166,12 +150,12 @@ leptonSelection = [
         globalOptions=globalOptions
     ),
     ElectronSelection(
-        inputCollection=lambda event: event.tightElectrons_unselected,
+        #inputCollection=lambda event: event.tightElectrons_unselected,  ########## ONLY FOR MU MU E!!!!!!!!
         outputName="looseElectrons",
         storeKinematics=[],
-        storeWeights=True,
+
         electronMinPt=5.,
-        electronID="Custom",
+        electronID="None",
         globalOptions=globalOptions
     ),
     ElectronSelection(
@@ -180,72 +164,34 @@ leptonSelection = [
         storeKinematics=[],
         electronMinPt=5.,
         storeWeights=False,
-        electronID="CustomIso",
+        electronID="Iso",
         globalOptions=globalOptions
     ),
     PhotonVeto(),
-    LeptonCollecting(
+    #EventSkim(selection=lambda event: event.nlooseElectrons>0 and event.ntightMuons+event.nlooseMuons<3, outputName="l3"),#think about it
+    EventSkim(selection=lambda event: event.ntightMuons+event.nlooseMuons<3, outputName="l3"),#makes sure we have only 2 muons
+    PhotonConversionsForEleSF(
         tightMuonsCollection=lambda event:event.tightMuons,
         tightElectronsCollection=lambda event:event.tightElectrons,
         looseMuonCollection=lambda event:event.looseMuons,
         looseElectronCollection=lambda event:event.looseElectrons,
         outputName = "Leptons",
-        storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso"],
-        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig']
+        storeLeadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig'],
+        storeSubleadingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig'],
+        storeTrailingKinematics=["pt", "eta", "phi", "charge/I", "isMuon/I", "isElectron/I", "relIso", "dxy", "dz", 'dxysig', 'dzsig', 'isCustomID', 'isCustomNoConvID']
     ),
 ]
 
 analyzerChain = []
 
 analyzerChain.extend(leptonSelection)
-
-if not args.notrigger:
-    analyzerChain.extend([
-        EventSkim(selection=lambda event: (event.IsoMuTrigger_flag + event.IsoElectronTrigger_flag) > 0,  outputName="l1_trigger"),
-        EventSkim(selection=lambda event: event.leadingLeptons[0].isTriggerMatched>0, outputName="l1_triggermatch"),
-    ])
     
-if args.leptons==1:
-    analyzerChain.append(
-        EventSkim(selection=lambda event: event.nsubleadingLeptons==0, outputName="l2")
-    )
-else:
-    analyzerChain.extend([
-        EventSkim(selection=lambda event: event.nsubleadingLeptons>0, outputName="l2"),
-        EventSkim(selection=lambda event: event.nsubleadingLeptons==1, outputName="l3"),
-        InvariantSystem(
-            inputCollection= lambda event: [event.leadingLeptons[0],event.subleadingLeptons[0]],
-            outputName="dilepton"
-        ),
-    ])
-
-#featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/feature_dict.py"
-featureDictFile = "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/experimental_feature_dict.py"
-
-
-taggerModelPath = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2016_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2017_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/nn/201117/weightMixed2018_ExtNominalNetwork_photon_DA_300_wasserstein4_lr001_201117.pb"
-}
-
-BDT2lmodelPathExperimental = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2016.model",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2017.model",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2018.model"
-}
-
-BDT2lmodelPathUncorr = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_2016.model",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_2017.model",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_2l_2018.model"
-}
-
-BDT1lmodelPathUncorr = {
-    2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_lr0.100_min0.1000_depths4_bagging0.75_2016.model",
-    2017: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_lr0.100_min0.1000_depths4_bagging0.75_2017.model",
-    2018: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_lr0.100_min0.1000_depths4_bagging0.75_2018.model",
-}
+analyzerChain.extend([
+    InvariantSystem(
+        inputCollection= lambda event: [event.tightMuons[0],event.tightMuons[1]],
+        outputName="dilepton"
+    ),
+])
 
 jesUncertaintyFile = {
     2016: "${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/jme/Summer16_07Aug2017_V11_MC_Uncertainty_AK4PFchs.txt",
@@ -354,105 +300,22 @@ def eventReconstructionSequence(jetMetDict):
     for systName,(jetCollection,metObject) in jetMetDict.items():
         sequence.extend([
             EventObservables(
-                lepton1Object=lambda event: event.leadingLeptons[0],
-                lepton2Object=None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
+                lepton1Object=lambda event: event.leadingLeptons,
+                lepton2Object=lambda event: event.subleadingLeptons,
+                lepton3Object=lambda event: event.trailingLeptons,
                 jetCollection=jetCollection,
                 metInput=metObject,
                 globalOptions=globalOptions,
                 outputName=systName
             ),
-            HNLReconstruction(
-                lepton1Object=lambda event: event.leadingLeptons[0],
-                lepton2Object=None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
-                jetCollection=jetCollection,
-                globalOptions=globalOptions,
-                outputName=systName,
-            ),
-        ])
-    sequence.extend([
-        TrackAndSVSelection(
-                svType="adapted",
-                outputName="hnlJet_track_weight",
-                jetCollection = lambda event: event.hnlJets_nominal,
-                globalOptions=globalOptions,
-                storeWeights=True
-            ),
-            TrackAndSVSelection(
-                svType="regular",
-                outputName="hnlJet_track_weight",
-                jetCollection = lambda event: event.hnlJets_nominal,
-                globalOptions=globalOptions
-            )
         ])
         
     return sequence
-    
-    
-def taggerSequence(jetDict, modelFile, taggerName):
-    sequence = []
-    if args.notagger:
-        return []
-    sequence.append(
-        TaggerEvaluationProfiled(
-            modelPath=taggerModelPath[year],
-            featureDictFile=featureDictFile,
-            inputCollections=jetDict.values(),
-            taggerName=taggerName,
-            profiledLabelDict = {
-                'LLP_Q': ['LLP_Q','LLP_QTAU_H','LLP_QTAU_3H'],
-                'LLP_QE': [ 'LLP_QE'],
-                'LLP_QMU': [ 'LLP_QMU'],
-                'LLP_QTAU_3H': ['LLP_QTAU_3H']
-            },
-            globalOptions=globalOptions,
-            evalValues = np.linspace(-1.9,1.9,5*4),
-        )
-    )
-   
-    for systName,jetCollection in jetDict.items():
-        sequence.append(
-            JetTaggerProfiledResult(
-                inputCollection=jetCollection,
-                taggerName=taggerName,
-                outputName="hnlJet_"+systName,
-                profiledLabels = ['LLP_Q','LLP_QE','LLP_QMU','LLP_QTAU_3H'],
-                kinds = ['single','ratio'],
-                globalOptions={"isData": False}
-            )
-        )
-    return sequence
-
-    
-
-def bdtSequence(systematics):
-    sequence = []
-    if args.nobdt:
-        return []
-    if args.leptons==1:
-        sequence.append(
-            XGBEvaluation(
-                systematics=systematics,
-                modelPath=BDT1lmodelPathUncorr[year],
-                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/uncorrelated/bdt_1l_inputs.py",
-                outputName="bdt_score"
-            )
-        )
-    else:
-        sequence.append(
-            XGBEvaluation(
-                systematics=systematics,
-                modelPath=BDT2lmodelPathExperimental[year],
-                inputFeatures="${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/data/bdt/201117/experimental/bdt_2l_inputs.py",
-                outputName="bdt_score"
-            )
-        )
-    return sequence
-
 
 if isMC:
     analyzerChain.append(
         JetMetUncertainties(
-            metInput= lambda event: Object(event, met_variable[year]),
+            metInput=met_variable[year],
             rhoInput = lambda event: event.fixedGridRhoFastjetAll,
             jetCollection = lambda event: Collection(event,"Jet"),
             lowPtJetCollection = lambda event: Collection(event,"CorrT1METJet"),
@@ -467,27 +330,10 @@ if isMC:
         )
     )
 
-    analyzerChain.append(
-        PhiXYCorrection(
-            era=str(year),
-            metInputDict={
-                "met_nominal": "met_nominal", 
-                "met_jerUp": "met_jerUp",
-                "met_jerDown": "met_jerDown",
-                "met_jesTotalUp": "met_jesTotalUp",
-                "met_unclEnUp": "met_unclEnUp",
-                "met_unclEnDown": "met_unclEnDown"},
-            isMC=isMC,
-            )
-        )
 
     analyzerChain.extend(
         jetSelectionSequence({
             "nominal": lambda event: event.jets_nominal,
-            "jerUp": lambda event: event.jets_jerUp,
-            "jerDown": lambda event: event.jets_jerDown,
-            "jesTotalUp": lambda event: event.jets_jesTotalUp,
-            "jesTotalDown": lambda event: event.jets_jesTotalDown,
         })
     )
         
@@ -495,52 +341,9 @@ if isMC:
     analyzerChain.extend(
         eventReconstructionSequence({
             "nominal": (lambda event: event.selectedJets_nominal, lambda event: event.met_nominal),
-            "jerUp": (lambda event: event.selectedJets_jerUp, lambda event: event.met_jerUp),
-            "jerDown": (lambda event: event.selectedJets_jerDown, lambda event: event.met_jerDown),
-            "jesTotalUp": (lambda event: event.selectedJets_jesTotalUp, lambda event: event.met_jesTotalUp),
-            "jesTotalDown": (lambda event: event.selectedJets_jesTotalDown, lambda event: event.met_jesTotalDown),
-            "unclEnUp": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnUp),
-            "unclEnDown": (lambda event: event.selectedJets_nominal, lambda event: event.met_unclEnDown),
         })
-    )    
-
-    analyzerChain.append(
-        HEMFlag(
-            inputDict={
-            "nominal": lambda event: event.hnlJets_nominal,
-            "jerUp": lambda event: event.hnlJets_jerUp,
-            "jerDown": lambda event: event.hnlJets_jerDown,
-            "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-            "jesTotalDown": lambda event: event.hnlJets_jesTotalDown
-        },
-            leadingLeptons=lambda event: event.leadingLeptons,
-            subleadingLeptons=lambda event: event.subleadingLeptons
-        )
-    )    
-        
-    analyzerChain.extend(
-        taggerSequence({
-            "nominal": lambda event: event.hnlJets_nominal,
-            "jerUp": lambda event: event.hnlJets_jerUp,
-            "jerDown": lambda event: event.hnlJets_jerDown,
-            "jesTotalUp": lambda event: event.hnlJets_jesTotalUp,
-            "jesTotalDown": lambda event: event.hnlJets_jesTotalDown,
-            "unclEnUp": lambda event: event.hnlJets_nominal,
-            "unclEnDown": lambda event: event.hnlJets_nominal,
-        },
-        modelFile=taggerModelPath[year],
-        taggerName='llpdnnx'
-    ))
-    
-    analyzerChain.extend(
-        bdtSequence([
-            "nominal", 
-            "jerUp", "jerDown", 
-            "jesTotalUp", "jesTotalDown", 
-            "unclEnUp", "unclEnDown"
-        ])
     )
-    
+
     analyzerChain.append(
         PileupWeight(
             outputName="puweight",
@@ -551,15 +354,6 @@ if isMC:
 
 
 else:
-    analyzerChain.append(
-        PhiXYCorrection(
-            era=str(year),
-            metInputDict={"met_nominal": met_variable[year]}, 
-            isMC=isMC,
-            metObject=True
-            )
-        )
-
     analyzerChain.extend(
         jetSelectionSequence({
             "nominal": lambda event: Collection(event,"Jet")
@@ -568,31 +362,8 @@ else:
     
     analyzerChain.extend(
         eventReconstructionSequence({
-            "nominal": (lambda event: event.selectedJets_nominal, lambda event: Object(event, met_variable[year])),
+            "nominal": (lambda event: event.selectedJets_nominal, met_variable[year]),
         })
-    )
-    analyzerChain.append(
-        HEMFlag(
-            inputDict={
-            "nominal": lambda event: event.hnlJets_nominal,
-        },
-            leadingLeptons=lambda event: event.leadingLeptons,
-            subleadingLeptons=lambda event: event.subleadingLeptons
-        )
-    )    
-    
-    analyzerChain.extend(
-        taggerSequence({
-            "nominal": lambda event: event.hnlJets_nominal,
-        },
-        modelFile=taggerModelPath[year],
-        taggerName='llpdnnx'
-    ))
-    
-    analyzerChain.extend(
-        bdtSequence([
-            "nominal",
-        ])
     )
 
 
@@ -613,22 +384,6 @@ if not globalOptions["isData"]:
                            event: tree.fillBranch("genweight",
                            event.Generator_weight)])
 
-    analyzerChain.append(
-        ScaleUncertainty(
-            xsecs = json.load(open('/vols/cms/LLP/gridpackLookupTable.json')),
-            isSignal = isSignal
-        )
-    )
-    
-
-    if isSignal:
-        analyzerChain.append(PDFUncertainty(isSignal = isSignal))
-        for coupling in range(1,68):
-            storeVariables.append([
-                lambda tree, coupling=coupling: tree.branch('LHEWeights_coupling_%i'%coupling,'F'),
-                lambda tree, event, coupling=coupling: tree.fillBranch('LHEWeights_coupling_%i'%coupling,getattr(event,"LHEWeights_coupling_%i"%coupling)),
-            ])
-
 analyzerChain.append(EventInfo(storeVariables=storeVariables))
 
 p = PostProcessor(
@@ -637,7 +392,7 @@ p = PostProcessor(
     modules=analyzerChain,
     maxEvents=-1,
     friend=True,
-    cut="((nElectron+nMuon)>0)", #remove if doing cutflow
+    cut="((nElectron+nMuon)>2)", #remove if doing cutflow
     cutFlow=args.cutflow
 )
 
