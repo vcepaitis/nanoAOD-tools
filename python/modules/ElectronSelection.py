@@ -11,6 +11,35 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from utils import getHist, getSFXY, deltaR
 
+def CustomNoConvID(electron):
+    if electron.GsfEleSCEtaMultiRangeCut>1 and \
+        electron.GsfEleDEtaInSeedCut>1 and \
+        electron.GsfEleDPhiInCut>1 and \
+        electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
+        electron.GsfEleEInverseMinusPInverseCut>1:
+        return True
+    else:
+        return False
+
+def CustomID(electron):
+    if CustomNoConvID(electron) and \
+        electron.GsfEleConversionVetoCut>1:
+        return True
+    else:
+        return False
+
+def CustomIsoID(electron):
+    if electron.GsfEleSCEtaMultiRangeCut>1 and \
+        electron.GsfEleDEtaInSeedCut>1 and \
+        electron.GsfEleDPhiInCut>1 and \
+        electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
+        electron.GsfEleEInverseMinusPInverseCut>1 and \
+        electron.GsfEleConversionVetoCut>1 and \
+        electron.pfRelIso03_all<0.15:
+        return True
+    else:
+        return False       
+
 class ElectronSelection(Module):
     def __init__(
         self,
@@ -34,6 +63,8 @@ class ElectronSelection(Module):
                "None",
                "Custom",
                "CustomIso",
+               "Iso",
+               "CustomNoConv"
                "Inv"
               ]
         self.inputCollection = inputCollection
@@ -45,6 +76,7 @@ class ElectronSelection(Module):
         self.storeWeights = storeWeights
         self.selectLeadingOnly = selectLeadingOnly
         self.globalOptions = globalOptions
+        self.electronIDName = electronID
         if electronID not in IDs:
             print("Undefined electron ID! Choose one of the following")
             print(IDs)
@@ -53,25 +85,17 @@ class ElectronSelection(Module):
             self.storeWeights = False
             self.electronID = lambda electron: True
         elif electronID == "Custom":
-            self.storeWeights = False
-            self.electronID = lambda electron:  \
-                                electron.GsfEleSCEtaMultiRangeCut>1 and \
-                                electron.GsfEleDEtaInSeedCut>1 and \
-                                electron.GsfEleDPhiInCut>1 and \
-                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
-                                electron.GsfEleEInverseMinusPInverseCut>1 and \
-                                electron.GsfEleConversionVetoCut>1
+            self.electronID = lambda electron:  CustomID(electron)
         elif electronID == "CustomIso":
             self.storeWeights = False
+            self.electronID = lambda electron:  CustomIsoID(electron)
+        elif electronID == "Iso":
+            self.storeWeights = False
             self.electronID = lambda electron:  \
-                                electron.GsfEleSCEtaMultiRangeCut>1 and \
-                                electron.GsfEleDEtaInSeedCut>1 and \
-                                electron.GsfEleDPhiInCut>1 and \
-                                electron.GsfEleFull5x5SigmaIEtaIEtaCut>1 and \
-                                electron.GsfEleEInverseMinusPInverseCut>1 and \
-                                electron.GsfEleConversionVetoCut>1 and \
                                 electron.pfRelIso03_all<0.15
-
+        elif electronID == "CustomNoConv":
+            self.storeWeights = False
+            self.electronID = lambda electron:  CustomNoConvID(electron)
         elif electronID == "Inv":
             self.electronID = lambda electron: electron.mvaFall17V2Iso_WPL<1 and electron.pfRelIso03_all<0.8
             self.storeWeights = False
@@ -86,7 +110,7 @@ class ElectronSelection(Module):
                 2018: "2018_ElectronMVAREPLACE.root"
         }
 
-        id_alias_dict = {
+        self.id_alias_dict = {
             "Iso_WP80" : "80",
             "noIso_WP80" : "80noiso",
             "Iso_WP90" : "90",
@@ -95,10 +119,16 @@ class ElectronSelection(Module):
 
         #tight id efficiency
         if not self.globalOptions["isData"] and self.storeWeights:
-            self.idHist = getHist(
-                "PhysicsTools/NanoAODTools/data/electron/{}/{}".format(globalOptions["year"], id_hist_dict[globalOptions["year"]].replace("REPLACE", id_alias_dict[electronID])),
-                "EGamma_SF2D"
-            )
+            if self.electronIDName in self.id_alias_dict.keys():
+                self.idHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/electron/{}/{}".format(globalOptions["year"], id_hist_dict[globalOptions["year"]].replace("REPLACE", self.id_alias_dict[self.electronIDName])),
+                    "EGamma_SF2D"
+                )
+            elif self.electronIDName == "Custom":
+                self.idHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/electron/{}/{}".format(globalOptions["year"], "scale_factor2D_trailingLeptons_dxysig_trailingLeptons_pt_"+str(globalOptions["year"])+".root"),
+                    "scale_factor2D_trailingLeptons_dxysig_trailingLeptons_pt_"+str(globalOptions["year"])
+                )
         if not self.globalOptions["isData"]:
             if self.globalOptions["year"] == 2016:
                 self.reco_hist_low = getHist(
@@ -186,6 +216,16 @@ class ElectronSelection(Module):
             electron.GsfEleConversionVetoCut = cuts[8]
             electron.GsfEleMissingHitsCut = cuts[9]
 
+            if CustomID(electron):
+                setattr(electron, "isCustomID", 1)
+            else:
+                setattr(electron, "isCustomID", 0)
+
+            if CustomNoConvID(electron):
+                setattr(electron, "isCustomNoConvID", 1)
+            else:
+                setattr(electron, "isCustomNoConvID", 0)
+
             if electron.pt>self.electronMinPt and math.fabs(electron.eta)<self.electronMaxEta \
                 and self.electronID(electron):
                 # https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2
@@ -215,6 +255,7 @@ class ElectronSelection(Module):
 
 
         if not self.globalOptions["isData"]:
+            
             weight_reco_nominal = []
             weight_reco_up = []
             weight_reco_down = []
@@ -237,12 +278,24 @@ class ElectronSelection(Module):
             self.out.fillBranch(self.outputName+"_weight_reco_up", weight_reco_up)
             self.out.fillBranch(self.outputName+"_weight_reco_down", weight_reco_down)
         
-        if not self.globalOptions["isData"] and self.storeWeights:    
+        if not self.globalOptions["isData"] and self.storeWeights:   
+            
             weight_id_nominal = []
             weight_id_up = []
-            weight_id_down = []
+            weight_id_down = [] 
+
             for electron in selectedElectrons:
-                weight_id,weight_id_err = getSFXY(self.idHist,electron.eta,electron.pt)
+
+                weight_id = 0
+                weight_id_err = 0
+
+                if self.electronIDName in self.id_alias_dict.keys():
+                    weight_id,weight_id_err = getSFXY(self.idHist,electron.eta,electron.pt)
+                elif self.electronIDName == "Custom":
+                    weight_id,weight_id_err = getSFXY(self.idHist,abs(electron.dxy)/(1e-5+abs(electron.dxyErr)),electron.pt)
+                else:
+                    print("Undefined ID: ", self.electronIDName)
+
                 weight_id_nominal.append(weight_id)
                 weight_id_up.append((weight_id+weight_id_err))
                 weight_id_down.append((weight_id-weight_id_err))
