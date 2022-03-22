@@ -170,7 +170,7 @@ leptonSelection = [
     PhotonVeto(),
     #EventSkim(selection=lambda event: event.nlooseElectrons>0 and event.ntightMuons+event.nlooseMuons<3, outputName="l3"),#think about it
     EventSkim(selection=lambda event: event.ntightMuons+event.nlooseMuons<3, outputName="l3"),#makes sure we have only 2 muons
-    ElectronSF(
+    PhotonConversionsForEleSF(
         tightMuonsCollection=lambda event:event.tightMuons,
         tightElectronsCollection=lambda event:event.tightElectrons,
         looseMuonCollection=lambda event:event.looseMuons,

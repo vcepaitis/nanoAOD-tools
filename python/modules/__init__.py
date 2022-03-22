@@ -35,6 +35,6 @@ from XsecWeight import XsecWeight
 from PDFUncertainty import PDFUncertainty
 from ScaleUncertainty import ScaleUncertainty
 from PhotonVeto import PhotonVeto
-from ElectronSF import ElectronSF
+from PhotonConversionsForEleSF import PhotonConversionsForEleSF
 from PhiXYCorrection import PhiXYCorrection
 from HEMFlag import HEMFlag
