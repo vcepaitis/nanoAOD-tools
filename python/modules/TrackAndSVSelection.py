@@ -40,10 +40,22 @@ class TrackAndSVSelection(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
+        
+        self.out.branch(self.outputName+"_"+self.svType+"_muon", "I")
+        self.out.branch(self.outputName+"_"+self.svType+"_muon_dxy", "F")
+        self.out.branch(self.outputName+"_"+self.svType+"_muon_pt", "F")
+        self.out.branch(self.outputName+"_"+self.svType+"_muon_dxysig", "F")
+        
+        self.out.branch(self.outputName+"_"+self.svType+"_electron", "I")
+        self.out.branch(self.outputName+"_"+self.svType+"_electron_pt", "F")
+        self.out.branch(self.outputName+"_"+self.svType+"_electron_dxy", "F")
+        self.out.branch(self.outputName+"_"+self.svType+"_electron_dxysig", "F")
+
+
         self.out.branch("n"+self.outputName+"_"+self.svType, "I")
         self.out.branch(self.outputName+"_"+self.svType+"_pt", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType)
-        self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)  
-
+        self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
+      
         if self.storeWeights:        
             self.out.branch("hnlJet_track_weight_"+self.svType+"_nominal", "F")
             self.out.branch("hnlJet_track_weight_"+self.svType+"_up", "F")
@@ -58,6 +70,15 @@ class TrackAndSVSelection(Module):
         # Iterate over all jets and find the matching tracks
         matchingVariable = "matchedSV_adapted" if self.svType == "adapted" else "matchedSV"
         cpfsMatchedToJetAndSV = []
+        cpfMuon = 0
+        cpfMuonpt = 0
+        cpfMuondxy = 0
+        cpfMuondxysig = 0
+        cpfElectron = 0
+        cpfElectronpt = 0
+        cpfElectrondxy = 0
+        cpfElectrondxysig = 0
+        
         if len(jets) == 0:
             averageWeightUp = 1.
         else:
@@ -65,7 +86,27 @@ class TrackAndSVSelection(Module):
             matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index and getattr(cpf, matchingVariable, True)]
             for cpf in matchedCpfs:
                 cpf.pt = jet.ptRaw*cpf.ptrel
+                if cpf.matchedMuon == 1 and cpfMuon == 0:
+                  cpfMuon = 1
+                  cpfMuonpt = cpf.pt
+                  cpfMuondxy= cpf.trackSip2dVal
+                  cpfMuondxysig = cpf.trackSip2dSig
+                elif cpf.matchedElectron == True and cpfElectron == 0 :
+                   cpfElectron = 1
+                   cpfElectronpt = cpf.pt
+                   cpfElectrondxy = cpf.trackSip2dVal
+                   cpfMuondxysig = cpf.trackSip2dSig
+                  
             cpfsMatchedToJetAndSV.extend(matchedCpfs)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_muon", cpfMuon)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_muon_pt", cpfMuonpt)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_muon_dxy", cpfMuondxy)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_muon_dxysig", cpfMuondxysig)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_electron", cpfElectron)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_electron_pt", cpfElectronpt)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_electron_dxy", cpfElectrondxy)
+            self.out.fillBranch(self.outputName+"_"+self.svType+"_electron_dxysig", cpfElectrondxysig)
+
             
             self.out.fillBranch("n"+self.outputName+"_"+self.svType, len(cpfsMatchedToJetAndSV))
             self.out.fillBranch(self.outputName+"_"+self.svType+"_pt", map(lambda cpf: cpf.pt, cpfsMatchedToJetAndSV))
