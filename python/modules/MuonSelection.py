@@ -120,9 +120,13 @@ class MuonSelection(Module):
                 #     16226.5/35916.4
                 # )
 
-                self.isoLooseLooseSFHist = getHistCanvas(
-                    "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
-                    "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
+                # self.isoLooseLooseSFHist = getHistCanvas(
+                #     "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
+                #     "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
+                # )
+                self.isoLooseLooseSFHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2016/rootfiles/scale_factor2D_absdxy_sig_pt_TnP_2016.root",
+                    "scale_factors_2016"
                 )
 
             elif self.globalOptions["year"] == 2017:
@@ -149,9 +153,13 @@ class MuonSelection(Module):
                 #     "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/RunBCDEF_SF_ISO.root",
                 #     "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
                 # )
-                self.isoLooseLooseSFHist = getHistCanvas(
-                    "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
-                    "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
+                # self.isoLooseLooseSFHist = getHistCanvas(
+                #     "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
+                #     "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
+                # )
+                self.isoLooseLooseSFHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2017/rootfiles/scale_factor2D_absdxy_sig_pt_TnP_2017.root",
+                    "scale_factors_2017"
                 )
 
             elif self.globalOptions["year"] == 2018:
@@ -179,9 +187,13 @@ class MuonSelection(Module):
                 #     "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/RunABCD_SF_ISO.root",
                 #     "NUM_LooseRelIso_DEN_LooseID_pt_abseta"
                 # )
-                self.isoLooseLooseSFHist = getHistCanvas(
-                    "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
-                    "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
+                # self.isoLooseLooseSFHist = getHistCanvas(
+                #     "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt.root",
+                #     "cNUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt", "NUM_LooseID_DEN_TrackerMuons_absdxy_sig_pt"
+                # )
+                self.isoLooseLooseSFHist = getHist(
+                    "PhysicsTools/NanoAODTools/data/muon/2018/rootfiles/scale_factor2D_absdxy_sig_pt_TnP_2018.root",
+                    "scale_factors_2018"
                 )
 
             else:
