@@ -64,9 +64,9 @@ class LeptonGenEfficiency(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
 
         self.features = ["pt", "eta", "phi", "RecoPt", "RecoEta", "RecoPhi", "RecoDeltaR", "isRecoMatched", "Lz", "Lxy"]
-        self.electron_features = self.features + ["mvaFall17V2noIso_WPL", "customID"]
-        self.muon_features  = self.features + ["looseId", "mediumId", "tightId"]
-        self.jet_features = ["pt", "eta", "phi", "is_matched", "dxy", "dz", "reco_pt", "reco_eta", "reco_phi", "tightId", "cpf_sum", "npf_sum"]
+        self.electron_features = self.features + ["mvaFall17V2noIso_WPL", "customID", "dxy", "dxysig"]
+        self.muon_features  = self.features + ["looseId", "mediumId", "tightId",  "dxy", "dxysig"]
+        self.jet_features = ["pt", "eta", "phi", "is_matched", "dz", "reco_pt", "reco_eta", "reco_phi", "tightId", "cpf_sum", "npf_sum"]
         self.hnl_features = ["pt", "eta", "phi", "mass", "boost", "Lxy"]
         self.tau_features = self.features
 
@@ -234,8 +234,19 @@ class LeptonGenEfficiency(Module):
 
         # Lepton-specific extra features
         for electron in electronsFromHNL:
+            
+            electron.dxy = -999.
+            electron.dxysig = -999.
+
             # Check if matched reco-electron passes ID
             if electron.isRecoMatched:
+                
+                electron.dxy = electron.matchedLepton.dxy
+                if electron.matchedLepton.dxyErr < 1e-6:
+                    setattr(electron, "dxysig", -1.)
+                else:
+                    setattr(electron, "dxysig", math.fabs(electron.matchedLepton.dxy)/math.fabs(electron.matchedLepton.dxyErr))
+
                 electron.mvaFall17V2noIso_WPL = electron.matchedLepton.mvaFall17V2noIso_WPL
                 bitmap = electron.matchedLepton.vidNestedWPBitmap
                 # decision for each cut represented by 3 bits (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
@@ -267,9 +278,20 @@ class LeptonGenEfficiency(Module):
                 electron.customID = -1.
 
         for muon in muonsFromHNL:
+            
+            muon.dxy = -999.
+            muon.dxysig = -999.
+
             # Check if matched reco-muon passes ID
 
             if muon.isRecoMatched:
+
+                muon.dxy = muon.matchedLepton.dxy
+                if muon.matchedLepton.dxyErr < 1e-6:
+                    setattr(muon, "dxysig", -1.)
+                else:
+                    setattr(muon, "dxysig", math.fabs(muon.matchedLepton.dxy)/math.fabs(muon.matchedLepton.dxyErr))
+
                 muon.looseId = muon.matchedLepton.looseId
                 muon.mediumId = muon.matchedLepton.mediumId
                 muon.tightId = muon.matchedLepton.tightId
