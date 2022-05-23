@@ -72,6 +72,8 @@ class TrackAndSVSelection(Module):
         jets = self.jetCollection(event)
         cpfs = self.cpfCollection(event)
 
+
+
         # Iterate over all jets and find the matching tracks
         matchingVariable = "matchedSV_adapted" if self.svType == "adapted" else "matchedSV"
         cpfsMatchedToJetAndSV = []
@@ -135,29 +137,36 @@ class TrackAndSVSelection(Module):
             self.out.fillBranch(self.outputName+"_"+self.svType+"_dxysig", map(lambda cpf: cpf.trackSip2dSig, cpfsMatchedToJetAndSV))
             
             if self.storeWeights:
-                matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
                 weightsPerTrack = []
+                errorsPerTrack = []
+                averageError2 = 0.
+                matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
                 if len(matchedCpfs) > 0:
                     # Apply the corrections based on leading three constituents
                     matchedCpfs = matchedCpfs[:3]
-                    #weightsPerTrack = np.asarray(map(lambda x: self.correctionFunction(self.correctionCoefficients, math.log10(max(1e-3, x.trackSip2dVal))), matchedCpfs)) 
-                    for cpf in matchedCpfs : 
-                      print "it arrives where you want and the dxy value is " , cpf.trackSip2dVal
+                    for i, cpf in enumerate(matchedCpfs) : 
                       binNumber = self.sf.FindBin(abs(cpf.trackSip2dVal))
- 		      print "the given number of a given dxy is " , binNumber
                       weightsPerTrack.append(self.sf.GetBinContent(binNumber))
+                      errorsPerTrack.append(self.sf.GetBinError(binNumber))
+                      averageError2 += errorsPerTrack[i]**2
 
                     ptsPerTrack = np.asarray(map(lambda x: x.ptrel, matchedCpfs))
 		    print "the pts per track are:  " , ptsPerTrack
                     averageWeight = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
                     print "average Weight gives,  ", averageWeight
+                    averageError = math.sqrt(averageError2)
+                    ### Additional systematic uncertainty on the SF. 
+                    sys_error = (1. - averageWeight)/2.0
+                    tot_error = math.sqrt(averageError2 + sys_error**2) 
+                    
                 else:
                     averageWeight = 1.
-        #### needs to be updated.
-        if self.storeWeights:
-            averageWeightDown = 2. - averageWeightUp
-            self.out.fillBranch(self.outputName+"_"+self.svType+"_nominal",averageWeight )
-            self.out.fillBranch(self.outputName+"_"+self.svType+"_up", averageWeightUp)
-            self.out.fillBranch(self.outputName+"_"+self.svType+"_down", averageWeightDown)
+
+            if self.storeWeights:
+              averageWeightDown = averageWeight - tot_error
+              averageWeightUp = averageWeight + tot_error
+              self.out.fillBranch(self.outputName+"_"+self.svType+"_nominal",averageWeight )
+              self.out.fillBranch(self.outputName+"_"+self.svType+"_up", averageWeightUp)
+              self.out.fillBranch(self.outputName+"_"+self.svType+"_down", averageWeightDown)
 
         return True
