@@ -140,6 +140,7 @@ class TrackAndSVSelection(Module):
                 weightsPerTrack = []
                 errorsPerTrack = []
                 averageError2 = 0.
+                tot_error = 0.
                 matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
                 if len(matchedCpfs) > 0:
                     # Apply the corrections based on leading three constituents
