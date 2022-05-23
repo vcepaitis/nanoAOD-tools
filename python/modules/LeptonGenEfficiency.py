@@ -11,6 +11,8 @@ from utils import deltaPhi, deltaR
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
+
+# Calculate the gen-level displacement between two vertices
 def getDisplacement(p1, p2):
     x1 = p1.vertex_x
     x2 = p2.vertex_x
@@ -19,10 +21,11 @@ def getDisplacement(p1, p2):
     z1 = p1.vertex_z
     z2 = p2.vertex_z
 
-    dy = math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2)
-    dz = math.sqrt((z1-z2) ** 2)
-    return dz, dy
+    Lxy = math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2)
+    Lz = math.sqrt((z1-z2) ** 2)
+    return Lxy, Lz
 
+# Returned truth-matched reco-level leptons with a given deltaR threshold
 def matchLepton(genLepton, recoLeptons, minDeltaRThreshold=0.4):
     if len(recoLeptons) > 0:
         minDeltaR = 1000.
@@ -34,7 +37,8 @@ def matchLepton(genLepton, recoLeptons, minDeltaRThreshold=0.4):
         if minDeltaR < minDeltaRThreshold:
             return matchedLepton
         return None
-    return None
+    else:
+        return None
 
 class LeptonGenEfficiency(Module):
     def __init__(
@@ -50,14 +54,6 @@ class LeptonGenEfficiency(Module):
         self.muonCollection = muonCollection
         self.jetCollection = jetCollection
         self.globalOptions = globalOptions
-        features = ["pt", "eta", "phi", "reco_pt", "reco_eta", "reco_phi", "reco_deltaR", "is_matched", "dz", "dxy"]
-        self.features = features
-
-        self.electron_features = features + ["mvaFall17V2noIso_WPL", "customID"]
-        self.muon_features = features + ["looseId", "mediumId", "tightId"]
-        self.tau_features = features + ["jetId"]
-        self.jet_features = ["pt", "eta", "phi", "is_matched", "dxy", "dz", "reco_pt", "reco_eta", "reco_phi", "tightId"]
-        self.HNL_features = ["pt", "eta", "phi", "mass", "boost", "dxy"]
 
     def beginJob(self):
         pass
@@ -66,26 +62,34 @@ class LeptonGenEfficiency(Module):
         pass
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
+
+        self.features = ["pt", "eta", "phi", "RecoPt", "RecoEta", "RecoPhi", "RecoDeltaR", "isRecoMatched", "Lz", "Lxy"]
+        self.electron_features = self.features + ["mvaFall17V2noIso_WPL", "customID", "dxy", "dxysig"]
+        self.muon_features  = self.features + ["looseId", "mediumId", "tightId",  "dxy", "dxysig"]
+        self.jet_features = ["pt", "eta", "phi", "is_matched", "dz", "reco_pt", "reco_eta", "reco_phi", "tightId", "cpf_sum", "npf_sum"]
+        self.hnl_features = ["pt", "eta", "phi", "mass", "boost", "Lxy"]
+        self.tau_features = self.features
+
         self.out = wrappedOutputTree
-        self.out.branch("nmuon", "I")
-        self.out.branch("nelectron", "I")
-        self.out.branch("nhadtau", "I")
-        self.out.branch("nlepton", "I")
-        self.out.branch("njet", "I")
+        self.out.branch("nGenMuons", "I")
+        self.out.branch("nGenElectrons", "I")
+        self.out.branch("nGenHadTaus", "I")
+        self.out.branch("nLeptons", "I")
+        self.out.branch("nGenJets", "I")
         self.out.branch("nGenLeptonsFromV", "I")
         self.out.branch("nGenLeptonsFromTauFromV", "I")
 
         for feature in self.muon_features:
-            self.out.branch("muon_"+feature, "F", lenVar="nmuon")
+            self.out.branch("GenMuon_"+feature, "F", lenVar="nGenMuons")
         for feature in self.electron_features:
-            self.out.branch("electron_"+feature, "F", lenVar="nelectron")
+            self.out.branch("GenElectron_"+feature, "F", lenVar="nGenElectrons")
         for feature in self.tau_features:
-            self.out.branch("hadtau_"+feature, "F", lenVar="nhadtau")
+            self.out.branch("GenHadTau_"+feature, "F", lenVar="nGenHadTaus")
         for feature in self.features:
-            self.out.branch("lepton_"+feature, "F", lenVar="nlepton")
+            self.out.branch("GenLepton_"+feature, "F", lenVar="nGenLeptons")
         for feature in self.jet_features:
-            self.out.branch("jet_"+feature, "F", lenVar="njet")
-        for feature in self.HNL_features:
+             self.out.branch("GenJet_"+feature, "F", lenVar="nGenJets")
+        for feature in self.hnl_features:
             self.out.branch("HNL_"+feature, "F")
     
         self.out.branch("GenLeptonsFromV_pt", "F", lenVar="nGenLeptonsFromV")
@@ -96,34 +100,47 @@ class LeptonGenEfficiency(Module):
         pass
 
     def analyze(self, event):
+
+        # Gen-level 
         genParticles = self.genInputCollection(event)
+        genJets = Collection(event, "GenJet")
+
+        # Reco-level
         electrons = self.electronCollection(event)
-        #photons = self.photonCollection(event)
         muons = self.muonCollection(event)
         jets = self.jetCollection(event)
-        jetOrigin = Collection(event, "jetorigin")
-        genJets = Collection(event, "GenJet")
+
+        # Extra reco-level
+        cpfs = Collection(event, "cpf")
+        npfs = Collection(event, "npf")
 
         genLeptonsFromV = []
         HNLHadronicDaughters = []
+        hnl = None
 
         for genParticle in genParticles:
+            # Check if has a mother, otherwise skip
             if genParticle.genPartIdxMother == -1:
                 continue
             if abs(genParticle.pdgId) in [9900012, 9990012]:
                 continue
+            # Check if from (anti)HNL decay
             if abs(genParticles[genParticle.genPartIdxMother].pdgId) in [9900012, 9990012]:
-                HNL = genParticles[genParticle.genPartIdxMother]
-                HNL_daughter = genParticle
-                if abs(HNL_daughter.pdgId) not in [11, 12, 13, 14, 15, 16]:
-                    HNLHadronicDaughters.append(HNL_daughter)
+                hnl = genParticles[genParticle.genPartIdxMother]
+                hnl_daughter = genParticle
+                # Check if not muon, electron, tau
+                if abs(hnl_daughter.pdgId) not in [11, 12, 13, 14, 15, 16]:
+                    HNLHadronicDaughters.append(hnl_daughter)
+        if hnl is None:
+            print("No HNL found -- skipping event!")
+            return False
 
-        HNL.boost = HNL.pt/HNL.mass
+        # Calculate some features
+        hnl.boost = hnl.pt/hnl.mass
+        hnl.Lxy, hnl.Lz = getDisplacement(hnl, hnl_daughter)
 
-        HNL.dxy, HNL.dz = getDisplacement(HNL, HNL_daughter)
-
-        for feature in self.HNL_features:
-            self.out.fillBranch("HNL_"+feature, getattr(HNL, feature))
+        for feature in self.hnl_features:
+            self.out.fillBranch("HNL_"+feature, getattr(hnl, feature))
 
         for genParticle in genParticles:
             # Proceed if particle has a mother and the particle is a muon or electron
@@ -156,6 +173,7 @@ class LeptonGenEfficiency(Module):
         hadTausFromHNL = []
 
         for lepton in genElectrons+genMuons+genTaus:
+            # Check if parent is HNL and categorise
             if abs(genParticles[lepton.genPartIdxMother].pdgId) in [9900012, 9990012]:
                 if abs(lepton.pdgId) == 11: 
                     electronsFromHNL.append(lepton)
@@ -181,25 +199,12 @@ class LeptonGenEfficiency(Module):
         muonsFromHNL = sorted(muonsFromHNL, key=lambda x: x.pt, reverse=True)
         hadTausFromHNL = sorted(hadTausFromHNL, key=lambda x: x.pt, reverse=True)
 
-        self.out.fillBranch("nelectron", len(electronsFromHNL)) 
-        self.out.fillBranch("nmuon", len(muonsFromHNL))
-        self.out.fillBranch("nhadtau", len(hadTausFromHNL))
+        self.out.fillBranch("nGenElectrons", len(electronsFromHNL)) 
+        self.out.fillBranch("nGenMuons", len(muonsFromHNL))
+        self.out.fillBranch("nGenHadTaus", len(hadTausFromHNL))
 
-        #for i, part in enumerate(genParticles):
-            #print i, part.pdgId, part.genPartIdxMother
-
-        '''
-        electrons = []
-        for electron in electrons:
-            electron.isElectron = 1
-            electron.isPhoton = 0
-            electrons.append(electron)
-        for photon in photons:
-            photon.isElectron = 0
-            photon.isPhoton = 1
-            electrons.append(photon)
-        '''
-
+        # Match to reco leptons
+        # Features common for all leptons
         for lepton in electronsFromHNL+muonsFromHNL+hadTausFromHNL:
             if abs(lepton.pdgId) == 11:
                 matchedLepton = matchLepton(lepton, electrons)        
@@ -208,28 +213,40 @@ class LeptonGenEfficiency(Module):
             elif abs(lepton.pdgId) == 15:
                 matchedLepton = matchLepton(lepton, jets)     
 
-            dz, dxy = getDisplacement(lepton, genParticles[lepton.genPartIdxMother])
-            lepton.dz = dz
-            lepton.dxy = dxy
+            # Calculate some properties
+            Lxy, Lz = getDisplacement(lepton, genParticles[lepton.genPartIdxMother])
+            lepton.Lz = Lz
+            lepton.Lxy = Lxy
+
+            lepton.RecoPt = -999.
+            lepton.RecoEta = -999.
+            lepton.RecoPhi = -999.
+            lepton.RecoDeltaR = -999.
+            lepton.isRecoMatched = 0
 
             if matchedLepton:
-                lepton.reco_pt = matchedLepton.pt
-                lepton.reco_eta = matchedLepton.eta
-                lepton.reco_phi = matchedLepton.phi
-                lepton.reco_deltaR = deltaR(matchedLepton, lepton)
-                lepton.is_matched = 1
+                lepton.RecoPt = matchedLepton.pt
+                lepton.RecoEta = matchedLepton.eta
+                lepton.RecoPhi = matchedLepton.phi
+                lepton.RecoDeltaR = deltaR(matchedLepton, lepton)
+                lepton.isRecoMatched = 1
                 lepton.matchedLepton = matchedLepton
-            else:
-                lepton.reco_pt = -999.
-                lepton.reco_eta = -999.
-                lepton.reco_phi = -999.
-                lepton.reco_deltaR = -999.
-                lepton.is_matched = 0
 
+        # Lepton-specific extra features
         for electron in electronsFromHNL:
-            electron.dz = dz
-            electron.dxy = dxy
-            if electron.is_matched:
+            
+            electron.dxy = -999.
+            electron.dxysig = -999.
+
+            # Check if matched reco-electron passes ID
+            if electron.isRecoMatched:
+                
+                electron.dxy = electron.matchedLepton.dxy
+                if electron.matchedLepton.dxyErr < 1e-6:
+                    setattr(electron, "dxysig", -1.)
+                else:
+                    setattr(electron, "dxysig", math.fabs(electron.matchedLepton.dxy)/math.fabs(electron.matchedLepton.dxyErr))
+
                 electron.mvaFall17V2noIso_WPL = electron.matchedLepton.mvaFall17V2noIso_WPL
                 bitmap = electron.matchedLepton.vidNestedWPBitmap
                 # decision for each cut represented by 3 bits (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
@@ -261,9 +278,20 @@ class LeptonGenEfficiency(Module):
                 electron.customID = -1.
 
         for muon in muonsFromHNL:
-            muon.dz = dz
-            muon.dxy = dxy
-            if muon.is_matched:
+            
+            muon.dxy = -999.
+            muon.dxysig = -999.
+
+            # Check if matched reco-muon passes ID
+
+            if muon.isRecoMatched:
+
+                muon.dxy = muon.matchedLepton.dxy
+                if muon.matchedLepton.dxyErr < 1e-6:
+                    setattr(muon, "dxysig", -1.)
+                else:
+                    setattr(muon, "dxysig", math.fabs(muon.matchedLepton.dxy)/math.fabs(muon.matchedLepton.dxyErr))
+
                 muon.looseId = muon.matchedLepton.looseId
                 muon.mediumId = muon.matchedLepton.mediumId
                 muon.tightId = muon.matchedLepton.tightId
@@ -272,57 +300,63 @@ class LeptonGenEfficiency(Module):
                 muon.mediumId = -1.
                 muon.tightId = -1.
 
-        for tau in hadTausFromHNL:
-            tau.dz = dz
-            tau.dxy = dxy
-            if tau.is_matched:
-                tau.jetId = tau.matchedLepton.jetId
-            else:
-                tau.jetId = -1.
-
         leptonsFromHNL = electronsFromHNL+muonsFromHNL
         leptonsFromHNL = sorted(leptonsFromHNL, key=lambda x: x.pt, reverse=True)
 
-        self.out.fillBranch("nlepton", len(leptonsFromHNL))    
-
+        self.out.fillBranch("nGenLeptons", len(leptonsFromHNL))    
 
         for feature in self.electron_features:
-            self.out.fillBranch("electron_"+feature, [getattr(lepton, feature) for lepton in electronsFromHNL])
+            self.out.fillBranch("GenElectron_"+feature, [getattr(lepton, feature) for lepton in electronsFromHNL])
         for feature in self.muon_features:
-            self.out.fillBranch("muon_"+feature, [getattr(lepton, feature) for lepton in muonsFromHNL])
+            self.out.fillBranch("GenMuon_"+feature, [getattr(lepton, feature) for lepton in muonsFromHNL])
         for feature in self.features:
-            self.out.fillBranch("lepton_"+feature, [getattr(lepton, feature) for lepton in leptonsFromHNL])
+            self.out.fillBranch("GenLepton_"+feature, [getattr(lepton, feature) for lepton in leptonsFromHNL])
         for feature in self.tau_features:
-            self.out.fillBranch("hadtau_"+feature, [getattr(lepton, feature) for lepton in hadTausFromHNL])
+            self.out.fillBranch("GenHadTau_"+feature, [getattr(lepton, feature) for lepton in hadTausFromHNL])
 
         selectedgenjets = []
 
         for genjet in genJets:
-
+            matched_jet = None
             genjet.is_matched = False
             genjet.reco_pt = -1.
             genjet.reco_eta = -1.
             genjet.reco_phi = -1.
             genjet.tightId = -1
+
             for jet in jets:
                 if deltaR(jet, genjet) < 0.4:
                     genjet.is_matched = True
+                    matched_jet = jet
                     genjet.reco_pt = jet.pt
                     genjet.reco_eta = jet.eta
                     genjet.reco_phi = jet.phi
                     genjet.tightId = jet.jetId > 1
                     break
+            genjet.cpf_sum = -1
+            genjet.npf_sum = -1
             for quark in HNLHadronicDaughters:
                 if deltaR(quark, genjet) < 0.4:
+                    if matched_jet:
+                        cpf_sum = 0
+                        npf_sum = 0
+                        for cpf in cpfs:
+                            if cpf.jetIdx == matched_jet._index:
+                                cpf_sum += cpf.ptrel
+                        for npf in npfs:
+                            if npf.jetIdx == matched_jet._index:
+                                npf_sum += npf.ptrel  
+                        genjet.cpf_sum = cpf_sum 
+                        genjet.npf_sum = npf_sum
                     selectedgenjets.append(genjet)
-                    dxy, dz = getDisplacement(HNL, quark)
+                    dxy, dz = getDisplacement(hnl, quark)
                     genjet.dxy = dxy
                     genjet.dz = dz
                     break
     
-        self.out.fillBranch("njet", len(selectedgenjets))   
+        self.out.fillBranch("nGenJets", len(selectedgenjets))   
 
         for feature in self.jet_features:
-            self.out.fillBranch("jet_"+feature, [getattr(jet, feature) for jet in selectedgenjets]) 
+            self.out.fillBranch("GenJet_"+feature, [getattr(jet, feature) for jet in selectedgenjets]) 
 
         return True
