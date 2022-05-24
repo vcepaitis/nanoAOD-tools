@@ -144,20 +144,23 @@ class TrackAndSVSelection(Module):
                 matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
                 matchedCpfs = sorted(matchedCpfs,key=lambda x: math.fabs(x.trackSip2dVal),reverse=True)
                 
-                matchedCpfs = matchedCpfs[0:1]
-                
-              
-                
+ 
                 if len(matchedCpfs) > 0:
 
                     matchedCpfs = matchedCpfs[:3]
                     
                     for i, cpf in enumerate(matchedCpfs) : 
-                        dxySig = max(self.sf.GetXaxis().GetXmin(), min(self.sf.GetXaxis().GetXmax(), math.fabs(cpf.trackSip2dVal)))
+                        dxySig = max(self.sf.GetXaxis().GetXmin()*1.0001, min(self.sf.GetXaxis().GetXmax()*0.9999, math.fabs(cpf.trackSip2dVal)))
                         binNumber = self.sf.FindBin(dxySig)
 
                         scaleFactor = self.sf.GetBinContent(binNumber)
                         scaleFactorErr = self.sf.GetBinError(binNumber)
+                        
+                        #skip if scaleFactor is unreasonably small
+                        if scaleFactor<0.1:
+                            scaleFactor = 1.
+                            scaleFactorErr = 0.
+                        
                         
                         weight = math.fabs(cpf.ptrel)+1e-3 #add slight bias to protect against very small weights
                         
@@ -170,6 +173,7 @@ class TrackAndSVSelection(Module):
                     weightedSFError = math.sqrt(
                         weightedSFErrorSum2/weightSum**2
                     )
+                    
                     
                     #add half the uncertainty to unity if SF uncertainty very small
                     if weightedSFError<(0.5*math.fabs(1.-weightedSFSum)):
