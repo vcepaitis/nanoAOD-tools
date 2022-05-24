@@ -140,6 +140,7 @@ class TrackAndSVSelection(Module):
                 weightsPerTrack = []
                 errorsPerTrack = []
                 averageError2 = 0.
+                tot_error = 0.
                 matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
                 if len(matchedCpfs) > 0:
                     # Apply the corrections based on leading three constituents
@@ -151,7 +152,7 @@ class TrackAndSVSelection(Module):
                       averageError2 += errorsPerTrack[i]**2
 
                     ptsPerTrack = np.asarray(map(lambda x: x.ptrel, matchedCpfs))
-		    print "the pts per track are:  " , ptsPerTrack
+                    print "the pts per track are:  " , ptsPerTrack
                     averageWeight = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
                     print "average Weight gives,  ", averageWeight
                     averageError = math.sqrt(averageError2)
