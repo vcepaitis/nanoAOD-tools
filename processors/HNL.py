@@ -374,6 +374,7 @@ def eventReconstructionSequence(jetMetDict):
             svType='regular',
             outputName="hnlJet_track_weight",
             jetCollection = lambda event: event.hnlJets_nominal,
+            lepton2Object = None if args.leptons==1 else (lambda event: event.subleadingLeptons[0]),
             globalOptions=globalOptions
         )
     ])

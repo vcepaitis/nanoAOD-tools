@@ -10,6 +10,7 @@ class TrackAndSVSelection(Module):
         jetCollection=lambda event: Collection(event, "Jet"),
         svType="adapted",
         cpfCollection=lambda event: Collection(event, "cpf"),
+        lepton2Object = lambda event: None,
         outputName="hnlJet_track_weight",
         globalOptions={"isData":False, "isSignal":False, "year": 2016},
         storeWeights="False",
@@ -20,6 +21,7 @@ class TrackAndSVSelection(Module):
             raise ValueError("Wrong sv type")
         self.svType = svType
         self.cpfCollection = cpfCollection
+        self.lepton2Object = lepton2Object
         self.outputName = outputName
         self.globalOptions = globalOptions
         if self.globalOptions["year"]== 2016 :   
@@ -30,6 +32,7 @@ class TrackAndSVSelection(Module):
 
         if self.globalOptions["year"]== 2018 :   
            self.sf = utils.getHistCanvas("PhysicsTools/NanoAODTools/data/track/track_sf_2018.root", "c1" , "ratio")
+          
       
         self.storeWeights = storeWeights
 
@@ -66,12 +69,16 @@ class TrackAndSVSelection(Module):
             self.out.branch(self.outputName+"_nominal", "F")
             self.out.branch(self.outputName+"_up", "F")
             self.out.branch(self.outputName+"_down", "F")
+            
+            self.out.branch("lepton2_track_nominal", "F")
+            self.out.branch("lepton2_track_up", "F")
+            self.out.branch("lepton2_track_down", "F")
 
     def analyze(self, event):
           
         jets = self.jetCollection(event)
         cpfs = self.cpfCollection(event)
-
+        lepton2 = self.lepton2Object(event)
 
 
         # Iterate over all jets and find the matching tracks
@@ -150,8 +157,8 @@ class TrackAndSVSelection(Module):
                     matchedCpfs = matchedCpfs[:3]
                     
                     for i, cpf in enumerate(matchedCpfs) : 
-                        dxySig = max(self.sf.GetXaxis().GetXmin()*1.0001, min(self.sf.GetXaxis().GetXmax()*0.9999, math.fabs(cpf.trackSip2dVal)))
-                        binNumber = self.sf.FindBin(dxySig)
+                        dxy = max(self.sf.GetXaxis().GetXmin()*1.0001, min(self.sf.GetXaxis().GetXmax()*0.9999, math.fabs(cpf.trackSip2dVal)))
+                        binNumber = self.sf.FindBin(dxy)
 
                         scaleFactor = self.sf.GetBinContent(binNumber)
                         scaleFactorErr = self.sf.GetBinError(binNumber)
@@ -188,5 +195,23 @@ class TrackAndSVSelection(Module):
                 self.out.fillBranch(self.outputName+"_nominal",weightedSFSum )
                 self.out.fillBranch(self.outputName+"_up", weightedSFSum+weightedSFError)
                 self.out.fillBranch(self.outputName+"_down", weightedSFSum-weightedSFError)
+                
+                resolvedLeptonWeight = 1.
+                resolvedLeptonWeightErr = 0.
+                if lepton2 and utils.deltaPhi(lepton2,jet)>0.4:
+                    dxy = max(self.sf.GetXaxis().GetXmin()*1.0001, min(self.sf.GetXaxis().GetXmax()*0.9999, math.fabs(lepton2.dxy)))
+                    binNumber = self.sf.FindBin(dxy)
+                    resolvedLeptonWeight = self.sf.GetBinContent(binNumber)
+                    resolvedLeptonWeightErr = self.sf.GetBinError(binNumber)
+                    if resolvedLeptonWeight<0.1:
+                        resolvedLeptonWeight = 1.
+                        resolvedLeptonWeightErr = 0.
+                    if resolvedLeptonWeightErr<(0.5*math.fabs(1.-resolvedLeptonWeight)):
+                        resolvedLeptonWeightErr = math.sqrt(resolvedLeptonWeightErr**2+(0.5*(1.-resolvedLeptonWeight))**2)
+                    
+                
+                self.out.fillBranch("lepton2_track_nominal", resolvedLeptonWeight)
+                self.out.fillBranch("lepton2_track_up", resolvedLeptonWeight+resolvedLeptonWeightErr)
+                self.out.fillBranch("lepton2_track_down", resolvedLeptonWeight-resolvedLeptonWeightErr)
 
         return True
