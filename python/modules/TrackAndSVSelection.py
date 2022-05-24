@@ -10,6 +10,7 @@ class TrackAndSVSelection(Module):
         jetCollection=lambda event: Collection(event, "Jet"),
         svType="adapted",
         cpfCollection=lambda event: Collection(event, "cpf"),
+        lepton2Object = lambda event: None,
         outputName="hnlJet_track_weight",
         globalOptions={"isData":False, "isSignal":False, "year": 2016},
         storeWeights="False",
@@ -20,6 +21,7 @@ class TrackAndSVSelection(Module):
             raise ValueError("Wrong sv type")
         self.svType = svType
         self.cpfCollection = cpfCollection
+        self.lepton2Object = lepton2Object
         self.outputName = outputName
         self.globalOptions = globalOptions
         if self.globalOptions["year"]== 2016 :   
@@ -30,6 +32,7 @@ class TrackAndSVSelection(Module):
 
         if self.globalOptions["year"]== 2018 :   
            self.sf = utils.getHistCanvas("PhysicsTools/NanoAODTools/data/track/track_sf_2018.root", "c1" , "ratio")
+          
       
         self.storeWeights = storeWeights
 
@@ -44,34 +47,38 @@ class TrackAndSVSelection(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         
-        self.out.branch(self.outputName+"_"+self.svType+"_muon", "I")
-        self.out.branch(self.outputName+"_"+self.svType+"_muon_dxy", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_muon_pt", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_muon_dxysig", "F")
-        
-        self.out.branch(self.outputName+"_"+self.svType+"_electron", "I")
-        self.out.branch(self.outputName+"_"+self.svType+"_electron_pt", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_electron_dxy", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_electron_dxysig", "F")
+        if self.svType is not None:
+            self.out.branch(self.outputName+"_"+self.svType+"_muon", "I")
+            self.out.branch(self.outputName+"_"+self.svType+"_muon_dxy", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_muon_pt", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_muon_dxysig", "F")
+            
+            self.out.branch(self.outputName+"_"+self.svType+"_electron", "I")
+            self.out.branch(self.outputName+"_"+self.svType+"_electron_pt", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_electron_dxy", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_electron_dxysig", "F")
         
 
 
-        self.out.branch("n"+self.outputName+"_"+self.svType, "I")
-        self.out.branch(self.outputName+"_"+self.svType+"_pt", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType)
-        self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
-        self.out.branch(self.outputName+"_"+self.svType+"_dxysig", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
+            self.out.branch("n"+self.outputName+"_"+self.svType, "I")
+            self.out.branch(self.outputName+"_"+self.svType+"_pt", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType)
+            self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
+            self.out.branch(self.outputName+"_"+self.svType+"_dxysig", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
       
         if self.storeWeights:        
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_nominal", "F")
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_up", "F")
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_down", "F")
-
+            self.out.branch(self.outputName+"_nominal", "F")
+            self.out.branch(self.outputName+"_up", "F")
+            self.out.branch(self.outputName+"_down", "F")
+            
+            self.out.branch("lepton2_track_nominal", "F")
+            self.out.branch("lepton2_track_up", "F")
+            self.out.branch("lepton2_track_down", "F")
 
     def analyze(self, event):
           
         jets = self.jetCollection(event)
         cpfs = self.cpfCollection(event)
-
+        lepton2 = self.lepton2Object(event)
 
 
         # Iterate over all jets and find the matching tracks
@@ -137,37 +144,74 @@ class TrackAndSVSelection(Module):
             self.out.fillBranch(self.outputName+"_"+self.svType+"_dxysig", map(lambda cpf: cpf.trackSip2dSig, cpfsMatchedToJetAndSV))
             
             if self.storeWeights:
-                weightsPerTrack = []
-                errorsPerTrack = []
-                averageError2 = 0.
-                tot_error = 0.
+                weightedSFSum = 0. #sum of weights x SF
+                weightedSFErrorSum2 = 0. #sum of weights^2 x SFerr ^ 2
+                weightSum = 0. #sum of weights
+                
                 matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
+                matchedCpfs = sorted(matchedCpfs,key=lambda x: math.fabs(x.trackSip2dVal),reverse=True)
+                
+ 
                 if len(matchedCpfs) > 0:
-                    # Apply the corrections based on leading three constituents
-                    matchedCpfs = matchedCpfs[:3]
-                    for i, cpf in enumerate(matchedCpfs) : 
-                      binNumber = self.sf.FindBin(abs(cpf.trackSip2dVal))
-                      weightsPerTrack.append(self.sf.GetBinContent(binNumber))
-                      errorsPerTrack.append(self.sf.GetBinError(binNumber))
-                      averageError2 += errorsPerTrack[i]**2
 
-                    ptsPerTrack = np.asarray(map(lambda x: x.ptrel, matchedCpfs))
-                    print "the pts per track are:  " , ptsPerTrack
-                    averageWeight = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
-                    print "average Weight gives,  ", averageWeight
-                    averageError = math.sqrt(averageError2)
-                    ### Additional systematic uncertainty on the SF. 
-                    sys_error = (1. - averageWeight)/2.0
-                    tot_error = math.sqrt(averageError2 + sys_error**2) 
+                    matchedCpfs = matchedCpfs[:3]
+                    
+                    for i, cpf in enumerate(matchedCpfs) : 
+                        dxy = max(self.sf.GetXaxis().GetXmin()*1.0001, min(self.sf.GetXaxis().GetXmax()*0.9999, math.fabs(cpf.trackSip2dVal)))
+                        binNumber = self.sf.FindBin(dxy)
+
+                        scaleFactor = self.sf.GetBinContent(binNumber)
+                        scaleFactorErr = self.sf.GetBinError(binNumber)
+                        
+                        #skip if scaleFactor is unreasonably small
+                        if scaleFactor<0.1:
+                            scaleFactor = 1.
+                            scaleFactorErr = 0.
+                        
+                        
+                        weight = math.fabs(cpf.ptrel)+1e-3 #add slight bias to protect against very small weights
+                        
+                        weightSum += weight
+                        weightedSFSum += weight*scaleFactor
+                        weightedSFErrorSum2 += (weight**2)*(scaleFactorErr**2)
+
+                        
+                    weightedSFSum = weightedSFSum/weightSum
+                    weightedSFError = math.sqrt(
+                        weightedSFErrorSum2/weightSum**2
+                    )
+                    
+                    
+                    #add half the uncertainty to unity if SF uncertainty very small
+                    if weightedSFError<(0.5*math.fabs(1.-weightedSFSum)):
+                        weightedSFError = math.sqrt(weightedSFError**2+(0.5*(1.-weightedSFSum))**2)
+                    
                     
                 else:
-                    averageWeight = 1.
+                    weightedSFSum = 1.
+                    weightedSFError = 0.
 
-            if self.storeWeights:
-              averageWeightDown = averageWeight - tot_error
-              averageWeightUp = averageWeight + tot_error
-              self.out.fillBranch(self.outputName+"_"+self.svType+"_nominal",averageWeight )
-              self.out.fillBranch(self.outputName+"_"+self.svType+"_up", averageWeightUp)
-              self.out.fillBranch(self.outputName+"_"+self.svType+"_down", averageWeightDown)
+                
+                self.out.fillBranch(self.outputName+"_nominal",weightedSFSum )
+                self.out.fillBranch(self.outputName+"_up", weightedSFSum+weightedSFError)
+                self.out.fillBranch(self.outputName+"_down", weightedSFSum-weightedSFError)
+                
+                resolvedLeptonWeight = 1.
+                resolvedLeptonWeightErr = 0.
+                if lepton2 and utils.deltaPhi(lepton2,jet)>0.4:
+                    dxy = max(self.sf.GetXaxis().GetXmin()*1.0001, min(self.sf.GetXaxis().GetXmax()*0.9999, math.fabs(lepton2.dxy)))
+                    binNumber = self.sf.FindBin(dxy)
+                    resolvedLeptonWeight = self.sf.GetBinContent(binNumber)
+                    resolvedLeptonWeightErr = self.sf.GetBinError(binNumber)
+                    if resolvedLeptonWeight<0.1:
+                        resolvedLeptonWeight = 1.
+                        resolvedLeptonWeightErr = 0.
+                    if resolvedLeptonWeightErr<(0.5*math.fabs(1.-resolvedLeptonWeight)):
+                        resolvedLeptonWeightErr = math.sqrt(resolvedLeptonWeightErr**2+(0.5*(1.-resolvedLeptonWeight))**2)
+                    
+                
+                self.out.fillBranch("lepton2_track_nominal", resolvedLeptonWeight)
+                self.out.fillBranch("lepton2_track_up", resolvedLeptonWeight+resolvedLeptonWeightErr)
+                self.out.fillBranch("lepton2_track_down", resolvedLeptonWeight-resolvedLeptonWeightErr)
 
         return True
