@@ -67,7 +67,6 @@ class TrackAndSVSelection(Module):
             self.out.branch(self.outputName+"_up", "F")
             self.out.branch(self.outputName+"_down", "F")
 
-
     def analyze(self, event):
           
         jets = self.jetCollection(event)
@@ -160,7 +159,7 @@ class TrackAndSVSelection(Module):
                         scaleFactor = self.sf.GetBinContent(binNumber)
                         scaleFactorErr = self.sf.GetBinError(binNumber)
                         
-                        weight = cpf.ptrel
+                        weight = math.fabs(cpf.ptrel)+1e-3 #add slight bias to protect against very small weights
                         
                         weightSum += weight
                         weightedSFSum += weight*scaleFactor
@@ -170,8 +169,11 @@ class TrackAndSVSelection(Module):
                     weightedSFSum = weightedSFSum/weightSum
                     weightedSFError = math.sqrt(
                         weightedSFErrorSum2/weightSum**2
-                        +(0.5*(1.-weightedSFSum))**2    
                     )
+                    
+                    #add half the uncertainty to unity if SF uncertainty very small
+                    if weightedSFError<(0.5*math.fabs(1.-weightedSFSum)):
+                        weightedSFError = math.sqrt(weightedSFError**2+(0.5*(1.-weightedSFSum))**2)
                     
                     
                 else:
