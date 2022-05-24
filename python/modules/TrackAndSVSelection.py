@@ -44,27 +44,28 @@ class TrackAndSVSelection(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         
-        self.out.branch(self.outputName+"_"+self.svType+"_muon", "I")
-        self.out.branch(self.outputName+"_"+self.svType+"_muon_dxy", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_muon_pt", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_muon_dxysig", "F")
-        
-        self.out.branch(self.outputName+"_"+self.svType+"_electron", "I")
-        self.out.branch(self.outputName+"_"+self.svType+"_electron_pt", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_electron_dxy", "F")
-        self.out.branch(self.outputName+"_"+self.svType+"_electron_dxysig", "F")
+        if self.svType is not None:
+            self.out.branch(self.outputName+"_"+self.svType+"_muon", "I")
+            self.out.branch(self.outputName+"_"+self.svType+"_muon_dxy", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_muon_pt", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_muon_dxysig", "F")
+            
+            self.out.branch(self.outputName+"_"+self.svType+"_electron", "I")
+            self.out.branch(self.outputName+"_"+self.svType+"_electron_pt", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_electron_dxy", "F")
+            self.out.branch(self.outputName+"_"+self.svType+"_electron_dxysig", "F")
         
 
 
-        self.out.branch("n"+self.outputName+"_"+self.svType, "I")
-        self.out.branch(self.outputName+"_"+self.svType+"_pt", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType)
-        self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
-        self.out.branch(self.outputName+"_"+self.svType+"_dxysig", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
+            self.out.branch("n"+self.outputName+"_"+self.svType, "I")
+            self.out.branch(self.outputName+"_"+self.svType+"_pt", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType)
+            self.out.branch(self.outputName+"_"+self.svType+"_dxy", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
+            self.out.branch(self.outputName+"_"+self.svType+"_dxysig", "F", lenVar="nhnlJet_svMatchedTracks_"+self.svType+"_"+self.outputName)
       
         if self.storeWeights:        
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_nominal", "F")
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_up", "F")
-            self.out.branch("hnlJet_track_weight_"+self.svType+"_down", "F")
+            self.out.branch(self.outputName+"_nominal", "F")
+            self.out.branch(self.outputName+"_up", "F")
+            self.out.branch(self.outputName+"_down", "F")
 
 
     def analyze(self, event):
@@ -137,37 +138,49 @@ class TrackAndSVSelection(Module):
             self.out.fillBranch(self.outputName+"_"+self.svType+"_dxysig", map(lambda cpf: cpf.trackSip2dSig, cpfsMatchedToJetAndSV))
             
             if self.storeWeights:
-                weightsPerTrack = []
-                errorsPerTrack = []
-                averageError2 = 0.
-                tot_error = 0.
+                weightedSFSum = 0. #sum of weights x SF
+                weightedSFErrorSum2 = 0. #sum of weights^2 x SFerr ^ 2
+                weightSum = 0. #sum of weights
+                
                 matchedCpfs = [cpf for cpf in cpfs if cpf.jetIdx == jet._index]
+                matchedCpfs = sorted(matchedCpfs,key=lambda x: math.fabs(x.trackSip2dVal),reverse=True)
+                
+                matchedCpfs = matchedCpfs[0:1]
+                
+              
+                
                 if len(matchedCpfs) > 0:
-                    # Apply the corrections based on leading three constituents
-                    matchedCpfs = matchedCpfs[:3]
-                    for i, cpf in enumerate(matchedCpfs) : 
-                      binNumber = self.sf.FindBin(abs(cpf.trackSip2dVal))
-                      weightsPerTrack.append(self.sf.GetBinContent(binNumber))
-                      errorsPerTrack.append(self.sf.GetBinError(binNumber))
-                      averageError2 += errorsPerTrack[i]**2
 
-                    ptsPerTrack = np.asarray(map(lambda x: x.ptrel, matchedCpfs))
-                    print "the pts per track are:  " , ptsPerTrack
-                    averageWeight = np.sum(weightsPerTrack*ptsPerTrack/np.sum(ptsPerTrack))
-                    print "average Weight gives,  ", averageWeight
-                    averageError = math.sqrt(averageError2)
-                    ### Additional systematic uncertainty on the SF. 
-                    sys_error = (1. - averageWeight)/2.0
-                    tot_error = math.sqrt(averageError2 + sys_error**2) 
+                    matchedCpfs = matchedCpfs[:3]
+                    
+                    for i, cpf in enumerate(matchedCpfs) : 
+                        dxySig = max(self.sf.GetXaxis().GetXmin(), min(self.sf.GetXaxis().GetXmax(), math.fabs(cpf.trackSip2dVal)))
+                        binNumber = self.sf.FindBin(dxySig)
+
+                        scaleFactor = self.sf.GetBinContent(binNumber)
+                        scaleFactorErr = self.sf.GetBinError(binNumber)
+                        
+                        weight = cpf.ptrel
+                        
+                        weightSum += weight
+                        weightedSFSum += weight*scaleFactor
+                        weightedSFErrorSum2 += (weight**2)*(scaleFactorErr**2)
+
+                        
+                    weightedSFSum = weightedSFSum/weightSum
+                    weightedSFError = math.sqrt(
+                        weightedSFErrorSum2/weightSum**2
+                        +(0.5*(1.-weightedSFSum))**2    
+                    )
+                    
                     
                 else:
-                    averageWeight = 1.
+                    weightedSFSum = 1.
+                    weightedSFError = 0.
 
-            if self.storeWeights:
-              averageWeightDown = averageWeight - tot_error
-              averageWeightUp = averageWeight + tot_error
-              self.out.fillBranch(self.outputName+"_"+self.svType+"_nominal",averageWeight )
-              self.out.fillBranch(self.outputName+"_"+self.svType+"_up", averageWeightUp)
-              self.out.fillBranch(self.outputName+"_"+self.svType+"_down", averageWeightDown)
+                
+                self.out.fillBranch(self.outputName+"_nominal",weightedSFSum )
+                self.out.fillBranch(self.outputName+"_up", weightedSFSum+weightedSFError)
+                self.out.fillBranch(self.outputName+"_down", weightedSFSum-weightedSFError)
 
         return True

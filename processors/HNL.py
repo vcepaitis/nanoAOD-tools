@@ -371,19 +371,12 @@ def eventReconstructionSequence(jetMetDict):
         ])
     sequence.extend([
         TrackAndSVSelection(
-                svType="adapted",
-                outputName="hnlJet_track_weight",
-                jetCollection = lambda event: event.hnlJets_nominal,
-                globalOptions=globalOptions,
-                storeWeights=True
-            ),
-            TrackAndSVSelection(
-                svType="regular",
-                outputName="hnlJet_track_weight",
-                jetCollection = lambda event: event.hnlJets_nominal,
-                globalOptions=globalOptions
-            )
-        ])
+            svType='regular',
+            outputName="hnlJet_track_weight",
+            jetCollection = lambda event: event.hnlJets_nominal,
+            globalOptions=globalOptions
+        )
+    ])
         
     return sequence
     
