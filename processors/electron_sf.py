@@ -100,7 +100,7 @@ leptonSelection = [
         outputName="tightMuons",
         storeKinematics=[],
         storeWeights=True,
-        muonMinPt=minMuonPt[globalOptions["year"]],
+        muonMinPt=10.,
         muonMaxDxy=0.01,
         muonMaxDz=0.05,
         muonID=MuonSelection.TIGHT,
@@ -110,14 +110,13 @@ leptonSelection = [
     ElectronSelection(
         outputName="tightElectrons",
         storeKinematics=[],
-        electronMinPt=minElectronPt[globalOptions["year"]],
+        electronMinPt=10.,
         electronID="noIso_WP90" if args.noiso else "Iso_WP90",
         storeWeights=True,
         electronIPCuts=True,
         globalOptions=globalOptions
     ),
-    #EventSkim(selection=lambda event: event.ntightMuons > 1 or event.ntightElectrons > 1, outputName="l1"),
-    EventSkim(selection=lambda event: event.ntightMuons > 1, outputName="l1l2"),
+    EventSkim(selection=lambda event: event.ntightMuons > 1 or event.ntightElectrons > 1, outputName="l1"),
     SingleMuonTriggerSelection(
         inputCollection=lambda event: event.tightMuons,
         outputName="IsoMuTrigger",
@@ -150,10 +149,9 @@ leptonSelection = [
         globalOptions=globalOptions
     ),
     ElectronSelection(
-        #inputCollection=lambda event: event.tightElectrons_unselected,  ########## ONLY FOR MU MU E!!!!!!!!
+        inputCollection=lambda event: event.tightElectrons_unselected,
         outputName="looseElectrons",
         storeKinematics=[],
-
         electronMinPt=5.,
         electronID="None",
         globalOptions=globalOptions
@@ -168,8 +166,6 @@ leptonSelection = [
         globalOptions=globalOptions
     ),
     PhotonVeto(),
-    #EventSkim(selection=lambda event: event.nlooseElectrons>0 and event.ntightMuons+event.nlooseMuons<3, outputName="l3"),#think about it
-    EventSkim(selection=lambda event: event.ntightMuons+event.nlooseMuons<3, outputName="l3"),#makes sure we have only 2 muons
     PhotonConversionsForEleSF(
         tightMuonsCollection=lambda event:event.tightMuons,
         tightElectronsCollection=lambda event:event.tightElectrons,
@@ -188,7 +184,7 @@ analyzerChain.extend(leptonSelection)
     
 analyzerChain.extend([
     InvariantSystem(
-        inputCollection= lambda event: [event.tightMuons[0],event.tightMuons[1]],
+        inputCollection= lambda event: [event.leadingLeptons,event.subleadingLeptons],
         outputName="dilepton"
     ),
 ])
@@ -392,7 +388,7 @@ p = PostProcessor(
     modules=analyzerChain,
     maxEvents=-1,
     friend=True,
-    cut="((nElectron+nMuon)>2)", #remove if doing cutflow
+    cut="((nElectron+nMuon)>1)", #remove if doing cutflow
     cutFlow=args.cutflow
 )
 

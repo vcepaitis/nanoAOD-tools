@@ -259,7 +259,7 @@ class PhotonConversionsForEleSF(Module):
         for variable in self.storeSubleadingKinematics:
             #self.out.fillBranch("subleading"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),tightLeptons))
             self.out.fillBranch("subleading"+self.outputName+"_"+variable,getattr(tightLeptons[1], variable))
-        if len(looseLeptons)>0:
+        if len(looseLeptons)>0 and looseLeptons[0].isElectron:
             for variable in self.storeTrailingKinematics:
                 #self.out.fillBranch("trailing"+self.outputName+"_"+variable,map(lambda lepton: getattr(lepton,variable),looseLeptons))
                 self.out.fillBranch("trailing"+self.outputName+"_"+variable,getattr(looseLeptons[0], variable))
@@ -271,7 +271,7 @@ class PhotonConversionsForEleSF(Module):
         self.out.fillBranch(self.outputName+"_muonmuonelectron", muonmuonelectron)
         self.out.fillBranch(self.outputName+"_electronelectronelectron", electronelectronelectron)
 
-        if len(looseLeptons)>0:
+        if len(looseLeptons)>0 and looseLeptons[0].isElectron:
             trilepton = ROOT.TLorentzVector()
             trilepton = tightLeptons[0].p4()+tightLeptons[1].p4()+looseLeptons[0].p4()
             trilepton_charge = tightLeptons[0].charge*tightLeptons[1].charge*looseLeptons[0].charge
@@ -300,7 +300,7 @@ class PhotonConversionsForEleSF(Module):
 
         setattr(event, "leading"+self.outputName, tightLeptons[0])
         setattr(event, "subleading"+self.outputName, tightLeptons[1])
-        if len(looseLeptons)>0:
+        if len(looseLeptons)>0 and looseLeptons[0].isElectron:
             setattr(event, "trailing"+self.outputName, looseLeptons[0])
         else:
             setattr(event, "trailing"+self.outputName, None)
